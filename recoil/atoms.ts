@@ -2,7 +2,7 @@ import {
   Session,
   createClientComponentClient,
 } from "@supabase/auth-helpers-nextjs";
-import { atom, selector } from "recoil";
+import { atom, selector, waitForAll } from "recoil";
 
 // const supabase = createClientComponentClient();
 type Profile = Database["public"]["Tables"]["profile"]["Row"];
@@ -12,8 +12,9 @@ export const mySessionState = atom<Session | null>({
   default: null,
 });
 
-export const myProfileState = atom<Profile>({
+export const myProfileState = atom<Profile | null>({
   key: "myProfileState",
+  default: null,
 });
 export const myIDState = selector<string>({
   key: "myIDState",
@@ -50,12 +51,16 @@ export const myDecksState = selector({
   get: async ({ get }) => {
     const supabase = createClientComponentClient<Database>();
     const myID = get(myIDState);
+    console.log("myID", myID);
     if (!myID) return null;
     const { data, error } = await supabase
       .from("deck")
       .select("*")
       .eq("player_id", myID);
-    if (error) console.log("error", error);
+    if (error) {
+      console.log("error", error);
+      return null;
+    }
     return data;
   },
 });
@@ -71,7 +76,7 @@ export const myCurrentDeckState = selector({
     if (!myCurrentDeckID) return null;
     const { data, error } = await supabase
       .from("deck")
-      .select("*, card_basic_info(*)")
+      .select("*, deck_card_basic_info(*)")
       .eq("id", myCurrentDeckID)
       .single();
     if (error) console.log("error", error);
@@ -79,6 +84,48 @@ export const myCurrentDeckState = selector({
   },
 });
 
+//gets the basic info of all the cards in the deck along with their quantities in deck
+export const myCurrentDeckCardsBasicInfoState = selector({
+  key: "myCurrentDeckCardsBasicInfoState",
+  get: async ({ get }) => {
+    const supabase = createClientComponentClient<Database>();
+    const myCurrentDeck = get(myCurrentDeckState);
+    console.log("myCurrentDeck in atom", myCurrentDeck);
+    if (!myCurrentDeck) return null;
+    //TODO: move this to a selector family (?) that fetches the basic info for each card in the deck
+    const myCardsBasicInfoIDs = myCurrentDeck.deck_card_basic_info.map(
+      ({ card_basic_info_id }) => card_basic_info_id
+    );
+    console.log("cardsBasicInfoIDs", myCardsBasicInfoIDs);
+    const { data, error } = await supabase
+      .from("card_basic_info")
+      .select()
+      .in("id", myCardsBasicInfoIDs);
+    console.log("data", data);
+    if (error) console.log("error", error);
+    if (!data) return null;
+    const cardsBasicInfoWithQuantities = data.map((cardBasicInfo) => ({
+      ...cardBasicInfo,
+      quantity:
+        myCurrentDeck.deck_card_basic_info.find(
+          (deckCardInfo) => deckCardInfo.card_basic_info_id === cardBasicInfo.id
+        )?.quantity ?? 0,
+    }));
+    return cardsBasicInfoWithQuantities;
+  },
+});
+
+//TODO: generate deck cards from the basic info (only client-side)
+// const inGameCardsFromBasicInfo = selector({
+//   key: "inGameCardsFromDeckInfo",
+//   get: async ({ get }) => {
+//     const;
+//   },
+// });
+export const myDeckCardsState = atom({
+  key: "myDeckCardsState",
+  default: [],
+});
 export const opponentCurrentDeckIDState = atom<string>({
   key: "opponentCurrentDeckIDState", //TODO: fetch default value?
 });
@@ -96,12 +143,6 @@ export const opponentCurrentDeckState = selector({
     if (error) console.log("error", error);
     return data;
   },
-});
-
-export const currentDeckState = atom<
-  Database["public"]["Tables"]["deck"]["Row"][]
->({
-  key: "deckState",
 });
 
 //game-related state --------------------------------
@@ -177,7 +218,7 @@ export const amIPlayer1State = selector<boolean>({
     const myProfile = get(myProfileState);
     const game = get(gameState);
     //TODO fix typo in player1I_board_id in db
-    return myProfile.id === game.player1_id;
+    return myProfile?.id === game.player1_id;
   },
 });
 export const currentPhaseState = atom<string>({

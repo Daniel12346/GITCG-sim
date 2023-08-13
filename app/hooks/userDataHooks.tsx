@@ -12,16 +12,18 @@ const useMySession = () => {
 
   useEffect(() => {
     const fetchMySessionData = async () => {
+      if (mySession) return;
       console.log("supabase", supabase);
       const { data, error } = await supabase.auth.getSession();
       console.log("data", data);
       console.log("error", error);
       if (!data.session) {
         //TODO: handle this
+        return null;
       }
       if (error) {
         console.log("error", error);
-        return;
+        return null;
       }
       const session = data?.session;
       session && setMySession(session);

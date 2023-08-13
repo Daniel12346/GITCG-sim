@@ -1,6 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { use, useEffect, useState } from "react";
-import { useMySession } from "./userDataHooks";
 import { useRouter } from "next/navigation";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import {
