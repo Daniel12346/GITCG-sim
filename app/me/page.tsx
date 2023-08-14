@@ -1,5 +1,5 @@
 "use client";
-import { myIDState } from "@/recoil/atoms";
+import { myIDState, mySessionState } from "@/recoil/atoms";
 import {
   useRecoilState,
   useRecoilValue,
@@ -9,28 +9,26 @@ import {
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Suspense, useEffect } from "react";
 import MyDecks from "@/components/MyDecks";
-import { useMySession } from "../hooks/userDataHooks";
 import dynamic from "next/dynamic";
 
-const Decks = dynamic(() => import("@/components/MyDecks"), {
+//TODO: why does this work?
+const MyDecksNoSSR = dynamic(() => import("@/components/MyDecks"), {
+  ssr: false,
+});
+const MyInfoNoSSR = dynamic(() => import("@/components/MyInfo"), {
   ssr: false,
 });
 
 export default function Me() {
-  useMySession();
-  const myID = useRecoilValue(myIDState);
-
   // const [deckIDs, setDeckIDs] = useState<string[]>([]);
-
   return (
     <>
       <div>
         <h1>Me</h1>
+        <MyInfoNoSSR />
         {/* //TODO: why does this keep loading when I add Suspense? */}
-        My Id: {myID}
-        <Suspense fallback={<div>loading decks</div>}>
-          <Decks />
-        </Suspense>
+        {/* My Id: {mySession?.user.id} */}
+        <MyDecksNoSSR />
       </div>
     </>
   );

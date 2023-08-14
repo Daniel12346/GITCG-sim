@@ -6,32 +6,32 @@ import {
   createClientComponentClient,
 } from "@supabase/auth-helpers-nextjs";
 
-const useMySession = () => {
-  const [mySession, setMySession] = useRecoilState(mySessionState);
-  const supabase = createClientComponentClient<any>();
+// const useMySession = () => {
+//   const [mySession, setMySession] = useRecoil(mySessionState);
+//   const supabase = createClientComponentClient<any>();
 
-  useEffect(() => {
-    const fetchMySessionData = async () => {
-      if (mySession) return;
-      console.log("supabase", supabase);
-      const { data, error } = await supabase.auth.getSession();
-      console.log("data", data);
-      console.log("error", error);
-      if (!data.session) {
-        //TODO: handle this
-        return null;
-      }
-      if (error) {
-        console.log("error", error);
-        return null;
-      }
-      const session = data?.session;
-      session && setMySession(session);
-    };
-    fetchMySessionData();
-  }, [supabase]);
-  return mySession;
-};
+//   useEffect(() => {
+//     const fetchMySessionData = async () => {
+//       if (mySession) return;
+//       console.log("supabase", supabase);
+//       const { data, error } = await supabase.auth.getSession();
+//       console.log("data", data);
+//       console.log("error", error);
+//       if (!data.session) {
+//         //TODO: handle this
+//         return null;
+//       }
+//       if (error) {
+//         console.log("error", error);
+//         return null;
+//       }
+//       const session = data?.session;
+//       session && setMySession(session);
+//     };
+//     fetchMySessionData();
+//   }, [supabase]);
+//   return mySession;
+// };
 // export const use= () => {
 
 //     if (!myID){
@@ -48,4 +48,4 @@ const useMySession = () => {
 
 //     })}
 // }
-export { useMySession };
+// export { useMySession };

@@ -1,7 +1,12 @@
 "use client";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useCreateGame } from "../hooks/channelHooks";
-import { opponentIDState, opponentProfileState } from "@/recoil/atoms";
+import {
+  currentGameIDState,
+  opponentIDState,
+  opponentProfileState,
+  myDeckInGameCardsState,
+} from "@/recoil/atoms";
 import { useRecoilValue } from "recoil";
 
 export default function Game() {
@@ -9,13 +14,16 @@ export default function Game() {
 
   // // console.log("opponent in game", opponent);
   // const game = useCreateGame();
-  useEffect(() => {
-    console.log(opponentID);
-  }, [opponentID]);
+  // const currentGameID = useRecoilValue(currentGameIDState);
+  const myDeckInGameCards = useRecoilValue(myDeckInGameCardsState);
+
   return (
+    //TODO: handle loading game page
     <div>
       Game
-      {opponentID}
+      <span>Opp. id:{opponentID}</span>
+      <br />
+      {/* <span>Game id:{currentGameID}</span> */}
     </div>
   );
 }

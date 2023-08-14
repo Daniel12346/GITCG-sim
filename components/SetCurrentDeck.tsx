@@ -1,4 +1,6 @@
+"use client";
 import { myCurrentDeckIDState } from "@/recoil/atoms";
+import { useRouter } from "next/navigation";
 import { useSetRecoilState } from "recoil";
 
 interface Props {
@@ -6,5 +8,14 @@ interface Props {
 }
 export default function SetCurrentDeck({ id }: Props) {
   const setMyCurrentDeckID = useSetRecoilState(myCurrentDeckIDState);
-  return <button onClick={() => setMyCurrentDeckID(id)}>set active</button>;
+  const router = useRouter();
+  return (
+    <button
+      onClick={() => {
+        setMyCurrentDeckID(id);
+      }}
+    >
+      set active
+    </button>
+  );
 }

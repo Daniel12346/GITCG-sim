@@ -6,6 +6,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import SetCurrentDeck from "./SetCurrentDeck";
 import CurrentDeckDisplay from "./CurrentDeckDisplay";
+import Link from "next/link";
 
 interface Props {
   userId: string;
@@ -23,6 +24,8 @@ export default function ClientComponent() {
           <SetCurrentDeck id={deck.id} />
         </div>
       ))}
+      <Link href={"/lobby"}>To Lobby</Link>
+
       <Suspense fallback={<div>loading deck display</div>}>
         <CurrentDeckDisplay></CurrentDeckDisplay>
       </Suspense>

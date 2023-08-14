@@ -18,7 +18,8 @@ export default function RootLayout({
       <body>
         <main className="min-h-screen bg-background flex flex-col items-center">
           <RecoilRootWrapper>
-            <InitSession>{children}</InitSession>
+            {children}
+            {/* <InitSession>{children}</InitSession> */}
           </RecoilRootWrapper>
         </main>
       </body>

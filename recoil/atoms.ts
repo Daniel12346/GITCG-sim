@@ -2,16 +2,27 @@ import {
   Session,
   createClientComponentClient,
 } from "@supabase/auth-helpers-nextjs";
+import { uuid } from "uuidv4";
+import { useEffect } from "react";
 import { atom, selector, waitForAll } from "recoil";
-
+import { recoilPersist } from "recoil-persist";
+const { persistAtom } = recoilPersist();
 // const supabase = createClientComponentClient();
 type Profile = Database["public"]["Tables"]["profile"]["Row"];
 
-export const mySessionState = atom<Session | null>({
+export const mySessionState = selector<Session | null>({
   key: "mySessionState",
-  default: null,
+  get: async ({ get }) => {
+    const supabase = createClientComponentClient<Database>();
+    const { data, error } = await supabase.auth.getSession();
+    if (error) console.log("error", error);
+    return data.session;
+  },
 });
-
+export const usersInLobbyIDsState = atom<string[]>({
+  key: "usersInLobbyIDsState",
+  default: [],
+});
 export const myProfileState = atom<Profile | null>({
   key: "myProfileState",
   default: null,
@@ -67,6 +78,7 @@ export const myDecksState = selector({
 export const myCurrentDeckIDState = atom<string>({
   key: "currentDeckIDState",
   default: "",
+  effects_UNSTABLE: [persistAtom],
 });
 export const myCurrentDeckState = selector({
   key: "myCurrentDeckState",
@@ -115,7 +127,44 @@ export const myCurrentDeckCardsBasicInfoState = selector({
   },
 });
 
-//TODO: generate deck cards from the basic info (only client-side)
+//TODO: make this depend on gameState?
+export const currentGameIDState = atom<string>({
+  key: "currentGameIDState",
+  default: "",
+});
+
+export const myDeckInGameCardsState = selector({
+  key: "myDeckInGameCardsState",
+  get: async ({ get }) => {
+    const currentGameID = get(currentGameIDState);
+    const myCurrentDeckCardsBasicInfo = get(myCurrentDeckCardsBasicInfoState);
+    const myID = get(myIDState);
+    if (!myCurrentDeckCardsBasicInfo) return null;
+    const myDeckCardsInGame: Card[] = [];
+    for (const cardBasicInfo of myCurrentDeckCardsBasicInfo) {
+      for (let i = 0; i < (cardBasicInfo.quantity || 1); i++) {
+        myDeckCardsInGame.push({
+          ...cardBasicInfo,
+          //TODO: make cardType either nullalble or non-nullable for both cardBasicInfo and card
+          card_type: cardBasicInfo.card_type ?? "",
+          counters: 0,
+          location: "DECK",
+          id: uuid(),
+          card_basic_info_id: cardBasicInfo.id,
+          energy: 0,
+          health: cardBasicInfo.base_health,
+          statuses: [],
+          usages: 0,
+          //refers to whether the card is currently in play (only for character cards?)
+          is_active: false,
+          owner_id: myID,
+          //TODO: use JSON because the card itself is not stored in the database
+          equipped_to_id: null,
+        });
+      }
+    }
+  },
+}); //TODO: generate deck cards from the basic info (only client-side)
 // const inGameCardsFromBasicInfo = selector({
 //   key: "inGameCardsFromDeckInfo",
 //   get: async ({ get }) => {
