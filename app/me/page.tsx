@@ -11,6 +11,9 @@ import { Suspense, useEffect } from "react";
 import MyDecks from "@/components/MyDecks";
 import dynamic from "next/dynamic";
 
+const DeckDisplayNoSSR = dynamic(() => import("@/components/DeckDisplay"), {
+  ssr: false,
+});
 //TODO: why does this work?
 const MyDecksNoSSR = dynamic(() => import("@/components/MyDecks"), {
   ssr: false,
@@ -29,6 +32,7 @@ export default function Me() {
         {/* //TODO: why does this keep loading when I add Suspense? */}
         {/* My Id: {mySession?.user.id} */}
         <MyDecksNoSSR />
+        <DeckDisplayNoSSR />
       </div>
     </>
   );

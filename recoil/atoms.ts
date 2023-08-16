@@ -133,16 +133,23 @@ export const currentGameIDState = atom<string>({
   default: "",
 });
 
-export const myDeckInGameCardsState = selector({
-  key: "myDeckInGameCardsState",
+export const opponentInGameCardsState = atom<Card[]>({
+  key: "opponentInGameState",
+  default: [],
+});
+
+export const myInGameCardsState = selector({
+  key: "myInGameCardsState",
   get: async ({ get }) => {
-    const currentGameID = get(currentGameIDState);
+    // const currentGameID = get(currentGameIDState);
     const myCurrentDeckCardsBasicInfo = get(myCurrentDeckCardsBasicInfoState);
     const myID = get(myIDState);
     if (!myCurrentDeckCardsBasicInfo) return null;
-    const myDeckCardsInGame: Card[] = [];
-    for (const cardBasicInfo of myCurrentDeckCardsBasicInfo) {
-      for (let i = 0; i < (cardBasicInfo.quantity || 1); i++) {
+    let myDeckCardsInGame: Card[] = [];
+    console.log("myCurrentDeckCardsBasicInfo", myCurrentDeckCardsBasicInfo);
+    myCurrentDeckCardsBasicInfo.forEach((cardBasicInfo) => {
+      const quantity = cardBasicInfo.quantity || 1;
+      for (let i = 0; i < quantity; i++) {
         myDeckCardsInGame.push({
           ...cardBasicInfo,
           //TODO: make cardType either nullalble or non-nullable for both cardBasicInfo and card
@@ -162,9 +169,13 @@ export const myDeckInGameCardsState = selector({
           equipped_to_id: null,
         });
       }
-    }
+      // }
+    });
+    console.log("myDeckCardsInGame", myDeckCardsInGame);
+    return myDeckCardsInGame;
   },
-}); //TODO: generate deck cards from the basic info (only client-side)
+});
+//TODO: generate deck cards from the basic info (only client-side)
 // const inGameCardsFromBasicInfo = selector({
 //   key: "inGameCardsFromDeckInfo",
 //   get: async ({ get }) => {

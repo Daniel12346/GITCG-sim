@@ -9,7 +9,9 @@ import { RealtimeChannel } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useRecoilValue, useRecoilState, useSetRecoilState } from "recoil";
+import { uuid } from "uuidv4";
 
+type Payload = { gameID: string; myID: string; opponentID: string };
 export default function LobbyChannel() {
   const myID = useRecoilValue(myIDState);
   const [usersInLobbyIDs, setUsersInLobbyIDs] =
@@ -49,7 +51,7 @@ export default function LobbyChannel() {
           channel.send({
             type: "broadcast",
             event: "found_game",
-            payload: [myID, foundOpponentID],
+            payload: { myID, opponentID: foundOpponentID, gameID: uuid() },
           });
         }
       })
@@ -61,14 +63,15 @@ export default function LobbyChannel() {
       })
       .on("broadcast", { event: "found_game" }, ({ payload }) => {
         // const [game_id, ...player_ids] = payload as string[];
-        if (payload.includes(myID)) {
-          console.log("payload", payload);
-          const opponentID = payload.filter((id: string) => id != myID)[0];
-          !isCancelled && setOpponentID(opponentID);
-          // setCurrentGameID(game_id);
-          //TODO: create game (?)
-          router.push("/game");
-        }
+        if (![payload.myID, payload.opponentID].includes(myID)) return;
+        const opponentID =
+          payload.myID === myID ? payload.opponentID : payload.myID;
+
+        console.log("payload", payload);
+        !isCancelled && setOpponentID(opponentID);
+        setCurrentGameID(payload.gameID);
+        //TODO: create game (?)
+        router.push("/game/" + payload.gameID);
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {

@@ -25,10 +25,10 @@ export default function ClientComponent() {
         </div>
       ))}
       <Link href={"/lobby"}>To Lobby</Link>
-
+      {/* 
       <Suspense fallback={<div>loading deck display</div>}>
         <CurrentDeckDisplay></CurrentDeckDisplay>
-      </Suspense>
+      </Suspense> */}
     </div>
   );
 }
