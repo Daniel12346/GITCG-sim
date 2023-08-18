@@ -71,6 +71,7 @@ export default function LobbyChannel() {
         !isCancelled && setOpponentID(opponentID);
         setCurrentGameID(payload.gameID);
         //TODO: create game (?)
+        console.log(router);
         router.push("/game/" + payload.gameID);
       })
       .subscribe(async (status) => {
@@ -84,7 +85,7 @@ export default function LobbyChannel() {
       });
 
     return () => {
-      supabase.removeChannel(channel);
+      channel.unsubscribe();
     };
   }, []);
   //TODO: what should this return?

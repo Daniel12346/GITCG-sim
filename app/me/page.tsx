@@ -29,7 +29,6 @@ export default function Me() {
       <div>
         <h1>Me</h1>
         <MyInfoNoSSR />
-        {/* //TODO: why does this keep loading when I add Suspense? */}
         {/* My Id: {mySession?.user.id} */}
         <MyDecksNoSSR />
         <DeckDisplayNoSSR />

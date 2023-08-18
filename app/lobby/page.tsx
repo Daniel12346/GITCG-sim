@@ -45,7 +45,6 @@ export default function Lobby() {
         route
       </button>
       <MyInfoNoSSR />
-      <GameBoardNoSSR />
       <LobbyChannelNoSSR />
     </div>
   );

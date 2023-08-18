@@ -6,6 +6,7 @@ import { uuid } from "uuidv4";
 import { useEffect } from "react";
 import { atom, selector, waitForAll } from "recoil";
 import { recoilPersist } from "recoil-persist";
+import { RealtimeChannel } from "@supabase/supabase-js";
 const { persistAtom } = recoilPersist();
 // const supabase = createClientComponentClient();
 type Profile = Database["public"]["Tables"]["profile"]["Row"];
@@ -155,7 +156,7 @@ export const myInGameCardsState = selector({
           //TODO: make cardType either nullalble or non-nullable for both cardBasicInfo and card
           card_type: cardBasicInfo.card_type ?? "",
           counters: 0,
-          location: "DECK",
+          location: cardBasicInfo.card_type !== "CHARACTER" ? "DECK" : null,
           id: uuid(),
           card_basic_info_id: cardBasicInfo.id,
           energy: 0,
@@ -206,6 +207,11 @@ export const opponentCurrentDeckState = selector({
 });
 
 //game-related state --------------------------------
+export const gameChannelState = atom<RealtimeChannel | null>({
+  key: "gameChannel",
+  default: null,
+});
+
 export const gameState = atom<Database["public"]["Tables"]["game"]["Row"]>({
   key: "gameState",
   default: {
@@ -281,15 +287,18 @@ export const amIPlayer1State = selector<boolean>({
     return myProfile?.id === game.player1_id;
   },
 });
-export const currentPhaseState = atom<string>({
+export const currentPhaseState = atom<
+  "PREPARATION" | "ROLL" | "ACTION" | "END"
+>({
   key: "currentPhaseState",
+  default: "PREPARATION",
 });
 export const amIReadyForNextPhaseState = atom<boolean>({
   key: "amIReadyForNextPhaseState",
   default: false,
 });
-export const opponentReadyForNextPhaseState = atom<boolean>({
-  key: "opponentReadyForNextPhaseState",
+export const isOpponentReadyForNextPhaseState = atom<boolean>({
+  key: "isOpponentReadyForNextPhaseState",
   default: false,
 });
 export const myDiceState = atom<JSON[]>({
