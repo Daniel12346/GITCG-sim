@@ -33,38 +33,19 @@ export default ({}) => {
     });
     channel
       .on("broadcast", { event: "ready_for_next_phase" }, ({ payload }) => {
-        //TODO: clean this up
         if (payload.playerID !== myID) {
-          console.log("opp");
           setIsOpponentReadyForNextPhase(payload.isReadyForNextPhase);
         } else {
-          console.log("me");
-          console.log(payload.isReadyForNextPhase);
           setAmIReadyForNextPhase(payload.isReadyForNextPhase);
         }
-        if (amIReadyForNextPhase && isOpponentReadyForNextPhase) {
-          channel.send({
-            type: "broadcast",
-            event: "start_next_phase",
-            payload: {},
-          });
-        }
-        console.log(
-          "ready_for_next_phase",
-          payload,
-          "me",
-          amIReadyForNextPhase,
-          "opp",
-          isOpponentReadyForNextPhase
-        );
       })
       .on("broadcast", { event: "start_next_phase" }, ({ payload }) => {
         //TODO:
         console.log("start_next_phase", payload);
-        setAmIReadyForNextPhase(false);
-        setIsOpponentReadyForNextPhase(false);
+        setAmIReadyForNextPhase((_) => false);
+        setIsOpponentReadyForNextPhase((_) => false);
         let nextPhase: "PREPARATION" | "ROLL" | "ACTION" | "END";
-        switch (currentPhase) {
+        switch (payload.currentPhase) {
           //the preparation phase only happens once at the beginning of the game
           case "PREPARATION":
             nextPhase = "ROLL";
@@ -81,19 +62,32 @@ export default ({}) => {
             nextPhase = "ROLL";
             break;
         }
+        if (payload.currentPhase == "END") {
+          setCurrentTurn((prev) => prev + 1);
+        }
         setCurrentPhase(nextPhase);
-        setCurrentTurn(currentTurn + 1);
       })
       .subscribe(async (status) => {
         console.log("status", status);
       });
     setChannel(channel);
     return () => {
-      // setGameChannel(null);
       console.log("unsubscribing in turn and phase");
-      // channel.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, [opponentInGameCards]);
+  //making a separate effect to broadcast "start_next_phase" because the channel does not receive updated amIReadyForNextPhase and isOpponentReadyForNextPhase
+  useEffect(() => {
+    if (!channel) return;
+    if (amIReadyForNextPhase && isOpponentReadyForNextPhase) {
+      channel.send({
+        type: "broadcast",
+        event: "start_next_phase",
+        //passing the current phase in the payload because the channel does not recieve updated currentPhase
+        payload: { currentPhase },
+      });
+    }
+  }, [channel, amIReadyForNextPhase, isOpponentReadyForNextPhase]);
   return (
     <div>
       <span>Turn {currentTurn}</span>

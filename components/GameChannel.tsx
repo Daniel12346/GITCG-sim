@@ -17,15 +17,9 @@ import { useRecoilValue, useRecoilState, useSetRecoilState } from "recoil";
 
 export default function LobbyChannel() {
   const myID = useRecoilValue(myIDState);
-  const [usersInLobbyIDs, setUsersInLobbyIDs] =
-    useRecoilState(usersInLobbyIDsState);
-  const setCurrentGameID = useSetRecoilState(currentGameIDState);
-  const setOpponentID = useSetRecoilState(opponentIDState);
+  const opponentID = useRecoilValue(opponentIDState);
   const gameID = useRecoilValue(currentGameIDState);
-  //TDO: use or remove
-  const router = useRouter();
   const setOpponentInGameCards = useSetRecoilState(opponentInGameCardsState);
-  // const setGameChannel = useSetRecoilState(gameChannelState);
   const myDeckInGameCards = useRecoilValue(myInGameCardsState);
   const opponentInGameCards = useRecoilValue(opponentInGameCardsState);
 
@@ -51,7 +45,7 @@ export default function LobbyChannel() {
       .on("broadcast", { event: "share_deck" }, ({ payload }) => {
         console.log("share_deck", payload);
         if (payload?.cards && payload?.cards.length > 0) {
-          setOpponentInGameCards(payload.cards);
+          setOpponentInGameCards(payload?.cards ?? []);
         }
       })
       .subscribe(async (status) => {
@@ -65,10 +59,9 @@ export default function LobbyChannel() {
       });
     //  setGameChannel(channel);
     return () => {
-      // setGameChannel(null);
-      channel.unsubscribe();
+      // TODO: why does this unmount when I enter the game?
+      console.log("unsubscribing");
+      supabase.removeChannel(channel);
     };
   }, []);
-  //TODO: what should this return?
-  return <div>{}</div>;
 }
