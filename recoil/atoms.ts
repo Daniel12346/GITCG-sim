@@ -139,8 +139,8 @@ export const opponentInGameCardsState = atom<Card[]>({
   default: [],
 });
 
-export const myInGameCardsState = selector({
-  key: "myInGameCardsState",
+export const myInGameCardsInitialState = selector({
+  key: "myInGameCardsInitialState",
   get: async ({ get }) => {
     // const currentGameID = get(currentGameIDState);
     const myCurrentDeckCardsBasicInfo = get(myCurrentDeckCardsBasicInfoState);
@@ -175,6 +175,10 @@ export const myInGameCardsState = selector({
     console.log("myDeckCardsInGame", myDeckCardsInGame);
     return myDeckCardsInGame;
   },
+});
+export const myInGameCardsState = atom({
+  key: "myInGameCardsState",
+  default: myInGameCardsInitialState,
 });
 //TODO: generate deck cards from the basic info (only client-side)
 // const inGameCardsFromBasicInfo = selector({
@@ -313,32 +317,10 @@ export const currentPlayerIDState = atom<string>({
 });
 //TODO: remove Card from database?
 type Card = Database["public"]["Tables"]["card"]["Row"];
-export const myCardsState = atom<Card[]>({
-  key: "myCardsState",
-});
-export const myCardsInHandState = selector<Card[]>({
-  key: "myCardsInHandState",
-  get: ({ get }) => {
-    const myCards = get(myCardsState);
-    return myCards.filter((card) => card.location === "HAND");
-  },
-});
-export const myCardsInDiscardPileState = selector<Card[]>({
-  key: "myCardsInDiscardPileState",
-  get: ({ get }) => {
-    const myCards = get(myCardsState);
-    return myCards.filter((card) => card.location === "DISCARD_PILE");
-  },
-});
-export const myCardsInDeckState = selector<Card[]>({
-  key: "myCardsInDeckState",
-  get: ({ get }) => {
-    const myCards = get(myCardsState);
-    return myCards.filter((card) => card.location === "DECK");
-  },
-});
+
 export const opponentCardsState = atom<Card[]>({
   key: "opponentCardsState",
+  default: [],
 });
 export const opponentCardsInHandState = selector<Card[]>({
   key: "opponentCardsInHandState",

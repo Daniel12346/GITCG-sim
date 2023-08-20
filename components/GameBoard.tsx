@@ -1,13 +1,10 @@
 import {
   currentGameIDState,
-  currentPhaseState,
-  currentTurnState,
-  gameChannelState,
+  currentPlayerIDState,
   myIDState,
   myInGameCardsState,
   opponentIDState,
   opponentInGameCardsState,
-  usersInLobbyIDsState,
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import TurnAndPhase from "./TurnAndPhase";
@@ -48,9 +45,14 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
       className={`${
         isMyBoard ? "bg-green-400" : "bg-red-400"
       } grid grid-cols-[5%_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)_5%] 
-    gap-2 w-screen  h-[40vh] p-2`}
+    gap-2 w-screen p-2`}
+      //TODO: default height
     >
-      <div className={`${isMyBoard && "order-2"} bg-blue-100 col-span-full`}>
+      <div
+        className={`${
+          isMyBoard && "order-2"
+        } bg-blue-100 col-span-full flex flex-row gap-2 justify-center`}
+      >
         hand
         {playerCards
           ?.filter((card) => card.location === "HAND")
@@ -89,14 +91,15 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
 };
 
 export default function GameBoard() {
-  const myCards = useRecoilValue(myInGameCardsState);
+  const [myCards, setMyCards] = useRecoilState(myInGameCardsState);
   const opponentCards = useRecoilValue(opponentInGameCardsState);
   const myID = useRecoilValue(myIDState);
   const opponentID = useRecoilValue(opponentIDState);
   const gameID = useRecoilValue(currentGameIDState);
   const setOpponentInGameCards = useSetRecoilState(opponentInGameCardsState);
-  const myDeckInGameCards = useRecoilValue(myInGameCardsState);
   const opponentInGameCards = useRecoilValue(opponentInGameCardsState);
+  const [currentPlayer, setcurrentPlayer] =
+    useRecoilState(currentPlayerIDState);
 
   //TODO: move to a separate file again
   useEffect(() => {
@@ -104,7 +107,8 @@ export default function GameBoard() {
     const channel = supabase.channel("game:" + gameID, {
       config: { presence: { key: myID }, broadcast: { self: true } },
     });
-    // channel && setGameChannel(channel);
+    //TODO: use
+    // setcurrentPlayer(Math.random() > 0.5 ? myID : opponentID);
     console.log("channel", channel);
     channel
       .on("presence", { event: "sync" }, () => {
@@ -114,7 +118,7 @@ export default function GameBoard() {
           channel.send({
             type: "broadcast",
             event: "share_deck",
-            payload: { cards: myDeckInGameCards },
+            payload: { cards: myCards },
           });
         }
       })
@@ -133,9 +137,7 @@ export default function GameBoard() {
           console.log(presenceTrackStatus);
         }
       });
-    //  setGameChannel(channel);
     return () => {
-      // TODO: why does this unmount when I enter the game?
       console.log("unsubscribing");
       supabase.removeChannel(channel);
     };

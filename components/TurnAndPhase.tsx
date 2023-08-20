@@ -2,15 +2,18 @@ import {
   amIReadyForNextPhaseState,
   currentGameIDState,
   currentPhaseState,
+  currentPlayerIDState,
   currentTurnState,
   isOpponentReadyForNextPhaseState,
+  myInGameCardsState,
   myIDState,
+  opponentIDState,
   opponentInGameCardsState,
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
-import { useRecoilState, useRecoilValue } from "recoil";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 
 export default ({}) => {
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
@@ -23,7 +26,29 @@ export default ({}) => {
   );
   const [currentPhase, setCurrentPhase] = useRecoilState(currentPhaseState);
   const [currentTurn, setCurrentTurn] = useRecoilState(currentTurnState);
-  const opponentInGameCards = useRecoilValue(opponentInGameCardsState);
+  const [turnPlayerID, setTurnPlayerID] = useRecoilState(currentPlayerIDState);
+  const [opponentInGameCards, setOpponentInGameCards] = useRecoilState(
+    opponentInGameCardsState
+  );
+  const opponentID = useRecoilValue(opponentIDState);
+  const [myCards, setMyCards] = useRecoilState(myInGameCardsState);
+
+  function drawCards(currentCards: Card[], amount: number) {
+    const newCardsState = currentCards.map((card) => {
+      let location = card.location;
+      if (card.location === "DECK" && amount > 0) {
+        location = "HAND";
+        amount--;
+      }
+      return { ...card, location };
+    });
+    console.log("newCardsState", newCardsState, channel);
+    channel?.send({
+      type: "broadcast",
+      event: "draw_cards",
+      payload: { playerID: myID, newCardsState },
+    });
+  }
 
   useEffect(() => {
     if (!opponentInGameCards || !opponentInGameCards.length) return;
@@ -39,9 +64,22 @@ export default ({}) => {
           setAmIReadyForNextPhase(payload.isReadyForNextPhase);
         }
       })
+      .on(
+        //TODO: handle better if possivble (no need to change the state of every card?)
+        "broadcast",
+        { event: "draw_cards" },
+        ({ payload }) => {
+          console.log("draw_cards", payload);
+          const { playerID, newCardsState } = payload;
+          console.log("draw_cards", playerID, newCardsState);
+          if (playerID === myID) {
+            setMyCards(newCardsState);
+          } else {
+            setOpponentInGameCards(newCardsState);
+          }
+        }
+      )
       .on("broadcast", { event: "start_next_phase" }, ({ payload }) => {
-        //TODO:
-        console.log("start_next_phase", payload);
         setAmIReadyForNextPhase((_) => false);
         setIsOpponentReadyForNextPhase((_) => false);
         let nextPhase: "PREPARATION" | "ROLL" | "ACTION" | "END";
@@ -76,15 +114,14 @@ export default ({}) => {
       supabase.removeChannel(channel);
     };
   }, [opponentInGameCards]);
-  //making a separate effect to broadcast "start_next_phase" because the channel does not receive updated amIReadyForNextPhase and isOpponentReadyForNextPhase
+  //making a separate effect to broadcast "start_next_phase" because the channel does not receive update recoil state
   useEffect(() => {
     if (!channel) return;
     if (amIReadyForNextPhase && isOpponentReadyForNextPhase) {
       channel.send({
         type: "broadcast",
         event: "start_next_phase",
-        //passing the current phase in the payload because the channel does not recieve updated currentPhase
-        payload: { currentPhase },
+        payload: { currentPhase, turnPlayerID },
       });
     }
   }, [channel, amIReadyForNextPhase, isOpponentReadyForNextPhase]);
@@ -93,7 +130,6 @@ export default ({}) => {
       <span>Turn {currentTurn}</span>
       <button
         onClick={() => {
-          console.log("click", amIReadyForNextPhase);
           channel?.send({
             type: "broadcast",
             event: "ready_for_next_phase",
@@ -106,6 +142,15 @@ export default ({}) => {
       >
         Move to next phase
         <span>{amIReadyForNextPhase ? "ready" : "not ready"}</span>
+      </button>
+      <button
+        className="bg-blue-500"
+        onClick={() => {
+          console.log("drawing cards", myCards);
+          myCards && drawCards(myCards, 2);
+        }}
+      >
+        draw
       </button>
       <span>{currentPhase} PHASE</span>
     </div>
