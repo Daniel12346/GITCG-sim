@@ -309,6 +309,7 @@ export const opponentDiceState = atom<JSON[]>({
 });
 export const currentPlayerIDState = atom<string>({
   key: "currentPlayerIDState",
+  default: "",
 });
 //TODO: remove Card from database?
 type Card = Database["public"]["Tables"]["card"]["Row"];
