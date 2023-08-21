@@ -65,7 +65,7 @@ export default ({}) => {
         }
       })
       .on(
-        //TODO: handle better if possivble (no need to change the state of every card?)
+        //TODO: handle better if possible (no need to change the state of every card?)
         "broadcast",
         { event: "draw_cards" },
         ({ payload }) => {
@@ -111,6 +111,7 @@ export default ({}) => {
     setChannel(channel);
     return () => {
       console.log("unsubscribing in turn and phase");
+      setChannel(null);
       supabase.removeChannel(channel);
     };
   }, [opponentInGameCards]);

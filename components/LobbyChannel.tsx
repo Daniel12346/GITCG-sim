@@ -19,7 +19,7 @@ export default function LobbyChannel() {
   const setCurrentGameID = useSetRecoilState(currentGameIDState);
   const setOpponentID = useSetRecoilState(opponentIDState);
   //TDO: use or remove
-  const [channel, setChannel] = useState<RealtimeChannel>();
+  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
   const router = useRouter();
   useEffect(() => {
     const supabase = createClientComponentClient<Database>();
@@ -27,8 +27,6 @@ export default function LobbyChannel() {
     const channel = supabase.channel("lobby", {
       config: { presence: { key: myID }, broadcast: { self: true } },
     });
-    console.log("channel", channel);
-    // !isCancelled && setChannel(channel);
 
     const findOpponentID = (userIDs: string[]) => {
       const usersInLobbyIDsExceptMe = userIDs.filter((id) => id != myID);
@@ -83,9 +81,10 @@ export default function LobbyChannel() {
           console.log(presenceTrackStatus);
         }
       });
-
+    setChannel(channel);
     return () => {
-      channel.unsubscribe();
+      supabase.removeChannel(channel);
+      setChannel(null);
     };
   }, []);
   //TODO: what should this return?
