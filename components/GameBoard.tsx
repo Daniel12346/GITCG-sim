@@ -11,13 +11,12 @@ import TurnAndPhase from "./TurnAndPhase";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
 import { use, useEffect, useState } from "react";
-type CardT = Card;
 import Card from "./Card";
 import { RealtimeChannel } from "@supabase/supabase-js";
 
 //TODO: move to another file
 interface PlayerBoardProps {
-  playerCards: Card[];
+  playerCards: CardExt[];
   playerID?: string;
 }
 const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {

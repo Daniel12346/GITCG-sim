@@ -112,7 +112,7 @@ export const myCurrentDeckCardsBasicInfoState = selector({
     console.log("cardsBasicInfoIDs", myCardsBasicInfoIDs);
     const { data, error } = await supabase
       .from("card_basic_info")
-      .select()
+      .select("* , effect_basic_info(*)")
       .in("id", myCardsBasicInfoIDs);
     console.log("data", data);
     if (error) console.log("error", error);
@@ -134,7 +134,7 @@ export const currentGameIDState = atom<string>({
   default: "",
 });
 
-export const opponentInGameCardsState = atom<Card[]>({
+export const opponentInGameCardsState = atom<CardExt[]>({
   key: "opponentInGameState",
   default: [],
 });
@@ -146,18 +146,19 @@ export const myInGameCardsInitialState = selector({
     const myCurrentDeckCardsBasicInfo = get(myCurrentDeckCardsBasicInfoState);
     const myID = get(myIDState);
     if (!myCurrentDeckCardsBasicInfo) return null;
-    let myDeckCardsInGame: Card[] = [];
+    let myDeckCardsInGame: CardExt[] = [];
     console.log("myCurrentDeckCardsBasicInfo", myCurrentDeckCardsBasicInfo);
     myCurrentDeckCardsBasicInfo.forEach((cardBasicInfo) => {
       const quantity = cardBasicInfo.quantity || 1;
       for (let i = 0; i < quantity; i++) {
+        const cardID = uuid();
         myDeckCardsInGame.push({
           ...cardBasicInfo,
           //TODO: make cardType either nullalble or non-nullable for both cardBasicInfo and card
           card_type: cardBasicInfo.card_type ?? "",
           counters: 0,
           location: cardBasicInfo.card_type !== "CHARACTER" ? "DECK" : null,
-          id: uuid(),
+          id: cardID,
           card_basic_info_id: cardBasicInfo.id,
           energy: 0,
           health: cardBasicInfo.base_health,
@@ -168,6 +169,14 @@ export const myInGameCardsInitialState = selector({
           owner_id: myID,
           //TODO: use JSON because the card itself is not stored in the database
           equipped_to_id: null,
+          effects: cardBasicInfo.effect_basic_info.map((effectBasicInfo) => ({
+            ...effectBasicInfo,
+            id: uuid(),
+            effect_basic_info_id: effectBasicInfo.id,
+            cardID,
+            usagesThisTurn: 0,
+            totalUsages: 0,
+          })),
         });
       }
       // }
@@ -233,7 +242,7 @@ type Board = {
   player_id: string;
   game_id: string;
   available_dice: JSON[];
-  cards: Card[];
+  cards: CardExt[];
 };
 export const myBoardState = atom<Board>({
   key: "MyBoardState",

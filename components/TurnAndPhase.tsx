@@ -33,7 +33,7 @@ export default ({}) => {
   const opponentID = useRecoilValue(opponentIDState);
   const [myCards, setMyCards] = useRecoilState(myInGameCardsState);
 
-  function drawCards(currentCards: Card[], amount: number) {
+  function drawCards(currentCards: CardExt[], amount: number) {
     const newCardsState = currentCards.map((card) => {
       let location = card.location;
       if (card.location === "DECK" && amount > 0) {
