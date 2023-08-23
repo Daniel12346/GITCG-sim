@@ -1,6 +1,6 @@
 import { Database as DB } from "@/lib/database.types";
 
-type Effect = DB["public"]["Tables"]["effect_basic_info"]["Row"] & {
+type EffectT = DB["public"]["Tables"]["effect_basic_info"]["Row"] & {
   usagesThisTurn: number;
   totalUsages: number;
   cardID: string;
@@ -11,8 +11,17 @@ type Card = DB["public"]["Tables"]["card"]["Row"];
 type CardExtended = Card & {
   effects: Effect[];
 };
+type BoardT = {
+  id: string;
+  player_id: string;
+  game_id: string;
+  available_dice: JSON[];
+  cards: CardExt[];
+};
 declare global {
   type Database = DB;
-  //extend Card with effectsIDs
+  //extends Card with effects
   type CardExt = CardExtended;
+  type Effect = EffectT;
+  type Board = BoardT;
 }

@@ -237,13 +237,6 @@ export const gameState = atom<Database["public"]["Tables"]["game"]["Row"]>({
   },
 });
 
-type Board = {
-  id: string;
-  player_id: string;
-  game_id: string;
-  available_dice: JSON[];
-  cards: CardExt[];
-};
 export const myBoardState = atom<Board>({
   key: "MyBoardState",
   default: {
