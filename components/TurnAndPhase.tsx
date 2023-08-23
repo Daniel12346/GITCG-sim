@@ -1,3 +1,4 @@
+import { drawCards } from "@/app/effectUtils";
 import {
   amIReadyForNextPhaseState,
   currentGameIDState,
@@ -32,23 +33,6 @@ export default ({}) => {
   );
   const opponentID = useRecoilValue(opponentIDState);
   const [myCards, setMyCards] = useRecoilState(myInGameCardsState);
-
-  function drawCards(currentCards: CardExt[], amount: number) {
-    const newCardsState = currentCards.map((card) => {
-      let location = card.location;
-      if (card.location === "DECK" && amount > 0) {
-        location = "HAND";
-        amount--;
-      }
-      return { ...card, location };
-    });
-    console.log("newCardsState", newCardsState, channel);
-    channel?.send({
-      type: "broadcast",
-      event: "draw_cards",
-      payload: { playerID: myID, newCardsState },
-    });
-  }
 
   useEffect(() => {
     if (!opponentInGameCards || !opponentInGameCards.length) return;
@@ -148,7 +132,9 @@ export default ({}) => {
         className="bg-blue-500"
         onClick={() => {
           console.log("drawing cards", myCards);
-          myCards && drawCards(myCards, 2);
+          if (!myCards?.length) return;
+          const newState = drawCards(myCards, 2);
+          setMyCards(newState);
         }}
       >
         draw
