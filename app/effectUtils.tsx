@@ -10,37 +10,28 @@ export function drawCards(currentCards: CardExt[], amount: number) {
   return newCardsState;
 }
 
-type CostElementName =
-  | "ANEMO"
-  | "DENDRO"
-  | "PYRO"
-  | "HYDRO"
-  | "ELECTRO"
-  | "CRYO"
-  | "GEO"
-  | "MATCHING"
-  | "UNALIGNED";
-type DieElementName =
-  | "ANEMO"
-  | "DENDRO"
-  | "PYRO"
-  | "HYDRO"
-  | "ELECTRO"
-  | "CRYO"
-  | "GEO"
-  | "OMNI";
-
-type Dice = {
-  [key in DieElementName]?: number;
-};
-
-type Cost = {
-  [key in CostElementName]?: number;
-};
-
-// const myDice:Dice = {}
-// const selectedDice:Dice={"ANEMO":2,"PYRO":1}
-// const cost:Cost={"ANEMO":2}
+export function addOneCardFromDeckByName(
+  currentCards: CardExt[],
+  cardName: string
+) {
+  let isAdded = false;
+  const newCardsState = currentCards.map((card) => {
+    let location = card.location;
+    if (
+      card.location === "DECK" &&
+      card.name.toLowerCase().trim() === cardName &&
+      !isAdded
+    ) {
+      location = "HAND";
+      isAdded = true;
+    }
+    return { ...card, location };
+  });
+  if (!isAdded) {
+    throw new Error("Card not found in deck");
+  }
+  return newCardsState;
+}
 
 const subtractDice = (dice1: Dice, dice2: Dice) => {
   const result = { ...dice1 };
@@ -48,6 +39,7 @@ const subtractDice = (dice1: Dice, dice2: Dice) => {
     const elementName = element as DieElementName;
     const requiredAmount = dice2[elementName];
     if (!requiredAmount) return;
+    //OMNI can be used as any element
     if (result[elementName] === undefined && !result["OMNI"])
       throw new Error("Dice do not containt required element " + elementName);
     for (let i = 0; i < requiredAmount; i++) {
@@ -75,8 +67,9 @@ const subtractDice = (dice1: Dice, dice2: Dice) => {
 // }
 const subtractCost = (dice1: Dice, dice2: Cost) => {
   const result = { ...dice1 };
-  //TODO: is the sorting necessary?
   Object.keys(dice2)
+    //sorting so that matching and unaligned are subtracted last because specific elements need to be checked first
+    //matching and unaligned must not take any of the dice that are needed for specific elements before those requirements are met
     .sort((a, b) => (["MATCHING", "UNALIGNED"].includes(b[0]) ? -1 : 1))
     .forEach((element) => {
       const requiredElementName = element as CostElementName;
@@ -86,6 +79,7 @@ const subtractCost = (dice1: Dice, dice2: Cost) => {
       if (requiredElementName === "MATCHING") {
         let hasSubtracted = false;
         for (let elName of availableElements) {
+          //result[elName] does exist beacuse it is in availableElements
           if (!hasSubtracted && result[elName]! >= requiredAmount) {
             result[elName] = result[elName]! - requiredAmount;
             hasSubtracted = true;
@@ -93,6 +87,8 @@ const subtractCost = (dice1: Dice, dice2: Cost) => {
             //??
             // throw new Error("Not enough dice");
           }
+          //TODO: handle error
+          if (!hasSubtracted) throw new Error("Not enough dice");
         }
       } else if (requiredElementName === "UNALIGNED") {
         let i = requiredAmount;
@@ -124,4 +120,4 @@ const subtractCost = (dice1: Dice, dice2: Cost) => {
   return result;
 };
 
-console.log(subtractCost({ PYRO: 4, CRYO: 1, OMNI: 2 }, { MATCHING: 2 }));
+// console.log(subtractCost({ PYRO: 4, CRYO: 1, OMNI: 2 }, { MATCHING: 2 }));

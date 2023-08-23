@@ -307,11 +307,13 @@ export const isOpponentReadyForNextPhaseState = atom<boolean>({
   key: "isOpponentReadyForNextPhaseState",
   default: false,
 });
-export const myDiceState = atom<JSON[]>({
+export const myDiceState = atom<Dice>({
   key: "myDiceState",
+  default: {},
 });
-export const opponentDiceState = atom<JSON[]>({
+export const opponentDiceState = atom<Dice>({
   key: "opponentDiceState",
+  default: {},
 });
 export const currentPlayerIDState = atom<string>({
   key: "currentPlayerIDState",

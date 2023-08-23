@@ -18,10 +18,43 @@ type BoardT = {
   available_dice: JSON[];
   cards: CardExt[];
 };
+
+type CostElementNameT =
+  | "ANEMO"
+  | "DENDRO"
+  | "PYRO"
+  | "HYDRO"
+  | "ELECTRO"
+  | "CRYO"
+  | "GEO"
+  | "MATCHING"
+  | "UNALIGNED";
+type DieElementNameT =
+  | "ANEMO"
+  | "DENDRO"
+  | "PYRO"
+  | "HYDRO"
+  | "ELECTRO"
+  | "CRYO"
+  | "GEO"
+  | "OMNI";
+
+type DiceT = {
+  [key in DieElementName]?: number;
+};
+
+type CostT = {
+  [key in CostElementName]?: number;
+};
+
 declare global {
   type Database = DB;
   //extends Card with effects
   type CardExt = CardExtended;
   type Effect = EffectT;
   type Board = BoardT;
+  type CostElementName = CostElementNameT;
+  type DieElementName = DieElementNameT;
+  type Dice = DiceT;
+  type Cost = CostT;
 }
