@@ -65,7 +65,7 @@ const subtractDice = (dice1: Dice, dice2: Dice) => {
 
 //   }
 // }
-const subtractCost = (dice1: Dice, dice2: Cost) => {
+export const subtractCost = (dice1: Dice, dice2: Cost) => {
   const result = { ...dice1 };
   Object.keys(dice2)
     //sorting so that matching and unaligned are subtracted last because specific elements need to be checked first
