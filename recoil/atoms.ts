@@ -167,15 +167,28 @@ export const myInGameCardsInitialState = selector({
           //refers to whether the card is currently in play (only for character cards?)
           is_active: false,
           owner_id: myID,
+          //TODO: generate cost object from cost json
+          costJson: cardBasicInfo.cost,
+          cost: {},
           //TODO: use JSON because the card itself is not stored in the database
+          subtype: cardBasicInfo.card_subtype || "",
           equipped_to_id: null,
+          equippedTo: null,
+          equippedCards: cardBasicInfo.card_type === "CHARACTER" ? [] : null,
           effects: cardBasicInfo.effect_basic_info.map((effectBasicInfo) => ({
             ...effectBasicInfo,
             id: uuid(),
             effect_basic_info_id: effectBasicInfo.id,
-            cardID,
-            usagesThisTurn: 0,
+            card_id: cardID,
+            card_basic_infoId: cardBasicInfo.id,
+            total_usages: 0,
+            usages_this_turn: 0,
             totalUsages: 0,
+            costJson: effectBasicInfo.cost,
+            //TODO: ??????
+            effect_basic_infoIdId: effectBasicInfo.id,
+            //TODO: generate cost object from cost json
+            cost: {},
           })),
         });
       }
@@ -243,7 +256,7 @@ export const myBoardState = atom<Board>({
     id: "",
     player_id: "",
     game_id: "",
-    available_dice: [],
+    available_dice: {},
     cards: [],
   },
 });
@@ -253,7 +266,7 @@ export const opponentBoardState = atom<Board>({
     id: "",
     player_id: "",
     game_id: "",
-    available_dice: [],
+    available_dice: {},
     cards: [],
   },
 });

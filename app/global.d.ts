@@ -1,21 +1,31 @@
 import { Database as DB } from "@/lib/database.types";
 
-type EffectT = DB["public"]["Tables"]["effect_basic_info"]["Row"] & {
-  usagesThisTurn: number;
-  totalUsages: number;
-  cardID: string;
+type Effect = DB["public"]["Tables"]["effect"]["Row"];
+interface EffectT extends Effect {
+  // usagesThisTurn: number;
+  // totalUsages: number;
+  // cardID: string;
   //TODO: add
   execute?: any;
-};
+  costJson?: Json;
+  cost?: Cost;
+}
 type Card = DB["public"]["Tables"]["card"]["Row"];
-type CardExtended = Card & {
-  effects: Effect[];
-};
+interface CardExtended extends Card {
+  effects: EffectT[];
+  //TODO: convert cost json to cost object at card creation
+  cost?: Cost;
+  costJson?: Json;
+  subtype?: string;
+  equippedCards?: CardExt[] | null;
+  equippedTo?: CardExt | null;
+  //TODO: remove equipped_to_id from card table
+}
 type BoardT = {
   id: string;
   player_id: string;
   game_id: string;
-  available_dice: JSON[];
+  available_dice: Dice;
   cards: CardExt[];
 };
 
