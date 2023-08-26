@@ -1,4 +1,4 @@
-import { drawCards } from "@/app/effectUtils";
+import { addOneCardFromDeckByName, drawCards } from "@/app/actions";
 import {
   amIReadyForNextPhaseState,
   currentGameIDState,
@@ -10,6 +10,7 @@ import {
   myIDState,
   opponentIDState,
   opponentInGameCardsState,
+  myDiceState,
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -33,6 +34,7 @@ export default ({}) => {
   );
   const opponentID = useRecoilValue(opponentIDState);
   const [myCards, setMyCards] = useRecoilState(myInGameCardsState);
+  const setMyDice = useSetRecoilState(myDiceState);
 
   useEffect(() => {
     if (!opponentInGameCards || !opponentInGameCards.length) return;
@@ -135,10 +137,31 @@ export default ({}) => {
           if (!myCards?.length) return;
           const newState = drawCards(myCards, 2);
           setMyCards(newState);
+          //TODO: broadcast draw
         }}
       >
         draw
       </button>
+      {/* TEST:------------------ */}
+      <button
+        className="bg-pink-500"
+        onClick={() => {
+          if (!myCards?.length) return;
+          const card = prompt("card name");
+          if (!card) return;
+          const newState = addOneCardFromDeckByName(myCards, card);
+          setMyCards(newState);
+        }}
+      >
+        add card
+      </button>
+      <button
+        className="bg-pink-500"
+        onClick={() => setMyDice({ ANEMO: 4, CRYO: 4 })}
+      >
+        create dice
+      </button>
+      {/* ------------------- */}
       <span>{currentPhase} PHASE</span>
     </div>
   );
