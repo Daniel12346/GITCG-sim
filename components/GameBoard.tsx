@@ -5,14 +5,16 @@ import {
   myInGameCardsState,
   opponentIDState,
   opponentInGameCardsState,
+  myDiceState,
+  opponentDiceState,
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import TurnAndPhase from "./TurnAndPhase";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { useRouter } from "next/router";
 import { use, useEffect, useState } from "react";
 import Card from "./Card";
 import { RealtimeChannel } from "@supabase/supabase-js";
+import { activateCard, subtractCost } from "@/app/actions";
 
 //TODO: move to another file
 interface PlayerBoardProps {
@@ -28,15 +30,19 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
     opponentInGameCardsState
   );
   const [myInGameCards, setMyInGameCards] = useRecoilState(myInGameCardsState);
+  const [myDice, setMyDice] = useRecoilState(myDiceState);
+  const [opponentDice, setOpponentDice] = useRecoilState(opponentDiceState);
 
-  const handleActivateCard = (cardID: string) => () => {
-    console.log("card clicked", channel);
-    channel?.send({
-      type: "broadcast",
-      event: "activate_card",
-      payload: { cardID },
-    });
-  };
+  // const handleActivateCard = (card: CardExt) => () => {
+  //   console.log("subtr")
+  //   console.log("card clicked", channel);
+  //   // setMyDice(diceLeft);
+  //   channel?.send({
+  //     type: "broadcast",
+  //     event: "activate_card",
+  //     payload: { cardID: card.id },
+  //   });
+  // };
 
   useEffect(() => {
     if (!gameID || !myID) return;
@@ -61,7 +67,6 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
       .subscribe(async (status) => {
         console.log("subscribed to activate_card", status);
       });
-    console.log("EEE", channel);
     setChannel(ch);
     return () => {
       console.log("unsubscribing in activate_card ");
@@ -90,23 +95,31 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
               key={card.id}
               card={card}
               handleClick={() => {
-                setMyInGameCards((prev) => {
-                  if (!prev) return [];
-                  // return prev.map((prevCard) => {
-                  //   if (prevCard.id === card.id) {
-                  //     return { ...card, location: "ACTION" };
-                  //   }
-                  //   return card;
-                  // });
-                  return prev.map((prevCard) => {
-                    if (prevCard.id === card.id) {
-                      return { ...card, location: "ACTION" };
-                    }
-                    return prevCard;
-                  });
-                });
+                if (!myInGameCards) return [];
 
-                console.log("card clicked", channel);
+                //TODO: fix everything
+                const {
+                  myUpdatedCards,
+                  myUpdatedDice,
+                  opponentUpdatedCards,
+                  opponentUpdatedDice,
+                } = activateCard({
+                  thisCard: card,
+                  playerID: myID,
+                  myCards: myInGameCards,
+                  myDice,
+                  opponentCards: opponentInGameCards,
+                  //TODO:
+                  opponentDice: {},
+                });
+                myUpdatedCards && setMyInGameCards(myUpdatedCards);
+                opponentUpdatedCards &&
+                  setOpponentInGameCards(opponentUpdatedCards);
+                myUpdatedDice && setMyDice(myUpdatedDice);
+                opponentUpdatedDice && setOpponentDice(opponentUpdatedDice);
+                //TODO: pay cost
+                // const diceLeft = subtractCost(myDice, { MATCHING: 2 });
+                // setMyDice(diceLeft);
                 channel?.send({
                   type: "broadcast",
                   event: "activate_card",
@@ -136,16 +149,19 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
           {playerCards
             ?.filter((card) => card.card_type === "CHARACTER")
             .map((card) => (
-              <Card
-                key={card.id}
-                card={card}
-                handleClick={isMyBoard ? handleActivateCard(card.id) : () => {}}
-              />
+              <Card key={card.id} card={card} />
             ))}
         </div>
       </div>
       <div className="bg-yellow-50 h-full">summon zone</div>
-      <div className="bg-yellow-50 h-full">dice zone</div>
+      {/* //TODO: move to another component and add opponent's dice */}
+      <div className="bg-yellow-50 h-full">
+        {Object.entries(myDice).map(([element, amount]) => (
+          <span key={element + playerID}>
+            {element}:{amount}
+          </span>
+        ))}
+      </div>
     </div>
   );
 };
