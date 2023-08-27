@@ -19,7 +19,7 @@ export default function Game() {
   return (
     //TODO: handle loading game page
     <div>
-      {/* <GameChannel /> */}
+      <GameChannel />
       <GameBoard />
     </div>
   );
