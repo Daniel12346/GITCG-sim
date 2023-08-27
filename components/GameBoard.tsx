@@ -7,6 +7,10 @@ import {
   opponentInGameCardsState,
   myDiceState,
   opponentDiceState,
+  amSelectingTargetsState,
+  mySelectedTargetCardsState,
+  requiredTargetsState,
+  currentEffectState,
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import TurnAndPhase from "./TurnAndPhase";
@@ -14,7 +18,8 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { use, useEffect, useState } from "react";
 import Card from "./Card";
 import { RealtimeChannel } from "@supabase/supabase-js";
-import { activateCard, subtractCost } from "@/app/actions";
+import { activateCard, activateEffect, subtractCost } from "@/app/actions";
+import { CardExtended } from "@/app/global";
 
 //TODO: move to another file
 interface PlayerBoardProps {
@@ -32,17 +37,15 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
   const [myInGameCards, setMyInGameCards] = useRecoilState(myInGameCardsState);
   const [myDice, setMyDice] = useRecoilState(myDiceState);
   const [opponentDice, setOpponentDice] = useRecoilState(opponentDiceState);
-
-  // const handleActivateCard = (card: CardExt) => () => {
-  //   console.log("subtr")
-  //   console.log("card clicked", channel);
-  //   // setMyDice(diceLeft);
-  //   channel?.send({
-  //     type: "broadcast",
-  //     event: "activate_card",
-  //     payload: { cardID: card.id },
-  //   });
-  // };
+  const [amSelectingTargets, setAmSelectingTargets] = useRecoilState(
+    amSelectingTargetsState
+  );
+  const [selectedTargetCards, setSelectedTargets] = useRecoilState(
+    mySelectedTargetCardsState
+  );
+  const [requiredTargets, setRequiredTargets] =
+    useRecoilState(requiredTargetsState);
+  const [currentEffect, setCurrentEffect] = useRecoilState(currentEffectState);
 
   useEffect(() => {
     if (!gameID || !myID) return;
@@ -74,6 +77,52 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
       setChannel(null);
     };
   }, [gameID, myID]);
+
+  useEffect(() => {
+    //TODO: ???????
+    if (!myInGameCards) return;
+
+    if (
+      selectedTargetCards.length === requiredTargets &&
+      amSelectingTargets &&
+      currentEffect
+    ) {
+      const {
+        myUpdatedCards,
+        myUpdatedDice,
+        opponentUpdatedCards,
+        opponentUpdatedDice,
+      } = activateEffect({
+        playerID: myID,
+        effect: currentEffect,
+        myCards: myInGameCards,
+        myDice,
+        opponentCards: opponentInGameCards,
+        opponentDice: {},
+        targetCards: selectedTargetCards,
+      });
+      myUpdatedCards && setMyInGameCards(myUpdatedCards);
+      myUpdatedDice && setMyDice(myUpdatedDice);
+      opponentUpdatedCards && setOpponentInGameCards(opponentUpdatedCards);
+      opponentUpdatedDice && setOpponentDice(opponentUpdatedDice);
+
+      // setAmSelectingTargets(false);
+      // setSelectedTargets([]);
+      // setRequiredTargets(null);
+    }
+  }, [requiredTargets, selectedTargetCards, amSelectingTargets]);
+  const handleSelectCard = (card: CardExt) => {
+    //don't select the same card twice
+    if (
+      selectedTargetCards.find(
+        (selected: CardExtended) => selected.id === card.id
+      )
+    ) {
+      return;
+    }
+    setSelectedTargets((prev) => [...prev, card]);
+  };
+
   return (
     <div
       className={`${
@@ -95,39 +144,69 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
               key={card.id}
               card={card}
               handleClick={() => {
-                if (!myInGameCards) return [];
+                if (!myInGameCards) return;
 
-                //TODO: fix everything
+                //TODO: select effect
+                const effect = card.effects[0];
+
+                if (effect.requiredTargets && effect.requiredTargets > 0) {
+                  setRequiredTargets(effect.requiredTargets);
+                  setCurrentEffect(effect);
+                  setAmSelectingTargets(true);
+                  return;
+                }
+
+                const thisCard = activateCard(card);
                 const {
                   myUpdatedCards,
                   myUpdatedDice,
                   opponentUpdatedCards,
                   opponentUpdatedDice,
-                } = activateCard({
-                  thisCard: card,
+                } = activateEffect({
+                  thisCard,
                   playerID: myID,
+                  effect,
                   myCards: myInGameCards,
                   myDice,
                   opponentCards: opponentInGameCards,
-                  //TODO:
                   opponentDice: {},
+                  targetCards: selectedTargetCards,
                 });
-                myUpdatedCards && setMyInGameCards(myUpdatedCards);
+                myUpdatedCards
+                  ? setMyInGameCards(
+                      myUpdatedCards.map((card) => {
+                        if (card.id === thisCard.id) {
+                          return thisCard;
+                        }
+                        return card;
+                      })
+                    )
+                  : setMyInGameCards(
+                      myInGameCards.map((card) => {
+                        if (card.id === thisCard.id) {
+                          return thisCard;
+                        }
+                        return card;
+                      })
+                    );
                 opponentUpdatedCards &&
                   setOpponentInGameCards(opponentUpdatedCards);
                 myUpdatedDice && setMyDice(myUpdatedDice);
                 opponentUpdatedDice && setOpponentDice(opponentUpdatedDice);
-                //TODO: pay cost
-                // const diceLeft = subtractCost(myDice, { MATCHING: 2 });
-                // setMyDice(diceLeft);
-                channel?.send({
-                  type: "broadcast",
-                  event: "activate_card",
-                  payload: { card_id: card.id },
-                });
               }}
             />
           ))}
+        <div>
+          <button
+            onClick={() => setAmSelectingTargets((prev) => !prev)}
+            className="bg-orange-300"
+          >
+            Toggle Selection
+          </button>
+          {amSelectingTargets && requiredTargets && (
+            <span>{requiredTargets} more targets needed</span>
+          )}
+        </div>
       </div>
       <div className="bg-yellow-50 h-full">
         deck zone{" "}
@@ -139,7 +218,11 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
           {playerCards
             ?.filter((card) => card.location === "ACTION")
             .map((card) => (
-              <Card key={card.id} card={card} />
+              <Card
+                key={card.id}
+                card={card}
+                handleClick={() => amSelectingTargets && handleSelectCard(card)}
+              />
             ))}
         </div>
       </div>
@@ -149,7 +232,11 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
           {playerCards
             ?.filter((card) => card.card_type === "CHARACTER")
             .map((card) => (
-              <Card key={card.id} card={card} />
+              <Card
+                key={card.id}
+                card={card}
+                handleClick={() => amSelectingTargets && handleSelectCard(card)}
+              />
             ))}
         </div>
       </div>
@@ -173,54 +260,9 @@ export default function GameBoard() {
   const opponentID = useRecoilValue(opponentIDState);
   const gameID = useRecoilValue(currentGameIDState);
   const setOpponentInGameCards = useSetRecoilState(opponentInGameCardsState);
-  const opponentInGameCards = useRecoilValue(opponentInGameCardsState);
   const [currentPlayer, setcurrentPlayer] =
     useRecoilState(currentPlayerIDState);
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
-
-  //TODO: move to a separate file again
-  useEffect(() => {
-    const supabase = createClientComponentClient<Database>();
-    const channel = supabase.channel("game:" + gameID, {
-      config: { presence: { key: myID }, broadcast: { self: true } },
-    });
-    //TODO: use
-    // setcurrentPlayer(Math.random() > 0.5 ? myID : opponentID);
-    console.log("channel", channel);
-    channel
-      .on("presence", { event: "sync" }, () => {
-        console.log("opp. ", opponentInGameCards);
-        if (!opponentInGameCards || !opponentInGameCards.length) {
-          console.log("sending deck", channel);
-          channel.send({
-            type: "broadcast",
-            event: "share_deck",
-            payload: { cards: myCards },
-          });
-        }
-      })
-      .on("broadcast", { event: "share_deck" }, ({ payload }) => {
-        console.log("share_deck", payload);
-        if (payload?.cards && payload?.cards.length > 0) {
-          setOpponentInGameCards(payload?.cards ?? []);
-        }
-      })
-      .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-          const presenceTrackStatus = await channel.track({
-            online_at: new Date().toISOString(),
-            opponent_id: "",
-          });
-          console.log(presenceTrackStatus);
-        }
-      });
-    setChannel(channel);
-    return () => {
-      console.log("unsubscribing");
-      supabase.removeChannel(channel);
-      setChannel(null);
-    };
-  }, []);
 
   return (
     <div>

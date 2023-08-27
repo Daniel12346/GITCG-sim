@@ -8,6 +8,7 @@ import {
   amIReadyForNextPhaseState,
   isOpponentReadyForNextPhaseState,
   gameChannelState,
+  currentPlayerIDState,
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -15,53 +16,77 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useRecoilValue, useRecoilState, useSetRecoilState } from "recoil";
 
-export default function LobbyChannel() {
+export default function GameChannel() {
+  const [myCards, setMyCards] = useRecoilState(myInGameCardsState);
+  const opponentCards = useRecoilValue(opponentInGameCardsState);
   const myID = useRecoilValue(myIDState);
   const opponentID = useRecoilValue(opponentIDState);
   const gameID = useRecoilValue(currentGameIDState);
   const setOpponentInGameCards = useSetRecoilState(opponentInGameCardsState);
-  const myDeckInGameCards = useRecoilValue(myInGameCardsState);
-  const opponentInGameCards = useRecoilValue(opponentInGameCardsState);
+  const [currentPlayer, setcurrentPlayer] =
+    useRecoilState(currentPlayerIDState);
+  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
 
+  //TODO: move to a separate file again
   useEffect(() => {
     const supabase = createClientComponentClient<Database>();
     const channel = supabase.channel("game:" + gameID, {
       config: { presence: { key: myID }, broadcast: { self: true } },
     });
-    // channel && setGameChannel(channel);
-    console.log("channel", channel);
+    // setcurrentPlayer(Math.random() > 0.5 ? myID : opponentID);
     channel
-      .on("presence", { event: "sync" }, () => {
-        console.log("opp. ", opponentInGameCards);
-        if (!opponentInGameCards || !opponentInGameCards.length) {
+      .on("presence", { event: "join" }, () => {
+        console.log("opp. ", opponentCards);
+        if (!opponentCards || !opponentCards.length) {
           console.log("sending deck", channel);
           channel.send({
             type: "broadcast",
             event: "share_deck",
-            payload: { cards: myDeckInGameCards },
+            payload: { cards: myCards, playerID: myID },
+          });
+        }
+      })
+      .on("presence", { event: "sync" }, () => {
+        console.log("opp. ", opponentCards);
+        if (!opponentCards || !opponentCards.length) {
+          console.log("sending deck", channel);
+          channel.send({
+            type: "broadcast",
+            event: "share_deck",
+            payload: { cards: myCards, playerID: myID },
           });
         }
       })
       .on("broadcast", { event: "share_deck" }, ({ payload }) => {
         console.log("share_deck", payload);
-        if (payload?.cards && payload?.cards.length > 0) {
-          setOpponentInGameCards(payload?.cards ?? []);
+        if (
+          payload?.cards &&
+          payload?.cards.length > 0 &&
+          payload.playerID !== myID
+        ) {
+          setOpponentInGameCards(payload?.cards);
         }
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
           const presenceTrackStatus = await channel.track({
             online_at: new Date().toISOString(),
-            opponent_id: "",
+            cards: myCards,
           });
-          console.log(presenceTrackStatus);
+          // TODO: when exactly should I send the deck?
+          channel.send({
+            type: "broadcast",
+            event: "share_deck",
+            payload: { cards: myCards, playerID: myID },
+          });
         }
       });
-    //  setGameChannel(channel);
+    setChannel(channel);
     return () => {
-      // TODO: why does this unmount when I enter the game?
       console.log("unsubscribing");
       supabase.removeChannel(channel);
+      setChannel(null);
     };
   }, []);
+  return null;
 }
