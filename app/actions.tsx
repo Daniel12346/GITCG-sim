@@ -134,44 +134,42 @@ export const addDice = (dice1: Dice, dice2: Dice) => {
   return result;
 };
 
-export const discardCard = (card: CardExt) => {
-  return { ...card, location: "DISCARD" };
+export const activateCard = (card: CardExt) => {
+  //TODO: broadcast event
+  return { ...card, location: "ACTION" };
 };
 
-export const activateCard: ExecuteEffect = ({
+export const activateEffect: ExecuteEffect = ({
   playerID,
   myCards,
   myDice,
   opponentCards,
   opponentDice,
-  thisCard,
+  //TODO: use cardID?
+  effect,
   cardToEquipTo,
+  thisCard,
   targetCards,
 }) => {
   //TODO: change everything
-  if (!thisCard) return {};
-  console.log("activateCard", thisCard);
-  const cardEffects = thisCard.effects.map(
-    (effect) =>
-      effect.effect_basic_infoIdId && effects[effect.effect_basic_infoIdId]
-  );
-  console.log("cardEffects", cardEffects);
-  if (!cardEffects || !cardEffects.length) return {};
-  const card = cardEffects[0];
-  if (!card) return {};
-  const { effect, onEvent, requiredTargets } = card;
-  //set card location to action zone
-  const cards = myCards.map((card) => {
-    if (card.id === thisCard.id) {
-      return { ...card, location: "ACTION" };
-    }
-    return card;
-  });
+  if (!effect) return {};
+  //TODO: ???????????
+  // const effectCard = thisCard ?? myCards.find((card) => card.ef === effect.id);
+  // if (!thisCard) {
+  //   console.log("no card with this effect");
+  //   return {};
+  // }
+  // console.log("activateCard", thisCard);
 
-  if (effect) {
-    return effect({
+  //TODO: check if effect can be activated
+  const { execute, onEvent, requiredTargets } = effect;
+  //set card location to action zone
+
+  if (execute) {
+    return execute({
+      effect,
       playerID,
-      myCards: cards,
+      myCards,
       myDice,
       opponentCards,
       opponentDice,
@@ -180,16 +178,9 @@ export const activateCard: ExecuteEffect = ({
       targetCards,
     });
   }
+  console.log("could not execute effect");
   return {};
-
-  // const { effect, onEvent, requiredTargets } = effects[thisCard.id];
-  // if (requiredTargets) {
-  //   console.log("requiredTargets");
-  // }
-  // console.log("effect", effect);
-  // if (!effect) {
-  //   console.log("no effect");
-  //   return {};
-  // }
 };
-// console.log(subtractCost({ PYRO: 4, CRYO: 1, OMNI: 2 }, { MATCHING: 2 }));
+export const discardCard = (card: CardExt) => {
+  return { ...card, location: "DISCARD" };
+};

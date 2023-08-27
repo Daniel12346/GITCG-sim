@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { atom, selector, waitForAll } from "recoil";
 import { recoilPersist } from "recoil-persist";
 import { RealtimeChannel } from "@supabase/supabase-js";
+import effects, { ExecuteEffect, OnEvent } from "@/app/cardEffects";
 const { persistAtom } = recoilPersist();
 // const supabase = createClientComponentClient();
 type Profile = Database["public"]["Tables"]["profile"]["Row"];
@@ -152,12 +153,14 @@ export const myInGameCardsInitialState = selector({
       const quantity = cardBasicInfo.quantity || 1;
       for (let i = 0; i < quantity; i++) {
         const cardID = uuid();
+        console.log("basicInfo", cardBasicInfo);
         myDeckCardsInGame.push({
           ...cardBasicInfo,
           //TODO: make cardType either nullalble or non-nullable for both cardBasicInfo and card
           card_type: cardBasicInfo.card_type ?? "",
           counters: 0,
-          location: cardBasicInfo.card_type !== "CHARACTER" ? "DECK" : null,
+          location:
+            cardBasicInfo.card_type === "CHARACTER" ? "CHARACTER" : "DECK",
           id: cardID,
           card_basic_info_id: cardBasicInfo.id,
           energy: 0,
@@ -169,27 +172,42 @@ export const myInGameCardsInitialState = selector({
           owner_id: myID,
           //TODO: generate cost object from cost json
           costJson: cardBasicInfo.cost,
-          cost: {},
+          cost: cardBasicInfo.cost as Dice,
           //TODO: use JSON because the card itself is not stored in the database
           subtype: cardBasicInfo.card_subtype || "",
           equipped_to_id: null,
           equippedTo: null,
           equippedCards: cardBasicInfo.card_type === "CHARACTER" ? [] : null,
-          effects: cardBasicInfo.effect_basic_info.map((effectBasicInfo) => ({
-            ...effectBasicInfo,
-            id: uuid(),
-            effect_basic_info_id: effectBasicInfo.id,
-            card_id: cardID,
-            card_basic_infoId: cardBasicInfo.id,
-            total_usages: 0,
-            usages_this_turn: 0,
-            totalUsages: 0,
-            costJson: effectBasicInfo.cost,
-            //TODO: ??????
-            effect_basic_infoIdId: effectBasicInfo.id,
-            //TODO: generate cost object from cost json
-            cost: {},
-          })),
+          effects: cardBasicInfo.effect_basic_info.map((effectBasicInfo) => {
+            let execute: ExecuteEffect | undefined;
+            let onEvent: OnEvent | undefined;
+            let requiredTargets: number | undefined;
+            const effectLogic = effects[effectBasicInfo.id];
+            if (effectLogic) {
+              execute = effectLogic.effect;
+              onEvent = effectLogic.onEvent;
+              requiredTargets = effectLogic.requiredTargets;
+            }
+
+            return {
+              ...effectBasicInfo,
+              id: uuid(),
+              effect_basic_info_id: effectBasicInfo.id,
+              card_id: cardID,
+              card_basic_infoId: cardBasicInfo.id,
+              total_usages: 0,
+              usages_this_turn: 0,
+              totalUsages: 0,
+              costJson: effectBasicInfo.cost,
+              //TODO: ??????
+              effect_basic_infoIdId: effectBasicInfo.id,
+              //TODO: generate cost object from cost json
+              cost: effectBasicInfo.cost as Dice,
+              execute,
+              onEvent,
+              requiredTargets,
+            };
+          }),
         });
       }
       // }
@@ -331,6 +349,26 @@ export const opponentDiceState = atom<Dice>({
 export const currentPlayerIDState = atom<string>({
   key: "currentPlayerIDState",
   default: "",
+});
+
+export const amSelectingTargetsState = atom<boolean>({
+  key: "amSelectingTargets",
+  default: false,
+});
+
+export const mySelectedTargetCardsState = atom<CardExt[]>({
+  key: "mySelectedTargetCardsState",
+  default: [],
+});
+
+export const requiredTargetsState = atom<number | null>({
+  key: "requiredTargetsState",
+  default: null,
+});
+
+export const currentEffectState = atom<Effect | null>({
+  key: "currentEffect",
+  default: null,
 });
 //TODO: remove Card from database?
 type Card = Database["public"]["Tables"]["card"]["Row"];

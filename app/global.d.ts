@@ -1,4 +1,5 @@
 import { Database as DB } from "@/lib/database.types";
+import { ExecuteEffect, EventType, OnEvent } from "./cardEffects";
 
 type Effect = DB["public"]["Tables"]["effect"]["Row"];
 interface EffectT extends Effect {
@@ -6,7 +7,9 @@ interface EffectT extends Effect {
   // totalUsages: number;
   // cardID: string;
   //TODO: add
-  execute?: any;
+  execute?: ExecuteEffect;
+  onEvent?: OnEvent;
+  requiredTargets?: number;
   costJson?: Json;
   cost?: Cost;
 }

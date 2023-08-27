@@ -1,6 +1,6 @@
 import { addDice, discardCard, drawCards } from "./actions";
 
-type EventType = "ACTIVATION" | "ATTACK" | "REACTION";
+export type EventType = "ACTIVATION" | "ATTACK" | "REACTION";
 
 type Params = {
   playerID: string;
@@ -8,9 +8,9 @@ type Params = {
   opponentCards: CardExt[];
   myDice: Dice;
   opponentDice: Dice;
-  //the card that is being activated
-  thisCard?: CardExt;
   cardToEquipTo?: CardExt;
+  effect?: Effect;
+  thisCard?: CardExt;
   //the card that is being targeted by the activated card
   targetCards?: CardExt[];
 };
@@ -25,11 +25,12 @@ export type ExecuteEffect = (params: Params) => {
   opponentUpdatedDice?: Dice;
 };
 
+export type OnEvent = EventType | EventType[] | null;
 type Execution = {
   //TODO: is there a better way to do this?
   requiredTargets?: number;
   //null would mean that the effect is activated immediately
-  onEvent?: EventType | EventType[] | null;
+  onEvent?: OnEvent;
   //TODO: use a canBeActivated function instead?
   effect: ExecuteEffect;
 };
