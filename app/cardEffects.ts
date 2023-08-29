@@ -8,7 +8,6 @@ type Params = {
   opponentCards: CardExt[];
   myDice: Dice;
   opponentDice: Dice;
-  cardToEquipTo?: CardExt;
   effect?: Effect;
   thisCard?: CardExt;
   //the card that is being targeted by the activated card
@@ -23,14 +22,15 @@ export type ExecuteEffect = (params: Params) => {
   myUpdatedDice?: Dice;
   opponentUpdatedCards?: CardExt[];
   opponentUpdatedDice?: Dice;
+  errorMessage?: string;
 };
 
-export type OnEvent = EventType | EventType[] | null;
+export type Trigger = EventType | EventType[] | null;
 type Execution = {
   //TODO: is there a better way to do this?
   requiredTargets?: number;
   //null would mean that the effect is activated immediately
-  onEvent?: OnEvent;
+  trigger?: Trigger;
   //TODO: use a canBeActivated function instead?
   effect: ExecuteEffect;
 };
@@ -41,7 +41,7 @@ export const effects: { [key: string]: Execution } = {
   //TODO: when and how should this be executed?
   // "7c59cd7c-68d5-4428-99cb-c245f7522b0c": {
   //   //???????
-  //   onEvent: "REACTION",
+  //   trigger: "REACTION",
   //   effect: ({ myCards, opponentCards }) => {
   //     return { ...myCards };
   //   },
@@ -51,15 +51,13 @@ export const effects: { [key: string]: Execution } = {
   "c4ba57f8-fd10-4d3c-9766-3b9b610de812": {
     effect: ({ thisCard, myCards, myDice }) => {
       if (!thisCard) {
-        console.log("No card passed to effect");
-        return {};
+        return { errorMessage: "No card passed to effect" };
       }
       //calculating the total cost of the activated card because it might change during the game
       let cardCostTotal = 0;
       const cost = thisCard.cost;
       if (!cost) {
-        console.log("No cost found for card");
-        return {};
+        return { errorMessage: "No cost found for card" };
       }
       Object.keys(cost).forEach((element) => {
         cardCostTotal += cost[element as CostElementName]!;
@@ -102,12 +100,10 @@ export const effects: { [key: string]: Execution } = {
     effect: ({ targetCards, myCards, opponentCards }) => {
       const target = targetCards?.[0];
       if (!target) {
-        console.log("No target card found");
-        return {};
+        return { errorMessage: "No target card found" };
       }
       if (target.location !== "SUMMON") {
-        console.log("Target card is not a summon card");
-        return {};
+        return { errorMessage: "Target card is not a summon card" };
       }
       const myUpdatedCards = myCards.map((card) => {
         if (card.id === target.id) {
@@ -126,12 +122,10 @@ export const effects: { [key: string]: Execution } = {
     effect: ({ targetCards, myCards }) => {
       const target = targetCards?.[0];
       if (!target) {
-        console.log("No target card found");
-        return {};
+        return { errorMessage: "No target card found" };
       }
       if (target.location !== "SUMMON") {
-        console.log("Target card is not a summon card");
-        return {};
+        return { errorMessage: "Target card is not a summon card" };
       }
       const myUpdatedCards = myCards.map((card) => {
         if (card.id === target.id) {
@@ -153,28 +147,24 @@ export const effects: { [key: string]: Execution } = {
     requiredTargets: 2,
     effect: ({ targetCards, myCards }) => {
       if (!targetCards || targetCards.length < 2) {
-        console.log("Two target cards are required");
-        return {};
+        return { errorMessage: "Two target cards are required" };
       }
       const [shiftFromTarget, shiftToTarget] = targetCards;
       if (!shiftFromTarget || !shiftToTarget) {
-        console.log("No target card found");
-        return {};
+        return { errorMessage: "No target card found" };
       }
       if (
         shiftFromTarget.location !== "CHARACTER" ||
         shiftToTarget.location !== "CHARACTER"
       ) {
-        console.log("Target card is not a character card");
-        return {};
+        return { errorMessage: "Target card is not a character card" };
       }
       if (
         !shiftFromTarget.equippedCards?.find(
           (c) => c.subtype === "EQUIPMENT_ARTIFACT"
         )
       ) {
-        console.log("No artifact found on the first target card");
-        return {};
+        return { errorMessage: "No artifact found on the first target card" };
       }
       let artifactToShift: CardExt | null = null;
       let shiftFromTargetIndex = -1;
@@ -187,8 +177,9 @@ export const effects: { [key: string]: Execution } = {
               (c) => c.subtype === "EQUIPMENT_ARTIFACT"
             ) ?? null;
           if (!artifactToShift) {
-            console.log("No artifact found on the first target card");
-            return {};
+            return {
+              errorMessage: "No artifact found on the first target card",
+            };
           }
           shiftFromTargetIndex = index;
         }
@@ -220,28 +211,24 @@ export const effects: { [key: string]: Execution } = {
     requiredTargets: 2,
     effect: ({ targetCards, myCards }) => {
       if (!targetCards || targetCards.length < 2) {
-        console.log("Two target cards are required");
-        return {};
+        return { errorMessage: "Two target cards are required" };
       }
       const [shiftFromTarget, shiftToTarget] = targetCards;
       if (!shiftFromTarget || !shiftToTarget) {
-        console.log("No target card found");
-        return {};
+        return { errorMessage: "No target card found" };
       }
       if (
         shiftFromTarget.location !== "CHARACTER" ||
         shiftToTarget.location !== "CHARACTER"
       ) {
-        console.log("Target card is not a character card");
-        return {};
+        return { errorMessage: "Target card is not a character card" };
       }
       if (
         !shiftFromTarget.equippedCards?.find(
           (c) => c.subtype === "EQUIPMENT_WEAPON"
         )
       ) {
-        console.log("No weapon found on the first target card");
-        return {};
+        return { errorMessage: "No weapon found on the first target card" };
       }
       let weaponToShift: CardExt | null = null;
       let shiftFromTargetIndex = -1;
@@ -254,8 +241,7 @@ export const effects: { [key: string]: Execution } = {
               (c) => c.subtype === "EQUIPMENT_WEAPON  "
             ) ?? null;
           if (!weaponToShift) {
-            console.log("No weapon found on the first target card");
-            return {};
+            return { errorMessage: "No weapon found on the first target card" };
           }
           shiftFromTargetIndex = index;
         }
@@ -285,7 +271,7 @@ export const effects: { [key: string]: Execution } = {
   //TODO: finish this
   "369a3f69-dc1b-49dc-8487-83ad8eb6979d": {
     //is skill the same as attack?
-    // onEvent: "ATTACK",
+    // trigger: "ATTACK",
     effect: ({ myCards }) => {
       const myCharacters = myCards.filter(
         (card) =>
@@ -338,9 +324,16 @@ export const effects: { [key: string]: Execution } = {
   //Mask of Solitude Basalt
   //TODO: make copies for other elements
   "85247510-9f6b-4d6e-8da0-55264aba3c8b": {
-    //TODO: set onEvent to "ACTIVATION" and "ATTACK" (?)
+    //TODO: set trigger to "ACTIVATION" and "ATTACK" (?)
 
-    effect: ({ cardToEquipTo, myCards }) => {
+    effect: ({ myCards, targetCards }) => {
+      const cardToEquipTo = targetCards?.[0];
+      if (!cardToEquipTo) {
+        return { errorMessage: "No card to equip to found" };
+      }
+      if (cardToEquipTo.health && cardToEquipTo.health <= 0) {
+        return { errorMessage: "Character has no health left" };
+      }
       const myUpdatedCards = myCards.map((card) => {
         //reducing the attack cost of the character card this card is equipped to
         if (card.id === cardToEquipTo?.id) {

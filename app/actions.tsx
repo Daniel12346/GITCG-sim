@@ -147,7 +147,6 @@ export const activateEffect: ExecuteEffect = ({
   opponentDice,
   //TODO: use cardID?
   effect,
-  cardToEquipTo,
   thisCard,
   targetCards,
 }) => {
@@ -162,7 +161,7 @@ export const activateEffect: ExecuteEffect = ({
   // console.log("activateCard", thisCard);
 
   //TODO: check if effect can be activated
-  const { execute, onEvent, requiredTargets } = effect;
+  const { execute, trigger, requiredTargets } = effect;
   //set card location to action zone
 
   if (execute) {
@@ -174,7 +173,6 @@ export const activateEffect: ExecuteEffect = ({
       opponentCards,
       opponentDice,
       thisCard,
-      cardToEquipTo,
       targetCards,
     });
   }

@@ -4,10 +4,10 @@ import {
 } from "@supabase/auth-helpers-nextjs";
 import { uuid } from "uuidv4";
 import { useEffect } from "react";
-import { atom, selector, waitForAll } from "recoil";
+import { atom, selector, selectorFamily, waitForAll } from "recoil";
 import { recoilPersist } from "recoil-persist";
 import { RealtimeChannel } from "@supabase/supabase-js";
-import effects, { ExecuteEffect, OnEvent } from "@/app/cardEffects";
+import effects, { ExecuteEffect, Trigger } from "@/app/cardEffects";
 const { persistAtom } = recoilPersist();
 // const supabase = createClientComponentClient();
 type Profile = Database["public"]["Tables"]["profile"]["Row"];
@@ -180,12 +180,12 @@ export const myInGameCardsInitialState = selector({
           equippedCards: cardBasicInfo.card_type === "CHARACTER" ? [] : null,
           effects: cardBasicInfo.effect_basic_info.map((effectBasicInfo) => {
             let execute: ExecuteEffect | undefined;
-            let onEvent: OnEvent | undefined;
+            let trigger: Trigger | undefined;
             let requiredTargets: number | undefined;
             const effectLogic = effects[effectBasicInfo.id];
             if (effectLogic) {
               execute = effectLogic.effect;
-              onEvent = effectLogic.onEvent;
+              trigger = effectLogic.trigger;
               requiredTargets = effectLogic.requiredTargets;
             }
 
@@ -204,7 +204,7 @@ export const myInGameCardsInitialState = selector({
               //TODO: generate cost object from cost json
               cost: effectBasicInfo.cost as Dice,
               execute,
-              onEvent,
+              trigger,
               requiredTargets,
             };
           }),
@@ -220,19 +220,24 @@ export const myInGameCardsState = atom({
   key: "myInGameCardsState",
   default: myInGameCardsInitialState,
 });
-//TODO: generate deck cards from the basic info (only client-side)
-// const inGameCardsFromBasicInfo = selector({
-//   key: "inGameCardsFromDeckInfo",
-//   get: async ({ get }) => {
-//     const;
-//   },
-// });
+
+export const myCardByIDState = selectorFamily({
+  key: "myCardByIDState",
+  get:
+    (id: string) =>
+    ({ get }) => {
+      const myInGameCards = get(myInGameCardsState);
+      return myInGameCards?.find((card: CardExt) => card.id === id);
+    },
+});
+
 export const myDeckCardsState = atom({
   key: "myDeckCardsState",
   default: [],
 });
 export const opponentCurrentDeckIDState = atom<string>({
-  key: "opponentCurrentDeckIDState", //TODO: fetch default value?
+  key: "opponentCurrentDeckIDState",
+  default: "",
 });
 export const opponentCurrentDeckState = selector({
   key: "opponentCurrentDeckState",
@@ -250,12 +255,12 @@ export const opponentCurrentDeckState = selector({
   },
 });
 
-//game-related state --------------------------------
 export const gameChannelState = atom<RealtimeChannel | null>({
   key: "gameChannel",
   default: null,
 });
 
+//TODO: use this
 export const gameState = atom<Database["public"]["Tables"]["game"]["Row"]>({
   key: "gameState",
   default: {
