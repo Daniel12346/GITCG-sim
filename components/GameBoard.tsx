@@ -54,20 +54,31 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
     const ch = supabase
       //TODO: do I need to make a separate channel for this?
       .channel("game-cards:" + gameID)
-      .on(
-        "broadcast",
-        { event: "activate_card" },
-        ({ payload: { card_id } }) => {
-          setOpponentInGameCards((prev) => {
-            return prev.map((card) => {
-              if (card.id === card_id) {
-                return { ...card, location: "ACTION" };
-              }
-              return card;
-            });
-          });
-        }
-      )
+      // .on(
+      //   "broadcast",
+      //   { event: "activate_card" },
+      //   ({ payload: { card_id } }) => {
+      //     setOpponentInGameCards((prev) => {
+      //       return prev.map((card) => {
+      //         if (card.id === card_id) {
+      //           return { ...card, location: "ACTION" };
+      //         }
+      //         return card;
+      //       });
+      //     });
+      //   }
+      // )
+      .on("broadcast", { event: "effect_executed" }, ({ payload }) => {
+        console.log("effect_executed", payload);
+        const { effect, myCards, myDice, opponentCards, opponentDice } =
+          payload;
+        //TODO: name this in a less confusing way
+        effect && console.log("effect", effect);
+        myCards && setOpponentInGameCards(myCards);
+        myDice && setOpponentDice(myDice);
+        opponentCards && setMyInGameCards(opponentCards);
+        opponentDice && setMyDice(opponentDice);
+      })
       .subscribe(async (status) => {
         console.log("subscribed to activate_card", status);
       });
@@ -152,21 +163,31 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
     };
     //the most recent card state
     const myCurrentCards = myUpdatedCards || myInGameCards;
-    setMyInGameCards(
-      //if the execution returned updated cards, use them
-      myCurrentCards.map((card) => {
-        if (card.id === effectCard.id) {
-          return updateEffectCard(card);
-        }
-        return card;
-      })
-    );
+    const myCurrentCardsWithUpdatedEffectCard = myCurrentCards.map((card) => {
+      if (card.id === effectCard.id) {
+        return updateEffectCard(card);
+      }
+      return card;
+    });
+    setMyInGameCards(myCurrentCardsWithUpdatedEffectCard);
 
     opponentUpdatedCards && setOpponentInGameCards(opponentUpdatedCards);
     myUpdatedDice && setMyDice(myUpdatedDice);
     opponentUpdatedDice && setOpponentDice(opponentUpdatedDice);
     setAmSelectingTargets(false);
     setSelectedTargets([]);
+    channel?.send({
+      type: "broadcast",
+      event: "effect_executed",
+      payload: {
+        effect,
+        playerID: myID,
+        myCards: myCurrentCardsWithUpdatedEffectCard,
+        myDice: myUpdatedDice,
+        opponentCards: opponentUpdatedCards,
+        opponentDice: opponentUpdatedDice,
+      },
+    });
   };
 
   return (
@@ -194,31 +215,40 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
               }}
             />
           ))}
-        <div>
-          <button
-            onClick={() => setAmSelectingTargets((prev) => !prev)}
-            className="bg-orange-300"
-          >
-            Toggle Selection
-          </button>
-          <div className="bg-fuchsia-600">
+        {amSelectingTargets && (
+          <div>
             <button
-              className="bg-yellow-200"
               onClick={() => {
-                console.log("current effect", currentEffect);
-                if (!currentEffect) return;
-                handleActivateEffect(currentEffect);
+                setAmSelectingTargets(false);
+                setCurrentEffect(null);
+                setSelectedTargets([]);
               }}
+              className="bg-orange-300"
             >
-              confirm
+              Cancel Selection
             </button>
-            {amSelectingTargets && errorMessage && <span>{errorMessage}</span>}
+            <div className="bg-fuchsia-600">
+              <button
+                className="bg-yellow-200"
+                onClick={() => {
+                  console.log("current effect", currentEffect);
+                  if (!currentEffect) return;
+                  handleActivateEffect(currentEffect);
+                }}
+              >
+                confirm
+              </button>
+              {amSelectingTargets && errorMessage && (
+                <span>{errorMessage}</span>
+              )}
+            </div>
+            {amSelectingTargets && requiredTargets && (
+              <span>{requiredTargets} targets needed</span>
+            )}
           </div>
-          {amSelectingTargets && requiredTargets && (
-            <span>{requiredTargets} targets needed</span>
-          )}
-        </div>
+        )}
       </div>
+
       <div className="bg-yellow-50 h-full">
         deck zone{" "}
         {playerCards.filter((card) => card.location === "DECK").length}
