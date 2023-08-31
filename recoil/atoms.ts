@@ -184,7 +184,7 @@ export const myInGameCardsInitialState = selector({
             let requiredTargets: number | undefined;
             const effectLogic = effects[effectBasicInfo.id];
             if (effectLogic) {
-              execute = effectLogic.effect;
+              execute = effectLogic.execute;
               trigger = effectLogic.trigger;
               requiredTargets = effectLogic.requiredTargets;
             }
@@ -219,16 +219,6 @@ export const myInGameCardsInitialState = selector({
 export const myInGameCardsState = atom({
   key: "myInGameCardsState",
   default: myInGameCardsInitialState,
-});
-
-export const myCardByIDState = selectorFamily({
-  key: "myCardByIDState",
-  get:
-    (id: string) =>
-    ({ get }) => {
-      const myInGameCards = get(myInGameCardsState);
-      return myInGameCards?.find((card: CardExt) => card.id === id);
-    },
 });
 
 export const myDeckCardsState = atom({

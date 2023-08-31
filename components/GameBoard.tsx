@@ -46,6 +46,7 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
   const [requiredTargets, setRequiredTargets] =
     useRecoilState(requiredTargetsState);
   const [currentEffect, setCurrentEffect] = useRecoilState(currentEffectState);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!gameID || !myID) return;
@@ -78,39 +79,6 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
     };
   }, [gameID, myID]);
 
-  useEffect(() => {
-    //TODO: ???????
-    if (!myInGameCards) return;
-
-    if (
-      selectedTargetCards.length === requiredTargets &&
-      amSelectingTargets &&
-      currentEffect
-    ) {
-      const {
-        myUpdatedCards,
-        myUpdatedDice,
-        opponentUpdatedCards,
-        opponentUpdatedDice,
-      } = activateEffect({
-        playerID: myID,
-        effect: currentEffect,
-        myCards: myInGameCards,
-        myDice,
-        opponentCards: opponentInGameCards,
-        opponentDice: {},
-        targetCards: selectedTargetCards,
-      });
-      myUpdatedCards && setMyInGameCards(myUpdatedCards);
-      myUpdatedDice && setMyDice(myUpdatedDice);
-      opponentUpdatedCards && setOpponentInGameCards(opponentUpdatedCards);
-      opponentUpdatedDice && setOpponentDice(opponentUpdatedDice);
-
-      // setAmSelectingTargets(false);
-      // setSelectedTargets([]);
-      // setRequiredTargets(null);
-    }
-  }, [requiredTargets, selectedTargetCards, amSelectingTargets]);
   const handleSelectCard = (card: CardExt) => {
     //don't select the same card twice
     if (
@@ -121,6 +89,84 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
       return;
     }
     setSelectedTargets((prev) => [...prev, card]);
+  };
+
+  const handleActivateEffect = (effect: Effect) => {
+    if (!myInGameCards) return;
+
+    //TODO: select effect
+    console.log(effect);
+
+    console.log(
+      amSelectingTargets,
+      effect.requiredTargets,
+      selectedTargetCards
+    );
+    if (effect.requiredTargets && !amSelectingTargets) {
+      setRequiredTargets(effect.requiredTargets);
+      setCurrentEffect(effect);
+      setAmSelectingTargets(true);
+      return;
+    }
+
+    // const effectCard = activateCard(card);
+    const {
+      myUpdatedCards,
+      myUpdatedDice,
+      opponentUpdatedCards,
+      opponentUpdatedDice,
+      errorMessage,
+    } = activateEffect({
+      playerID: myID,
+      effect,
+      myCards: myInGameCards,
+      myDice,
+      opponentCards: opponentInGameCards,
+      opponentDice: {},
+      targetCards: selectedTargetCards,
+    });
+    if (errorMessage) {
+      setErrorMessage(errorMessage);
+      return;
+    }
+    const effectCard = myInGameCards.find((c) => c.id === effect.card_id);
+    if (!effectCard) {
+      console.log("no effect card");
+      return;
+    }
+    //updating the the effect whose effect was activated
+    const updateEffectCard = (effectCard: CardExtended) => {
+      return {
+        ...effectCard,
+        location: "ACTION",
+        effects: effectCard.effects.map((eff) => {
+          return {
+            ...eff,
+            total_usages: eff.total_usages ? eff.total_usages + 1 : 0,
+            usages_this_turn: eff.usages_this_turn
+              ? eff.usages_this_turn + 1
+              : 0,
+          };
+        }),
+      };
+    };
+    //the most recent card state
+    const myCurrentCards = myUpdatedCards || myInGameCards;
+    setMyInGameCards(
+      //if the execution returned updated cards, use them
+      myCurrentCards.map((card) => {
+        if (card.id === effectCard.id) {
+          return updateEffectCard(card);
+        }
+        return card;
+      })
+    );
+
+    opponentUpdatedCards && setOpponentInGameCards(opponentUpdatedCards);
+    myUpdatedDice && setMyDice(myUpdatedDice);
+    opponentUpdatedDice && setOpponentDice(opponentUpdatedDice);
+    setAmSelectingTargets(false);
+    setSelectedTargets([]);
   };
 
   return (
@@ -144,55 +190,7 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
               key={card.id}
               card={card}
               handleClick={() => {
-                if (!myInGameCards) return;
-
-                //TODO: select effect
-                const effect = card.effects[0];
-
-                if (effect.requiredTargets && effect.requiredTargets > 0) {
-                  setRequiredTargets(effect.requiredTargets);
-                  setCurrentEffect(effect);
-                  setAmSelectingTargets(true);
-                  return;
-                }
-
-                const thisCard = activateCard(card);
-                const {
-                  myUpdatedCards,
-                  myUpdatedDice,
-                  opponentUpdatedCards,
-                  opponentUpdatedDice,
-                } = activateEffect({
-                  thisCard,
-                  playerID: myID,
-                  effect,
-                  myCards: myInGameCards,
-                  myDice,
-                  opponentCards: opponentInGameCards,
-                  opponentDice: {},
-                  targetCards: selectedTargetCards,
-                });
-                myUpdatedCards
-                  ? setMyInGameCards(
-                      myUpdatedCards.map((card) => {
-                        if (card.id === thisCard.id) {
-                          return thisCard;
-                        }
-                        return card;
-                      })
-                    )
-                  : setMyInGameCards(
-                      myInGameCards.map((card) => {
-                        if (card.id === thisCard.id) {
-                          return thisCard;
-                        }
-                        return card;
-                      })
-                    );
-                opponentUpdatedCards &&
-                  setOpponentInGameCards(opponentUpdatedCards);
-                myUpdatedDice && setMyDice(myUpdatedDice);
-                opponentUpdatedDice && setOpponentDice(opponentUpdatedDice);
+                handleActivateEffect(card.effects[0]);
               }}
             />
           ))}
@@ -203,8 +201,21 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
           >
             Toggle Selection
           </button>
+          <div className="bg-fuchsia-600">
+            <button
+              className="bg-yellow-200"
+              onClick={() => {
+                console.log("current effect", currentEffect);
+                if (!currentEffect) return;
+                handleActivateEffect(currentEffect);
+              }}
+            >
+              confirm
+            </button>
+            {amSelectingTargets && errorMessage && <span>{errorMessage}</span>}
+          </div>
           {amSelectingTargets && requiredTargets && (
-            <span>{requiredTargets} more targets needed</span>
+            <span>{requiredTargets} targets needed</span>
           )}
         </div>
       </div>
@@ -216,7 +227,14 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
         action zone
         <div className="grid grid-cols-2">
           {playerCards
-            ?.filter((card) => card.location === "ACTION")
+            ?.filter(
+              (card) =>
+                card.location === "ACTION" &&
+                card.subtype &&
+                !["EQUIPMENT_ARTIFACT", "EQUIPMENT_WEAPON"].includes(
+                  card.subtype
+                )
+            )
             .map((card) => (
               <Card
                 key={card.id}

@@ -32,7 +32,7 @@ type Execution = {
   //null would mean that the effect is activated immediately
   trigger?: Trigger;
   //TODO: use a canBeActivated function instead?
-  effect: ExecuteEffect;
+  execute: ExecuteEffect;
 };
 
 //only handles the execution, not the effect cost
@@ -42,14 +42,14 @@ export const effects: { [key: string]: Execution } = {
   // "7c59cd7c-68d5-4428-99cb-c245f7522b0c": {
   //   //???????
   //   trigger: "REACTION",
-  //   effect: ({ myCards, opponentCards }) => {
+  //   execute: ({ myCards, opponentCards }) => {
   //     return { ...myCards };
   //   },
   // },
 
   //The Bestest Travel Companion!
   "c4ba57f8-fd10-4d3c-9766-3b9b610de812": {
-    effect: ({ thisCard, myCards, myDice }) => {
+    execute: ({ thisCard, myCards, myDice }) => {
       if (!thisCard) {
         return { errorMessage: "No card passed to effect" };
       }
@@ -71,7 +71,7 @@ export const effects: { [key: string]: Execution } = {
   },
   //Guardian's Oath
   "2c4dfe38-cb2f-44d1-a40f-58feec6f8dbd": {
-    effect: ({ myCards, opponentCards }) => {
+    execute: ({ myCards, opponentCards }) => {
       const destroySummons = (cards: CardExt[]) => {
         return cards.map((card) => {
           //TODO: check the constants used for location
@@ -97,7 +97,7 @@ export const effects: { [key: string]: Execution } = {
   //Send Off
   "be33cd23-5caf-4aa4-8065-ce01fbaa8326": {
     requiredTargets: 1,
-    effect: ({ targetCards, myCards, opponentCards }) => {
+    execute: ({ targetCards, myCards, opponentCards }) => {
       const target = targetCards?.[0];
       if (!target) {
         return { errorMessage: "No target card found" };
@@ -119,7 +119,7 @@ export const effects: { [key: string]: Execution } = {
   //Quick Knit
   "a15baf43-884b-4e7d-86a7-9f3261d4d7f5": {
     requiredTargets: 1,
-    effect: ({ targetCards, myCards }) => {
+    execute: ({ targetCards, myCards }) => {
       const target = targetCards?.[0];
       if (!target) {
         return { errorMessage: "No target card found" };
@@ -145,7 +145,7 @@ export const effects: { [key: string]: Execution } = {
   "ce166d08-1be9-4937-a601-b34835c97dd2": {
     //the effect targets character cards, the artifact does not need to be targeted because a character can only have one artifact at a time
     requiredTargets: 2,
-    effect: ({ targetCards, myCards }) => {
+    execute: ({ targetCards, myCards }) => {
       if (!targetCards || targetCards.length < 2) {
         return { errorMessage: "Two target cards are required" };
       }
@@ -209,7 +209,7 @@ export const effects: { [key: string]: Execution } = {
   "916e111b-1418-4aad-9854-957c4c07e028": {
     //the effect targets character cards, the weapon does not need to be targeted because a character can only have one weapon at a time
     requiredTargets: 2,
-    effect: ({ targetCards, myCards }) => {
+    execute: ({ targetCards, myCards }) => {
       if (!targetCards || targetCards.length < 2) {
         return { errorMessage: "Two target cards are required" };
       }
@@ -272,7 +272,7 @@ export const effects: { [key: string]: Execution } = {
   "369a3f69-dc1b-49dc-8487-83ad8eb6979d": {
     //is skill the same as attack?
     // trigger: "ATTACK",
-    effect: ({ myCards }) => {
+    execute: ({ myCards }) => {
       const myCharacters = myCards.filter(
         (card) =>
           card.location === "CHARACTER" && card.health && card.health > 0
@@ -316,7 +316,7 @@ export const effects: { [key: string]: Execution } = {
 
   //Strategize
   "0ecdb8f3-a1a3-4b3c-8ebc-ac0788e200ea": {
-    effect: ({ myCards }) => {
+    execute: ({ myCards }) => {
       const myUpdatedCards = drawCards(myCards, 2);
       return { myUpdatedCards };
     },
@@ -325,8 +325,8 @@ export const effects: { [key: string]: Execution } = {
   //TODO: make copies for other elements
   "85247510-9f6b-4d6e-8da0-55264aba3c8b": {
     //TODO: set trigger to "ACTIVATION" and "ATTACK" (?)
-
-    effect: ({ myCards, targetCards }) => {
+    requiredTargets: 1,
+    execute: ({ myCards, targetCards, effect }) => {
       const cardToEquipTo = targetCards?.[0];
       if (!cardToEquipTo) {
         return { errorMessage: "No card to equip to found" };
@@ -336,9 +336,12 @@ export const effects: { [key: string]: Execution } = {
       }
       const myUpdatedCards = myCards.map((card) => {
         //reducing the attack cost of the character card this card is equipped to
+        console.log(cardToEquipTo, effect?.card_id);
+
         if (card.id === cardToEquipTo?.id) {
           return {
             ...card,
+            equippedCardIDs: [...card.equippedCards!, effect!],
             effects: card.effects.map((effect) => {
               if (effect.cost && effect.cost["GEO"]) {
                 return {
@@ -355,10 +358,14 @@ export const effects: { [key: string]: Execution } = {
           };
         }
         //TODO: reduce the cost of talent cards of the character that this card is equipped to
-        // else if (){
 
-        // }
-        else {
+        // else if (card)
+        else if (card.id === effect?.card_id) {
+          return {
+            ...card,
+            equipped_to_id: cardToEquipTo.id,
+          };
+        } else {
           return card;
         }
       });
