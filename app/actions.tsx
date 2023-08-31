@@ -151,14 +151,13 @@ export const activateEffect: ExecuteEffect = ({
   targetCards,
 }) => {
   //TODO: change everything
-  if (!effect) return {};
+  if (!effect) return { errorMessage: "no effect" };
   //TODO: ???????????
-  // const effectCard = thisCard ?? myCards.find((card) => card.ef === effect.id);
-  // if (!thisCard) {
-  //   console.log("no card with this effect");
-  //   return {};
-  // }
-  // console.log("activateCard", thisCard);
+  const effectCard =
+    thisCard ?? myCards.find((card) => card.id === effect.card_id);
+  if (!effectCard) {
+    return { errorMessage: "no card with this effect" };
+  }
 
   //TODO: check if effect can be activated
   const { execute, trigger, requiredTargets } = effect;
@@ -172,12 +171,11 @@ export const activateEffect: ExecuteEffect = ({
       myDice,
       opponentCards,
       opponentDice,
-      thisCard,
+      thisCard: effectCard,
       targetCards,
     });
   }
-  console.log("could not execute effect");
-  return {};
+  return { errorMessage: "could not execute effect" };
 };
 export const discardCard = (card: CardExt) => {
   return { ...card, location: "DISCARD" };
