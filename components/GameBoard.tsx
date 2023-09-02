@@ -52,7 +52,6 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
     if (!gameID || !myID) return;
     const supabase = createClientComponentClient<Database>();
     const ch = supabase
-      //TODO: do I need to make a separate channel for this?
       .channel("game-cards:" + gameID)
       // .on(
       //   "broadcast",
@@ -201,7 +200,7 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
       <div
         className={`${
           isMyBoard && "order-2"
-        } bg-blue-100 col-span-full flex flex-row gap-2 justify-center`}
+        } bg-blue-100 col-span-full h-24 p-2 flex flex-row gap-2 justify-center`}
       >
         hand
         {playerCards
@@ -249,11 +248,11 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
         )}
       </div>
 
-      <div className="bg-yellow-50 h-full">
+      <div className="bg-yellow-50 h-full p-1">
         deck zone{" "}
         {playerCards.filter((card) => card.location === "DECK").length}
       </div>
-      <div className="bg-yellow-50 h-full">
+      <div className="bg-yellow-50">
         action zone
         <div className="grid grid-cols-2">
           {playerCards
@@ -274,9 +273,9 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
             ))}
         </div>
       </div>
-      <div className="bg-yellow-50 h-full">
+      <div className="bg-yellow-50 h-44">
         character zone
-        <div className="flex flex-row justify-evenly">
+        <div className="flex flex-row justify-evenly gap-2 px-2">
           {playerCards
             ?.filter((card) => card.card_type === "CHARACTER")
             .map((card) => (

@@ -21,23 +21,43 @@ export default function Card({ card, handleClick }: Props) {
   );
   return (
     <div
-      className={`bg-blue-200 flex flex-col items-center w-28 ${
+      className={`bg-blue-200 flex flex-col items-center  ${
+        // card.card_type === "CHARACTER" ? "h-20" : "h-16"
+        "h-18"
+      } w-28  ${
         amSelectingTargets &&
         selectedTargets.find((target) => target.id === card.id) &&
         "border-4 border-green-500 border-solid"
       }`}
       onClick={handleClick}
+      //TODO: remove
       onMouseEnter={() => console.log(card)}
     >
-      <span className="h-16">{card.name}</span>
+      <div className="w-full">
+        <span
+          className={` 
+      ${card.card_type === "CHARACTER" ? "text-s" : "text-xs"}`}
+        >
+          {card.name}
+        </span>
+        {card.card_type === "CHARACTER" && (
+          <div className="flex justify-between h-auto w-full">
+            <span className="flex justify-start">{card.health}</span>
+            <span className="flex justify-end">
+              {card.energy}/{card.max_energy}
+            </span>
+          </div>
+        )}
+      </div>
       {/* //TODO: use Next.js Image component */}
       <img
         src={card.img_src}
-        className="w-full h-12 object-cover object-center"
+        className={`w-full ${
+          card.card_type === "CHARACTER" ? "h-20" : "h-12"
+        } object-cover object-center`}
       />
-      <span>{card.card_type}</span>
-      <span>{card.faction}</span>
-      <span>{card.element}</span>
+
+      {/* //TODO: display equipped cards */}
     </div>
   );
 }
