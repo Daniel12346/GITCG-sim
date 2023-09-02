@@ -35,11 +35,11 @@ export function addOneCardFromDeckByName(
   return newCardsState;
 }
 
-const subtractDice = (dice1: Dice, dice2: Dice) => {
-  const result = { ...dice1 };
-  Object.keys(dice2).forEach((element) => {
+const subtractDice = (diceToSubtractFrom: Dice, diceToSubtract: Dice) => {
+  const result = { ...diceToSubtractFrom };
+  Object.keys(diceToSubtract).forEach((element) => {
     const elementName = element as DieElementName;
-    const requiredAmount = dice2[elementName];
+    const requiredAmount = diceToSubtract[elementName];
     if (!requiredAmount) return;
     //OMNI can be used as any element
     if (result[elementName] === undefined && !result["OMNI"])
@@ -67,15 +67,18 @@ const subtractDice = (dice1: Dice, dice2: Dice) => {
 
 //   }
 // }
-export const subtractCost = (dice1: Dice, dice2: Cost) => {
-  const result = { ...dice1 };
-  Object.keys(dice2)
+export const subtractCost = (
+  diceToSubtractFrom: Dice,
+  costToSubtract: Cost
+) => {
+  const result = { ...diceToSubtractFrom };
+  Object.keys(costToSubtract)
     //sorting so that matching and unaligned are subtracted last because specific elements need to be checked first
     //matching and unaligned must not take any of the dice that are needed for specific elements before those requirements are met
     .sort((a, b) => (["MATCHING", "UNALIGNED"].includes(b[0]) ? -1 : 1))
     .forEach((element) => {
       const requiredElementName = element as CostElementName;
-      const requiredAmount = dice2[requiredElementName];
+      const requiredAmount = costToSubtract[requiredElementName];
       const availableElements = Object.keys(result) as DieElementName[];
       if (!requiredAmount) return;
       if (requiredElementName === "MATCHING") {
@@ -131,6 +134,41 @@ export const addDice = (dice1: Dice, dice2: Dice) => {
     if (result[elementName] === undefined) result[elementName] = 0;
     result[elementName] = result[elementName]! + amountToAdd;
   });
+  return result;
+};
+
+export const getRandomElement = (): DieElementName => {
+  const elements = [
+    "CRYO",
+    "GEO",
+    "PYRO",
+    "HYDRO",
+    "ELECTRO",
+    "DENDRO",
+    "ANEMO",
+    "OMNI",
+  ] as const;
+  return elements[Math.floor(Math.random() * elements.length)];
+};
+export const createRandomDice = (amount: number) => {
+  const result: Dice = {};
+  for (let i = 0; i < amount; i++) {
+    const randomElement = getRandomElement();
+    if (!result[randomElement]) result[randomElement] = 0;
+    result[randomElement] = result[randomElement]! + 1;
+  }
+  return result;
+};
+
+const rerollDice = (diceToChooseFrom: Dice, chosenDice: Dice) => {
+  let result = {};
+  result = subtractDice(diceToChooseFrom, chosenDice);
+  const amountOfDiceToReroll = Object.values(chosenDice).reduce(
+    (acc, curr) => acc + curr,
+    0
+  );
+  const newDice = createRandomDice(amountOfDiceToReroll);
+  result = addDice(result, newDice);
   return result;
 };
 
