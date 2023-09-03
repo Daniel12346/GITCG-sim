@@ -12,7 +12,6 @@ import {
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { RealtimeChannel } from "@supabase/supabase-js";
-import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useRecoilValue, useRecoilState, useSetRecoilState } from "recoil";
 
@@ -23,8 +22,6 @@ export default function GameChannel() {
   const opponentID = useRecoilValue(opponentIDState);
   const gameID = useRecoilValue(currentGameIDState);
   const setOpponentInGameCards = useSetRecoilState(opponentInGameCardsState);
-  const [currentPlayer, setcurrentPlayer] =
-    useRecoilState(currentPlayerIDState);
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
 
   //TODO: move to a separate file again
