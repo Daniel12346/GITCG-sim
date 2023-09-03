@@ -26,7 +26,7 @@ export default function Me() {
   // const [deckIDs, setDeckIDs] = useState<string[]>([]);
   return (
     <>
-      <div>
+      <div className="w-full">
         <h1>Me</h1>
         <MyInfoNoSSR />
         {/* My Id: {mySession?.user.id} */}
