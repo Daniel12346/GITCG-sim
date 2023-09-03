@@ -47,7 +47,7 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
   const [currentEffect, setCurrentEffect] = useRecoilState(currentEffectState);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const isMyBoard = playerID && playerID === myID;
+  const isMyBoard = playerID === myID;
   const playerCards = isMyBoard ? myCards : opponentInGameCards;
   const playerDice = isMyBoard ? myDice : opponentDice;
 
@@ -203,7 +203,7 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
       <div
         className={`${
           isMyBoard && "order-2"
-        } bg-blue-100 col-span-full h-24 p-2 flex flex-row gap-2 justify-center`}
+        } bg-blue-100 col-span-full h-32 p-2 flex flex-row gap-2 justify-center items-center`}
       >
         hand
         {playerCards
@@ -212,6 +212,7 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
             <Card
               key={card.id}
               card={card}
+              isFaceDown={!isMyBoard}
               handleClick={() => {
                 handleActivateEffect(card.effects[0]);
               }}
@@ -269,6 +270,7 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
             )
             .map((card) => (
               <Card
+                isFaceDown={false}
                 key={card.id}
                 card={card}
                 handleClick={() => amSelectingTargets && handleSelectCard(card)}
@@ -276,7 +278,7 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
             ))}
         </div>
       </div>
-      <div className="bg-yellow-50 h-44">
+      <div className="bg-yellow-50 h-40">
         character zone
         <div className="flex flex-row justify-evenly gap-2 px-2">
           {playerCards
@@ -292,7 +294,8 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
       </div>
       <div className="bg-yellow-50 h-full">summon zone</div>
       {/* //TODO: move to another component and add opponent's dice */}
-      <div className="bg-yellow-50 h-full">
+      {/* //TODO: display dice */}
+      <div className="bg-yellow-50 h-full overflow-hidden">
         {Object.entries(playerDice)
           .sort()
           .map(([element, amount]) => (
