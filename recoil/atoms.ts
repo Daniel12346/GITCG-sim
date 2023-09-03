@@ -320,10 +320,10 @@ export const amIPlayer1State = selector<boolean>({
   },
 });
 export const currentPhaseState = atom<
-  "PREPARATION" | "ROLL" | "ACTION" | "END"
+  "PREPARATION" | "ROLL" | "ACTION" | "END" | null
 >({
   key: "currentPhaseState",
-  default: "PREPARATION",
+  default: null,
 });
 export const amIReadyForNextPhaseState = atom<boolean>({
   key: "amIReadyForNextPhaseState",
