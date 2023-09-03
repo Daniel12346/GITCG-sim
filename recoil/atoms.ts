@@ -206,6 +206,7 @@ export const myInGameCardsInitialState = selector({
               execute,
               trigger,
               requiredTargets,
+              description: effectBasicInfo.description || "",
             };
           }),
         });

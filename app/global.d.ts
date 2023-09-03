@@ -12,6 +12,7 @@ interface EffectT extends Effect {
   requiredTargets?: number;
   costJson?: Json;
   cost?: Cost;
+  description?: string;
 }
 type Card = DB["public"]["Tables"]["card"]["Row"];
 interface CardExtended extends Card {
