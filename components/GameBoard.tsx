@@ -2,7 +2,6 @@ import {
   currentGameIDState,
   currentPlayerIDState,
   myIDState,
-  myInGameCardsState,
   opponentIDState,
   opponentInGameCardsState,
   myDiceState,
@@ -11,6 +10,7 @@ import {
   mySelectedTargetCardsState,
   requiredTargetsState,
   currentEffectState,
+  myInGameCardsState,
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import TurnAndPhase from "./TurnAndPhase";
@@ -23,18 +23,17 @@ import { CardExtended } from "@/app/global";
 
 //TODO: move to another file
 interface PlayerBoardProps {
-  playerCards: CardExt[];
   playerID?: string;
 }
-const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
+const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
   const gameID = useRecoilValue(currentGameIDState);
   const myID = useRecoilValue(myIDState);
-  const isMyBoard = playerID === myID;
+
   const [opponentInGameCards, setOpponentInGameCards] = useRecoilState(
     opponentInGameCardsState
   );
-  const [myInGameCards, setMyInGameCards] = useRecoilState(myInGameCardsState);
+  const [myCards, setMyCards] = useRecoilState(myInGameCardsState);
   const [myDice, setMyDice] = useRecoilState(myDiceState);
   const [opponentDice, setOpponentDice] = useRecoilState(opponentDiceState);
   const [amSelectingTargets, setAmSelectingTargets] = useRecoilState(
@@ -47,6 +46,10 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
     useRecoilState(requiredTargetsState);
   const [currentEffect, setCurrentEffect] = useRecoilState(currentEffectState);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const isMyBoard = playerID && playerID === myID;
+  const playerCards = isMyBoard ? myCards : opponentInGameCards;
+  const playerDice = isMyBoard ? myDice : opponentDice;
 
   useEffect(() => {
     if (!gameID || !myID) return;
@@ -75,7 +78,7 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
         effect && console.log("effect", effect);
         myCards && setOpponentInGameCards(myCards);
         myDice && setOpponentDice(myDice);
-        opponentCards && setMyInGameCards(opponentCards);
+        opponentCards && setMyCards(opponentCards);
         opponentDice && setMyDice(opponentDice);
       })
       .subscribe(async (status) => {
@@ -102,7 +105,7 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
   };
 
   const handleActivateEffect = (effect: Effect) => {
-    if (!myInGameCards) return;
+    if (!myCards) return;
 
     //TODO: select effect
     console.log(effect);
@@ -129,7 +132,7 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
     } = activateEffect({
       playerID: myID,
       effect,
-      myCards: myInGameCards,
+      myCards: myCards,
       myDice,
       opponentCards: opponentInGameCards,
       opponentDice: {},
@@ -139,7 +142,7 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
       setErrorMessage(errorMessage);
       return;
     }
-    const effectCard = myInGameCards.find((c) => c.id === effect.card_id);
+    const effectCard = myCards.find((c) => c.id === effect.card_id);
     if (!effectCard) {
       console.log("no effect card");
       return;
@@ -161,14 +164,14 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
       };
     };
     //the most recent card state
-    const myCurrentCards = myUpdatedCards || myInGameCards;
+    const myCurrentCards = myUpdatedCards || myCards;
     const myCurrentCardsWithUpdatedEffectCard = myCurrentCards.map((card) => {
       if (card.id === effectCard.id) {
         return updateEffectCard(card);
       }
       return card;
     });
-    setMyInGameCards(myCurrentCardsWithUpdatedEffectCard);
+    setMyCards(myCurrentCardsWithUpdatedEffectCard);
 
     opponentUpdatedCards && setOpponentInGameCards(opponentUpdatedCards);
     myUpdatedDice && setMyDice(myUpdatedDice);
@@ -250,7 +253,7 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
 
       <div className="bg-yellow-50 h-full p-1">
         deck zone{" "}
-        {playerCards.filter((card) => card.location === "DECK").length}
+        {playerCards?.filter((card) => card.location === "DECK").length}
       </div>
       <div className="bg-yellow-50">
         action zone
@@ -290,11 +293,13 @@ const PlayerBoard = ({ playerCards, playerID }: PlayerBoardProps) => {
       <div className="bg-yellow-50 h-full">summon zone</div>
       {/* //TODO: move to another component and add opponent's dice */}
       <div className="bg-yellow-50 h-full">
-        {Object.entries(myDice).map(([element, amount]) => (
-          <span key={element + playerID}>
-            {element}:{amount}
-          </span>
-        ))}
+        {Object.entries(playerDice)
+          .sort()
+          .map(([element, amount]) => (
+            <span key={element + playerID}>
+              {element}:{amount}
+            </span>
+          ))}
       </div>
     </div>
   );
@@ -305,17 +310,12 @@ export default function GameBoard() {
   const opponentCards = useRecoilValue(opponentInGameCardsState);
   const myID = useRecoilValue(myIDState);
   const opponentID = useRecoilValue(opponentIDState);
-  const gameID = useRecoilValue(currentGameIDState);
-  const setOpponentInGameCards = useSetRecoilState(opponentInGameCardsState);
-  const [currentPlayer, setcurrentPlayer] =
-    useRecoilState(currentPlayerIDState);
-  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
 
   return (
     <div>
-      <PlayerBoard playerCards={opponentCards || []} playerID={opponentID} />
+      <PlayerBoard playerID={opponentID} />
       <TurnAndPhase />
-      <PlayerBoard playerCards={myCards || []} playerID={myID} />
+      <PlayerBoard playerID={myID} />
     </div>
   );
 }
