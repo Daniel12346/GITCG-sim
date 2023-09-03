@@ -126,7 +126,7 @@ export default ({}) => {
     }
   }, [amIReadyForNextPhase, isOpponentReadyForNextPhase]);
   useEffect(() => {
-    if (!channel || !myCards) return;
+    if (!channel) return;
     switch (currentPhase) {
       case "PREPARATION":
         const randomDice = createRandomDice(8);
@@ -137,14 +137,16 @@ export default ({}) => {
           event: "dice_change",
           payload: { dice: randomDice, playerID: myID },
         });
-        setMyCards((prev) => prev && drawCards(prev, 5));
+        //throttled because messages from both players would be sent at the same time, exceeding the rate limit
+        setTimeout(() => {
+          setMyCards((prev) => prev && drawCards(prev, 5));
+        }, Math.random() * 1000);
 
         //TODO: switch cards
         break;
       case "ROLL":
         //TODO: reroll dice
         //TODO: are cards drawn in the first turn?
-        //throttled because messages from both players will be sent at the same time, exceeding the rate limit
         setTimeout(() => {
           setMyCards((prev) => prev && drawCards(prev, 2));
         }, Math.random() * 1000);
