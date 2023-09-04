@@ -11,6 +11,7 @@ import {
   requiredTargetsState,
   currentEffectState,
   myInGameCardsState,
+  currentActiveCharacterAttacksState,
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import TurnAndPhase from "./TurnAndPhase";
@@ -18,7 +19,12 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { use, useEffect, useState } from "react";
 import Card from "./Card";
 import { RealtimeChannel } from "@supabase/supabase-js";
-import { activateCard, activateEffect, subtractCost } from "@/app/actions";
+import {
+  activateCard,
+  activateEffect,
+  subtractCost,
+  switchActiveCharacterCard,
+} from "@/app/actions";
 import { CardExtended } from "@/app/global";
 
 //TODO: move to another file
@@ -50,6 +56,7 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
   const isMyBoard = playerID === myID;
   const playerCards = isMyBoard ? myCards : opponentInGameCards;
   const playerDice = isMyBoard ? myDice : opponentDice;
+  const attacks = useRecoilValue(currentActiveCharacterAttacksState);
 
   useEffect(() => {
     if (!gameID || !myID) return;
@@ -102,6 +109,21 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
       return;
     }
     setSelectedTargets((prev) => [...prev, card]);
+  };
+
+  const handleSwitchCharacter = (card: CardExt) => {
+    if (!myCards) return;
+    const { errorMessage, myUpdatedCards } = switchActiveCharacterCard(
+      myCards,
+      card
+    );
+    console.log("switch", myUpdatedCards);
+
+    if (errorMessage) {
+      setErrorMessage(errorMessage);
+      return;
+    }
+    myUpdatedCards && setMyCards(myUpdatedCards);
   };
 
   const handleActivateEffect = (effect: Effect) => {
@@ -197,59 +219,86 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
       className={`${
         isMyBoard ? "bg-green-400" : "bg-red-400"
       } grid grid-cols-[5%_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)_5%] 
-    gap-2 w-screen p-2`}
+    gap-2 w-100% p-2 overflow-x-hidden`}
       //TODO: default height
     >
       <div
         className={`${
           isMyBoard && "order-2"
-        } bg-blue-100 col-span-full h-32 p-2 flex flex-row gap-2 justify-center items-center`}
+        } bg-blue-100 col-span-full h-32 p-2 grid grid-cols-[4fr_8fr_4fr] `}
       >
-        hand
-        {playerCards
-          ?.filter((card) => card.location === "HAND")
-          .map((card) => (
-            <Card
-              key={card.id}
-              card={card}
-              isFaceDown={!isMyBoard}
-              handleClick={() => {
-                handleActivateEffect(card.effects[0]);
-              }}
-            />
-          ))}
-        {amSelectingTargets && (
-          <div>
-            <button
-              onClick={() => {
-                setAmSelectingTargets(false);
-                setCurrentEffect(null);
-                setSelectedTargets([]);
-              }}
-              className="bg-orange-300"
-            >
-              Cancel Selection
-            </button>
-            <div className="bg-fuchsia-600">
-              <button
-                className="bg-yellow-200"
-                onClick={() => {
-                  console.log("current effect", currentEffect);
-                  if (!currentEffect) return;
-                  handleActivateEffect(currentEffect);
+        <div></div>
+        <div className="flex flex-row justify-center items-center gap-2">
+          {playerCards
+            ?.filter((card) => card.location === "HAND")
+            .map((card) => (
+              <Card
+                key={card.id}
+                card={card}
+                isFaceDown={!isMyBoard}
+                handleClick={() => {
+                  handleActivateEffect(card.effects[0]);
                 }}
+              />
+            ))}
+          {amSelectingTargets && (
+            <div>
+              <button
+                onClick={() => {
+                  setAmSelectingTargets(false);
+                  setCurrentEffect(null);
+                  setSelectedTargets([]);
+                }}
+                className="bg-orange-300"
               >
-                confirm
+                Cancel Selection
               </button>
-              {amSelectingTargets && errorMessage && (
-                <span>{errorMessage}</span>
+              <div className="bg-fuchsia-600">
+                <button
+                  className="bg-yellow-200"
+                  onClick={() => {
+                    console.log("current effect", currentEffect);
+                    if (!currentEffect) return;
+                    handleActivateEffect(currentEffect);
+                  }}
+                >
+                  confirm
+                </button>
+                {amSelectingTargets && errorMessage && (
+                  <span>{errorMessage}</span>
+                )}
+              </div>
+              {amSelectingTargets && requiredTargets && (
+                <span>{requiredTargets} targets needed</span>
               )}
             </div>
-            {amSelectingTargets && requiredTargets && (
-              <span>{requiredTargets} targets needed</span>
-            )}
-          </div>
-        )}
+          )}
+        </div>
+        {/* //TODO: display dice, move to new component, fix overflow */}
+        <div className="flex justify-between gap-2 overflow-hidden">
+          {isMyBoard && (
+            <>
+              {/* //TODO: use attack on click */}
+              {attacks?.map((attack) => (
+                <div className=" bg-blue-300 cursor-pointer z-20">
+                  {/* <p className="text-xs">{attack.description}</p> */}
+                  <div className="h-full">
+                    {Object.entries(attack.cost!)
+                      .sort()
+                      .map(([element, amount]) => (
+                        <div>
+                          <span>{element}</span>
+                          <span key={element + playerID}>
+                            {element}:{amount}
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
       </div>
 
       <div className="bg-yellow-50 h-full p-1">
@@ -273,7 +322,12 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
                 isFaceDown={false}
                 key={card.id}
                 card={card}
-                handleClick={() => amSelectingTargets && handleSelectCard(card)}
+                handleClick={() => {
+                  if (amSelectingTargets) {
+                    handleSelectCard(card);
+                    return;
+                  }
+                }}
               />
             ))}
         </div>
@@ -287,7 +341,13 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
               <Card
                 key={card.id}
                 card={card}
-                handleClick={() => amSelectingTargets && handleSelectCard(card)}
+                handleClick={() => {
+                  if (amSelectingTargets) {
+                    handleSelectCard(card);
+                    return;
+                  }
+                  handleSwitchCharacter(card);
+                }}
               />
             ))}
         </div>
@@ -315,7 +375,7 @@ export default function GameBoard() {
   const opponentID = useRecoilValue(opponentIDState);
 
   return (
-    <div>
+    <div className="w-full">
       <PlayerBoard playerID={opponentID} />
       <TurnAndPhase />
       <PlayerBoard playerID={myID} />
