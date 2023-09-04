@@ -1,15 +1,8 @@
 "use client";
 import { Suspense, useEffect } from "react";
-import {
-  currentGameIDState,
-  opponentIDState,
-  opponentProfileState,
-  myInGameCardsState,
-} from "@/recoil/atoms";
-import { useRecoilValue } from "recoil";
 import GameBoard from "@/components/GameBoard";
-import { useParams } from "next/navigation";
 import GameChannel from "@/components/GameChannel";
+import CardDisplay from "@/components/CardDisplay";
 
 export default function Game() {
   // // console.log("opponent in game", opponent);
@@ -18,9 +11,13 @@ export default function Game() {
 
   return (
     //TODO: handle loading game page
-    <div>
+    <div className="w-full p-3">
       <GameChannel />
-      <GameBoard />
+      {/* //TODO: adapt to mobile */}
+      <div className="grid grid-cols-[5fr_1fr] bg-red-400">
+        <GameBoard />
+        <CardDisplay />
+      </div>
     </div>
   );
 }
