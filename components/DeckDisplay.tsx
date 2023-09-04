@@ -9,7 +9,7 @@ export default function DeckDisplay() {
   return (
     <div className="flex bg-blue-500 flex-row flex-wrap gap-4 p-2 w-full">
       {myCards?.map((card) => {
-        return <Card key={card.id} card={card} />;
+        return <Card key={card.id} card={card} isInDeckDisplay />;
       })}
     </div>
   );
