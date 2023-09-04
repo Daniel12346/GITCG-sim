@@ -218,3 +218,28 @@ export const activateEffect: ExecuteEffect = ({
 export const discardCard = (card: CardExt) => {
   return { ...card, location: "DISCARD" };
 };
+
+export const switchActiveCharacterCard = (
+  myCards: CardExt[],
+  character: CardExt,
+  errorMessage?: string
+) => {
+  if (!character) return { errorMessage: "No character found" };
+  if (character.health === 0)
+    return { errorMessage: "Character has no health left" };
+  //TODO: pay cost
+  const myUpdatedCards = myCards.map((card) => {
+    if (card.id === character.id) {
+      return { ...card, is_active: true };
+    }
+    if (
+      card.id !== character.id &&
+      card.location === "CHARACTER" &&
+      card.is_active
+    ) {
+      return { ...card, is_active: false };
+    }
+    return card;
+  });
+  return { myUpdatedCards };
+};
