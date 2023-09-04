@@ -5,7 +5,6 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Suspense, useEffect, useState } from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import SetCurrentDeck from "./SetCurrentDeck";
-import CurrentDeckDisplay from "./CurrentDeckDisplay";
 import Link from "next/link";
 
 interface Props {
