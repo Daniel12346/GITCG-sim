@@ -211,7 +211,6 @@ export const myInGameCardsInitialState = selector({
           }),
         });
       }
-      // }
     });
     console.log("myDeckCardsInGame", myDeckCardsInGame);
     return myDeckCardsInGame;
@@ -222,10 +221,29 @@ export const myInGameCardsState = atom({
   default: myInGameCardsInitialState,
 });
 
-export const myDeckCardsState = atom({
-  key: "myDeckCardsState",
-  default: [],
+export const currentActiveCharacterState = selector<CardExt | null>({
+  key: "currentActiveCharacterState",
+  get: ({ get }) => {
+    const myInGameCards = get(myInGameCardsState);
+    if (!myInGameCards) return null;
+    return (
+      myInGameCards.find(
+        (card) => card.is_active && card.card_type === "CHARACTER"
+      ) || null
+    );
+  },
 });
+
+export const currentActiveCharacterAttacksState = selector({
+  key: "currentActiveCharacterAttacksState",
+  get: ({ get }) => {
+    const currentActiveCharacter = get(currentActiveCharacterState);
+    if (!currentActiveCharacter) return null;
+    //TODO: filter out non-attack effects (do they exist on characters?)
+    return currentActiveCharacter.effects;
+  },
+});
+
 export const opponentCurrentDeckIDState = atom<string>({
   key: "opponentCurrentDeckIDState",
   default: "",
@@ -244,6 +262,10 @@ export const opponentCurrentDeckState = selector({
     if (error) console.log("error", error);
     return data;
   },
+});
+export const currentViewedCardState = atom<CardExt | null>({
+  key: "currentViewedCardState",
+  default: null,
 });
 
 export const gameChannelState = atom<RealtimeChannel | null>({
