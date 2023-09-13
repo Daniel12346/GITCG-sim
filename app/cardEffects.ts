@@ -49,6 +49,7 @@ export const effects: { [key: string]: Execution } = {
 
   //The Bestest Travel Companion!
   "c4ba57f8-fd10-4d3c-9766-3b9b610de812": {
+    //TODO: set trigger to "ON_ACTIVATION"
     execute: ({ thisCard, myCards, myDice }) => {
       if (!thisCard) {
         return { errorMessage: "No card passed to effect" };
@@ -341,6 +342,7 @@ export const effects: { [key: string]: Execution } = {
         if (card.id === cardToEquipTo?.id) {
           return {
             ...card,
+            //TODO: equip this card, not effect
             equippedCardIDs: [...card.equippedCards!, effect!],
             effects: card.effects.map((effect) => {
               if (effect.cost && effect.cost["GEO"]) {
@@ -370,6 +372,29 @@ export const effects: { [key: string]: Execution } = {
         }
       });
       return { myUpdatedCards };
+    },
+  },
+  //--------------ATTACKS------------------
+  "b4a1b3f5-45a1-4db8-8d07-a21cb5e5be11": {
+    requiredTargets: 1,
+    execute: ({ opponentCards, thisCard, targetCards }) => {
+      if (!thisCard) {
+        return { errorMessage: "No card passed to effect" };
+      }
+      if (!targetCards || targetCards.length < 1) {
+        return { errorMessage: "One target card is required" };
+      }
+      const opponentUpdatedCards = opponentCards.map((card) => {
+        if (card.id === targetCards[0].id) {
+          return {
+            ...card,
+            health: card.health ? card.health - 1 : 0,
+          };
+        } else {
+          return card;
+        }
+      });
+      return { opponentUpdatedCards };
     },
   },
 };

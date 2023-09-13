@@ -3,8 +3,6 @@ import { ExecuteEffect, EventType, Trigger } from "./cardEffects";
 
 type Effect = DB["public"]["Tables"]["effect"]["Row"];
 interface EffectT extends Effect {
-  // usagesThisTurn: number;
-  // totalUsages: number;
   // cardID: string;
   //TODO: add
   execute?: ExecuteEffect;
@@ -13,6 +11,8 @@ interface EffectT extends Effect {
   costJson?: Json;
   cost?: Cost;
   description?: string;
+  effect_basic_info_id?: string;
+  effectType?: string;
 }
 type Card = DB["public"]["Tables"]["card"]["Row"];
 interface CardExtended extends Card {

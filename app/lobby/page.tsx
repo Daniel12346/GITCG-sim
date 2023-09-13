@@ -38,7 +38,6 @@ export default function Lobby() {
     <div>
       <button
         onClick={() => {
-          console.log("router", router);
           router.push("/");
         }}
       >

@@ -109,6 +109,7 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
       return;
     }
     setSelectedTargets((prev) => [...prev, card]);
+    console.log("SELECTED", selectedTargetCards);
   };
 
   const handleSwitchCharacter = (card: CardExt) => {
@@ -130,13 +131,7 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
     if (!myCards) return;
 
     //TODO: select effect
-    console.log(effect);
 
-    console.log(
-      amSelectingTargets,
-      effect.requiredTargets,
-      selectedTargetCards
-    );
     if (effect.requiredTargets && !amSelectingTargets) {
       setRequiredTargets(effect.requiredTargets);
       setCurrentEffect(effect);
@@ -144,7 +139,6 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
       return;
     }
 
-    // const effectCard = activateCard(card);
     const {
       myUpdatedCards,
       myUpdatedDice,
@@ -208,6 +202,67 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
         playerID: myID,
         myCards: myCurrentCardsWithUpdatedEffectCard,
         myDice: myUpdatedDice,
+        opponentCards: opponentUpdatedCards,
+        opponentDice: opponentUpdatedDice,
+      },
+    });
+  };
+  const handleUseAttackEffect = (effect: Effect) => {
+    if (!myCards) return;
+
+    //TODO: select effect
+    if (effect.requiredTargets && !amSelectingTargets) {
+      setRequiredTargets(effect.requiredTargets);
+      setCurrentEffect(effect);
+      setAmSelectingTargets(true);
+      return;
+    }
+
+    // const effectCard = activateCard(card);
+    const {
+      myUpdatedCards,
+      myUpdatedDice,
+      opponentUpdatedCards,
+      opponentUpdatedDice,
+      errorMessage,
+    } = activateEffect({
+      playerID: myID,
+      effect,
+      myCards: myCards,
+      myDice,
+      opponentCards: opponentInGameCards,
+      opponentDice: {},
+      targetCards: selectedTargetCards,
+    });
+    if (errorMessage) {
+      setErrorMessage(errorMessage);
+      return;
+    }
+    const effectCard = myCards.find((c) => c.id === effect.card_id);
+    if (!effectCard) {
+      console.log("no effect card");
+      return;
+    }
+
+    myUpdatedCards && setMyCards(myUpdatedCards);
+    opponentUpdatedCards && setOpponentInGameCards(opponentUpdatedCards);
+    opponentUpdatedDice && setOpponentDice(opponentUpdatedDice);
+    const myDiceAfterAttack = myUpdatedDice || myDice;
+    const myUpdatedDiceAfterCost =
+      myDiceAfterAttack &&
+      effect.cost &&
+      subtractCost(myDiceAfterAttack, effect.cost);
+    setAmSelectingTargets(false);
+    setSelectedTargets([]);
+    channel?.send({
+      type: "broadcast",
+      //TODO: rename event
+      event: "effect_executed",
+      payload: {
+        effect,
+        playerID: myID,
+        myCards: myUpdatedCards,
+        myDice: myUpdatedDiceAfterCost,
         opponentCards: opponentUpdatedCards,
         opponentDice: opponentUpdatedDice,
       },
@@ -280,14 +335,16 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
             <>
               {/* //TODO: use attack on click */}
               {attacks?.map((attack) => (
-                <div className=" bg-blue-300 cursor-pointer z-20">
+                <div
+                  className=" bg-blue-300 cursor-pointer z-20"
+                  onClick={() => handleUseAttackEffect(attack)}
+                >
                   {/* <p className="text-xs">{attack.description}</p> */}
                   <div className="h-full">
                     {Object.entries(attack.cost!)
                       .sort()
                       .map(([element, amount]) => (
                         <div>
-                          <span>{element}</span>
                           <span key={element + playerID}>
                             {element}:{amount}
                           </span>
@@ -343,10 +400,11 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
                 card={card}
                 handleClick={() => {
                   if (amSelectingTargets) {
+                    alert("selecting targets");
                     handleSelectCard(card);
                     return;
                   }
-                  handleSwitchCharacter(card);
+                  isMyBoard && handleSwitchCharacter(card);
                 }}
               />
             ))}

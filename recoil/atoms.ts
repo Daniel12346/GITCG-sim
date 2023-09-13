@@ -178,37 +178,39 @@ export const myInGameCardsInitialState = selector({
           equipped_to_id: null,
           equippedTo: null,
           equippedCards: cardBasicInfo.card_type === "CHARACTER" ? [] : null,
-          effects: cardBasicInfo.effect_basic_info.map((effectBasicInfo) => {
-            let execute: ExecuteEffect | undefined;
-            let trigger: Trigger | undefined;
-            let requiredTargets: number | undefined;
-            const effectLogic = effects[effectBasicInfo.id];
-            if (effectLogic) {
-              execute = effectLogic.execute;
-              trigger = effectLogic.trigger;
-              requiredTargets = effectLogic.requiredTargets;
-            }
+          effects: cardBasicInfo.effect_basic_info.map(
+            (effectBasicInfo): Effect => {
+              let execute: ExecuteEffect | undefined;
+              let trigger: Trigger | undefined;
+              let requiredTargets: number | undefined;
+              const effectLogic = effects[effectBasicInfo.id];
+              if (effectLogic) {
+                execute = effectLogic.execute;
+                trigger = effectLogic.trigger;
+                requiredTargets = effectLogic.requiredTargets;
+              }
 
-            return {
-              ...effectBasicInfo,
-              id: uuid(),
-              effect_basic_info_id: effectBasicInfo.id,
-              card_id: cardID,
-              card_basic_infoId: cardBasicInfo.id,
-              total_usages: 0,
-              usages_this_turn: 0,
-              totalUsages: 0,
-              costJson: effectBasicInfo.cost,
-              //TODO: ??????
-              effect_basic_infoIdId: effectBasicInfo.id,
-              //TODO: generate cost object from cost json
-              cost: effectBasicInfo.cost as Dice,
-              execute,
-              trigger,
-              requiredTargets,
-              description: effectBasicInfo.description || "",
-            };
-          }),
+              return {
+                ...effectBasicInfo,
+                id: uuid(),
+                effect_basic_info_id: effectBasicInfo.id,
+                card_id: cardID,
+                // card_basic_infoId: cardBasicInfo.id,
+                total_usages: 0,
+                usages_this_turn: 0,
+                costJson: effectBasicInfo.cost,
+                //TODO: ??????
+                effect_basic_infoIdId: effectBasicInfo.id,
+                //TODO: generate cost object from cost json
+                cost: effectBasicInfo.cost as Dice,
+                execute,
+                trigger,
+                requiredTargets,
+                description: effectBasicInfo.description || "",
+                effectType: effectBasicInfo.effect_type || "",
+              };
+            }
+          ),
         });
       }
     });

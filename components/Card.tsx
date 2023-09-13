@@ -37,11 +37,12 @@ export default function Card({
         ${
           amSelectingTargets &&
           selectedTargets.find((target) => target.id === card.id) &&
-          "border-4 border-green-500 border-solid"
+          "outline-dashed outline-4 outline-green-700"
         }
         ${card && card.is_active && "scale-125"}
         `}
         onClick={(e) => {
+          console.log("selecting targets", amSelectingTargets);
           handleClick && handleClick(e);
         }}
         onMouseEnter={() => setCurrentViewedCard(card)}
