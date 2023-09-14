@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export default async function Index() {
   return (
-    <div className="flex w-full">
+    <div className="flex w-full pt-20">
       <div className="flex justify-center w-full">
         <div className="uppercase flex justify-evenly md:flex-row flex-col text-amber-200 text-xl font-light">
           <div className="flex flex-col gap-3 items-center">

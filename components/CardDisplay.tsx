@@ -6,16 +6,16 @@ import { useRecoilValue } from "recoil";
 export default () => {
   const currentCard = useRecoilValue(currentViewedCardState);
   return (
-    <div className="w-full bg-orange-200 flex justify-center">
+    <div className="w-full flex justify-center">
       <div className="flex flex-col items-center gap-3">
-        <span>{currentCard?.name}</span>
+        <span className="text-xl">{currentCard?.name}</span>
         <img src={currentCard?.img_src} className="h-80" />
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 max-h-[10rem] overflow-y-scroll translate-x-0">
           {currentCard?.effects &&
             currentCard.effects.map((effect) => {
               return (
                 <div className="w-full p-2">
-                  <p className="w-full">{effect.description}</p>
+                  <p className="w-full text-slate-200">{effect.description}</p>
                   <div className="flex gap-[0.5rem]">
                     {effect.cost &&
                       Object.entries(effect.cost)

@@ -15,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <main className="bg-background flex flex-col items-center bg-indigo-950 min-h-[100vh] pt-20">
+        <main className="bg-background flex flex-col items-center bg-indigo-950 min-h-[100vh]">
           <RecoilRootWrapper>{children}</RecoilRootWrapper>
         </main>
       </body>

@@ -432,6 +432,13 @@ export default function GameBoard() {
   const myID = useRecoilValue(myIDState);
   const opponentID = useRecoilValue(opponentIDState);
 
+  //TODO: use
+  // useEffect(() => {
+  //   return () => {
+  //     setMyCards([]);
+  //   };
+  // });
+
   return (
     <div className="w-full">
       <PlayerBoard playerID={opponentID} />

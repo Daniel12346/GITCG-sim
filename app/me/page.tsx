@@ -18,7 +18,7 @@ const DeckDisplayNoSSR = dynamic(() => import("@/components/DeckDisplay"), {
 const MyDecksNoSSR = dynamic(() => import("@/components/MyDecks"), {
   ssr: false,
 });
-const MyInfoNoSSR = dynamic(() => import("@/components/MyInfo"), {
+const MyInfoNoSSR = dynamic(() => import("@/components/LobbyInfo"), {
   ssr: false,
 });
 

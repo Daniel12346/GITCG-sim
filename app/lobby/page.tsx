@@ -1,29 +1,12 @@
 "use client";
 
-import {
-  IDsOfPlayersInGameState,
-  currentGameIDState,
-  myCurrentDeckIDState,
-  myIDState,
-  mySessionState,
-  opponentIDState,
-  usersInLobbyIDsState,
-} from "@/recoil/atoms";
-import { Suspense, useEffect, useState } from "react";
-import {
-  useRecoilState,
-  useRecoilValue,
-  useRecoilValueLoadable,
-  useSetRecoilState,
-} from "recoil";
-import { create } from "domain";
-import MyInfo from "@/components/MyInfo";
+import MyInfo from "@/components/LobbyInfo";
 import dynamic from "next/dynamic";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
 
 export default function Lobby() {
-  const MyInfoNoSSR = dynamic(() => import("@/components/MyInfo"), {
+  const LobbyInfoNoSSR = dynamic(() => import("@/components/LobbyInfo"), {
     ssr: false,
   });
   const LobbyChannelNoSSR = dynamic(() => import("@/components/LobbyChannel"), {
@@ -35,16 +18,19 @@ export default function Lobby() {
   const router = useRouter();
 
   return (
-    <div>
-      <button
-        onClick={() => {
-          router.push("/");
-        }}
-      >
-        route
-      </button>
-      <MyInfoNoSSR />
-      <LobbyChannelNoSSR />
+    <div className="pt-20 max-w-xl w-full">
+      <div>
+        <button
+          className=" text-orange-300 p-0.5 outline mb-4 "
+          onClick={() => {
+            router.push("/");
+          }}
+        >
+          {"<-"} cancel
+        </button>
+        <LobbyInfoNoSSR />
+        <LobbyChannelNoSSR />
+      </div>
     </div>
   );
 }
