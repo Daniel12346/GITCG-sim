@@ -280,7 +280,7 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
       <div
         className={`${
           isMyBoard && "order-2"
-        } bg-blue-100 col-span-full h-32 p-2 grid grid-cols-[4fr_8fr_4fr] `}
+        } bg-blue-200 col-span-full h-32 p-2 grid grid-cols-[4fr_8fr_4fr] `}
       >
         <div></div>
         <div className="flex flex-row justify-center items-center gap-2">
@@ -296,7 +296,7 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
                 }}
               />
             ))}
-          {amSelectingTargets && (
+          {amSelectingTargets && isMyBoard && (
             <div>
               <button
                 onClick={() => {
@@ -400,7 +400,6 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
                 card={card}
                 handleClick={() => {
                   if (amSelectingTargets) {
-                    alert("selecting targets");
                     handleSelectCard(card);
                     return;
                   }
@@ -417,8 +416,9 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
         {Object.entries(playerDice)
           .sort()
           .map(([element, amount]) => (
-            <span key={element + playerID}>
+            <span className="text-sm" key={element + playerID}>
               {element}:{amount}
+              <br />
             </span>
           ))}
       </div>

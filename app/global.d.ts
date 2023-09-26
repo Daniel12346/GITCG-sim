@@ -17,12 +17,13 @@ interface EffectT extends Effect {
 type Card = DB["public"]["Tables"]["card"]["Row"];
 interface CardExtended extends Card {
   effects: EffectT[];
-  //TODO: convert cost json to cost object at card creation
   cost?: Cost;
   costJson?: Json;
   subtype?: string;
   equippedCards?: CardExt[] | null;
   equippedTo?: CardExt | null;
+  //should only be used in deck builder
+  quantity?: number;
   //TODO: remove equipped_to_id from card table
 }
 type BoardT = {

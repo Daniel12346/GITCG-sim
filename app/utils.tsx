@@ -1,5 +1,6 @@
 import { uuid } from "uuidv4";
 import effects, { ExecuteEffect, Trigger } from "./cardEffects";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 type CardBasicInfo = Database["public"]["Tables"]["card_basic_info"]["Row"];
 export const cardFromBasicInfo = (
@@ -9,6 +10,9 @@ export const cardFromBasicInfo = (
   const cardID = uuid();
   return {
     ...cardBasicInfo,
+    //TODO: do not ts ignore
+    //@ts-ignore
+    quantity: cardBasicInfo.quantity || null,
     //TODO: make cardType either nullalble or non-nullable for both cardBasicInfo and card
     card_type: cardBasicInfo.card_type ?? "",
     counters: 0,
@@ -19,13 +23,11 @@ export const cardFromBasicInfo = (
     health: cardBasicInfo.base_health,
     statuses: [],
     usages: 0,
-    //refers to whether the card is currently in play (only for character cards?)
+    //refers to whether the card is currently in play (only for character cards)
     is_active: false,
     owner_id: ownerID || "",
-    //TODO: generate cost object from cost json
     costJson: cardBasicInfo.cost,
     cost: cardBasicInfo.cost as Dice,
-    //TODO: use JSON because the card itself is not stored in the database
     subtype: cardBasicInfo.card_subtype || "",
     equipped_to_id: null,
     equippedTo: null,
@@ -66,4 +68,62 @@ export const cardFromBasicInfo = (
       }
     ),
   };
+};
+
+export const addCardBasicInfoToDeck = async (
+  client: SupabaseClient,
+  basicInfoID: string,
+  deckID: string
+) => {
+  const currentQuantityData = await client
+    .from("deck_card_basic_info")
+    .select("quantity")
+    .eq("deck_id", deckID)
+    .eq("card_basic_info_id", basicInfoID);
+  const currentQuantity = currentQuantityData.data?.[0]?.quantity || 0;
+  console.log("currentQuantity", currentQuantity);
+  const query = currentQuantity
+    ? client
+        .from("deck_card_basic_info")
+        .update({ quantity: currentQuantity + 1 })
+        .eq("deck_id", deckID)
+        .eq("card_basic_info_id", basicInfoID)
+    : client.from("deck_card_basic_info").insert({
+        deck_id: deckID,
+        card_basic_info_id: basicInfoID,
+        quantity: 1,
+      });
+
+  const result = await query;
+  console.log(result);
+  return result;
+};
+
+export const removeBasicInfoFromDeck = async (
+  client: SupabaseClient,
+  basicInfoID: string,
+  deckID: string
+) => {
+  const currentQuantityData = await client
+    .from("deck_card_basic_info")
+    .select("quantity")
+    .eq("deck_id", deckID)
+    .eq("card_basic_info_id", basicInfoID);
+  const currentQuantity = currentQuantityData.data?.[0]?.quantity || 0;
+  const query = async (client: SupabaseClient) =>
+    currentQuantity > 1
+      ? client
+          .from("deck_card_basic_info")
+          .update({ quantity: currentQuantity - 1 })
+          .eq("deck_id", deckID)
+          .eq("card_basic_info_id", basicInfoID)
+      : client
+          .from("deck_card_basic_info")
+          .delete()
+          .eq("deck_id", deckID)
+          .eq("card_basic_info_id", basicInfoID);
+  const result = await query(client);
+  console.log(result);
+  result.error && console.log(result.error);
+  return result;
 };

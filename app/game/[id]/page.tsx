@@ -14,7 +14,7 @@ export default function Game() {
     <div className="w-full p-3">
       <GameChannel />
       {/* //TODO: adapt to mobile */}
-      <div className="grid grid-cols-[5fr_1fr] bg-red-400">
+      <div className="grid grid-cols-[5fr_1fr] bg-indigo-950">
         <GameBoard />
         <CardDisplay />
       </div>

@@ -6,7 +6,7 @@ import { useRecoilValue } from "recoil";
 export default () => {
   const currentCard = useRecoilValue(currentViewedCardState);
   return (
-    <div className="w-full flex justify-center">
+    <div className="w-full flex justify-center text-slate-200">
       <div className="flex flex-col items-center gap-3">
         <span className="text-xl">{currentCard?.name}</span>
         <img src={currentCard?.img_src} className="h-80" />

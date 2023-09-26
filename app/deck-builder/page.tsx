@@ -42,7 +42,7 @@ export default function DeckBuilder() {
   }, [searchKey]);
 
   return (
-    <div className="pt-12 text-slate-200 max-w-6xl grid md:grid-cols-[6fr_3fr_3fr] gap-6">
+    <div className="pt-12 flex flex-col text-slate-200 md:max-w-6xl w-full md:grid md:grid-cols-[6fr_3fr_3fr] gap-6">
       <Suspense fallback={<div>Loading deck...</div>}>
         <div className="col-span-3">
           <DeckInfoNoSSR />
@@ -50,9 +50,9 @@ export default function DeckBuilder() {
         <div>
           <DeckDisplayNoSSR />
         </div>
-        <div className="border-x-2 border-indigo-400 flex flex-col px-4 gap-3">
+        <div className="border-x-2 md:border-indigo-400 flex flex-col px-4 gap-3">
           <span className="text-lg text-slate-200">Add cards to deck</span>
-          <div className="text-slate-400">
+          <div className="text-slate-300">
             <label>Card name</label>
             <input
               value={searchKey}

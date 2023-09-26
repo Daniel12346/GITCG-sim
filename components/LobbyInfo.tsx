@@ -14,7 +14,9 @@ export default function LobbyInfo() {
     <div className="text-slate-300">
       <div className="flex justify-center w-full"></div>
       {opponentProfile ? (
-        <span>Opponent found!</span>
+        <div>
+          <span>Opponent found!</span>
+        </div>
       ) : (
         <span>Looking for opponent...</span>
       )}

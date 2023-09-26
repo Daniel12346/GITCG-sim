@@ -1,13 +1,21 @@
+import { addCardBasicInfoToDeck, removeBasicInfoFromDeck } from "@/app/utils";
 import {
   amSelectingTargetsState,
   currentViewedCardState,
+  myCurrentDeckCardsBasicInfoState,
+  myCurrentDeckIDState,
   mySelectedTargetCardsState,
   requiredTargetsState,
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { ReactEventHandler, useEffect, useState } from "react";
-import { useRecoilState, useSetRecoilState } from "recoil";
+import {
+  useRecoilRefresher_UNSTABLE,
+  useRecoilState,
+  useRecoilValue,
+  useSetRecoilState,
+} from "recoil";
 
 interface Props {
   card: CardExt;
@@ -29,6 +37,12 @@ export default function Card({
     mySelectedTargetCardsState
   );
   const setCurrentViewedCard = useSetRecoilState(currentViewedCardState);
+  const currentDeckID = useRecoilValue(myCurrentDeckIDState);
+  const client = createClientComponentClient<Database>();
+  const refreshDeck = useRecoilRefresher_UNSTABLE(
+    myCurrentDeckCardsBasicInfoState
+  );
+
   return (
     <>
       <div
@@ -56,11 +70,35 @@ export default function Card({
         </div>
         {isInDeckDisplay && (
           <div className="z-10 flex justify-center w-full bottom-[-10px] absolute ">
-            <span className="bg-slate-200 px-0.5 text-blue-800 h-fit font-extrabold cursor-pointer">
+            <span
+              className="bg-slate-200 px-0.5 text-blue-800 h-fit font-extrabold cursor-pointer"
+              onClick={async () => {
+                await addCardBasicInfoToDeck(
+                  client,
+                  card.card_basic_info_id,
+                  currentDeckID
+                );
+                //TODO: set new value on cardsBasicInfoState
+                refreshDeck();
+              }}
+            >
               +
             </span>
-            <span className="bg-slate-200 px-0.5 text-red-800 h-fit font-extrabold cursor-pointer">
+            <span
+              className="bg-slate-200 px-0.5 text-red-800 h-fit font-extrabold cursor-pointer"
+              onClick={async () => {
+                await removeBasicInfoFromDeck(
+                  client,
+                  card.card_basic_info_id,
+                  currentDeckID
+                );
+                refreshDeck();
+              }}
+            >
               -
+            </span>
+            <span className="bg-slate-200 px-0.5 text-indigo-900 font-semibold">
+              {card.quantity}
             </span>
           </div>
         )}

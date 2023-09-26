@@ -3,13 +3,19 @@ import { useRecoilValue, useRecoilValueLoadable } from "recoil";
 
 export default function DeckInfo() {
   const deckLoadable = useRecoilValueLoadable(myCurrentDeckState);
+  const deckCardBasicInfoTotalCards =
+    deckLoadable.contents?.deck_card_basic_info?.length &&
+    deckLoadable.contents?.deck_card_basic_info
+      .map((deckCardBasicInfo: any) => deckCardBasicInfo.quantity)
+      .reduce((a: number, b: number) => a + b, 0);
+
   switch (deckLoadable.state) {
     case "hasValue":
       return (
         <div className="text-slate-200 ">
-          <span className="text-lg">{deckLoadable.contents?.name + " "}</span>
+          <span>{deckLoadable.contents?.name + " "}</span>
           <span className="text-slate-300">
-            ({deckLoadable.contents?.deck_card_basic_info.length} cards)
+            ({deckCardBasicInfoTotalCards} cards)
           </span>
         </div>
       );

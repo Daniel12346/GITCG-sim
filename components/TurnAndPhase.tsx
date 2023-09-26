@@ -132,11 +132,13 @@ export default ({}) => {
         const randomDice = createRandomDice(8);
         setMyDice(randomDice);
         //TODO: display and reroll dice
-        channel.send({
-          type: "broadcast",
-          event: "dice_change",
-          payload: { dice: randomDice, playerID: myID },
-        });
+        setTimeout(() => {
+          channel.send({
+            type: "broadcast",
+            event: "dice_change",
+            payload: { dice: randomDice, playerID: myID },
+          });
+        }, Math.random() * 1000);
         //throttled because messages from both players would be sent at the same time, exceeding the rate limit
         setTimeout(() => {
           setMyCards((prev) => prev && drawCards(prev, 5));
@@ -178,7 +180,7 @@ export default ({}) => {
   }, [areDecksInitialized]);
 
   return (
-    <div>
+    <div className="text-slate-100 flex gap-4">
       <span>Turn {currentTurn}</span>
       <button
         onClick={() => {
@@ -192,8 +194,10 @@ export default ({}) => {
           });
         }}
       >
-        Move to next phase
-        <span>{amIReadyForNextPhase ? "ready" : "not ready"}</span>
+        Move to next phase:
+        <span className="underline">
+          {amIReadyForNextPhase ? "ready" : "not ready"}
+        </span>
       </button>
       <button
         className="bg-blue-500"
@@ -222,19 +226,6 @@ export default ({}) => {
         onClick={() => setMyDice({ ANEMO: 4, CRYO: 4 })}
       >
         create dice
-      </button>
-      <button
-        className="bg-pink-500"
-        onClick={() => {
-          console.log(
-            "OPP",
-            opponentCards,
-            "hand",
-            opponentCards.filter((card) => card.location === "HAND")
-          );
-        }}
-      >
-        log opp cards
       </button>
 
       {/* ------------------- */}
