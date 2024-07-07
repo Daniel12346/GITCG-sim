@@ -8,17 +8,16 @@ import {
 } from "recoil";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Suspense, useEffect } from "react";
-import MyDecks from "@/components/MyDecks";
+// import MyDecks from "@/components/MyDecks";
 import dynamic from "next/dynamic";
 
 const DeckDisplayNoSSR = dynamic(() => import("@/components/DeckDisplay"), {
   ssr: false,
 });
-//TODO: why does this work?
-const MyDecksNoSSR = dynamic(() => import("@/components/MyDecks"), {
-  ssr: false,
-});
-const MyInfoNoSSR = dynamic(() => import("@/components/LobbyInfo"), {
+// const MyDecksNoSSR = dynamic(() => import("@/components/MyDecks"), {
+//   ssr: false,
+// });
+const MyInfoNoSSR = dynamic(() => import("@/components/MyInfo"), {
   ssr: false,
 });
 
@@ -30,7 +29,7 @@ export default function Me() {
         <h1>Me</h1>
         <MyInfoNoSSR />
         {/* My Id: {mySession?.user.id} */}
-        <MyDecksNoSSR />
+        {/* <MyDecksNoSSR /> */}
         <DeckDisplayNoSSR />
       </div>
     </>

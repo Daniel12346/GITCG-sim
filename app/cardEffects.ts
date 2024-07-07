@@ -1,5 +1,7 @@
+import { Modifier } from "typescript";
 import { addDice, discardCard, drawCards } from "./actions";
 
+//TODO: add missing events
 export type EventType = "ACTIVATION" | "ATTACK" | "REACTION";
 
 type Params = {
@@ -22,6 +24,7 @@ export type ExecuteEffect = (params: Params) => {
   myUpdatedDice?: Dice;
   opponentUpdatedCards?: CardExt[];
   opponentUpdatedDice?: Dice;
+  newModifier?: Modifier;
   errorMessage?: string;
 };
 
@@ -344,24 +347,22 @@ export const effects: { [key: string]: Execution } = {
             ...card,
             //TODO: equip this card, not effect
             equippedCardIDs: [...card.equippedCards!, effect!],
-            effects: card.effects.map((effect) => {
-              if (effect.cost && effect.cost["GEO"]) {
-                return {
-                  ...effect,
-                  cost: {
-                    ...effect.cost,
-                    GEO: effect.cost["GEO"] - 1,
-                  },
-                };
-              } else {
-                return effect;
-              }
-            }),
+            // effects: card.effects.map((effect) => {
+            //   if (effect.cost && effect.cost["GEO"]) {
+            //     return {
+            //       ...effect,
+            //       cost: {
+            //         ...effect.cost,
+            //         GEO: effect.cost["GEO"] - 1,
+            //       },
+            //     };
+            //   } else {
+            //     return effect;
+            //   }
+            //   }),
           };
         }
         //TODO: reduce the cost of talent cards of the character that this card is equipped to
-
-        // else if (card)
         else if (card.id === effect?.card_id) {
           return {
             ...card,

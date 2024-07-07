@@ -1,7 +1,9 @@
 "use client";
 
+import { myDecksState } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useState } from "react";
+import SetCurrentDeck from "./SetCurrentDeck";
 
 interface Props {
   userId: string;
@@ -23,5 +25,16 @@ export default function ClientComponent({ userId }: Props) {
     };
     getDecks();
   }, [supabase, setDecks, userId]);
-  return <pre>{JSON.stringify(decks, null, 2)}</pre>;
+  return (
+    <div>
+      {decks?.map((deck) => {
+        return (
+          <div key={deck.id}>
+            <span>{deck.name}</span>
+            <SetCurrentDeck id={deck.id} />
+          </div>
+        );
+      })}
+    </div>
+  );
 }

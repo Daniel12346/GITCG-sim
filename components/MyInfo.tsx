@@ -2,7 +2,7 @@
 
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useState } from "react";
-import UserDecks from "./UserDecks";
+import UserDecks from "./MyDecks";
 
 export default function UserInfo() {
   const supabase = createClientComponentClient<Database>();
@@ -30,7 +30,7 @@ export default function UserInfo() {
       getUserInfo();
     }, [supabase, setUserInfo, userId]);
   return (
-    <pre>
+    <pre className="text-white">
       {JSON.stringify(userInfo, null, 2)}
       <div>DECKS: {userId && <UserDecks userId={userId} />}</div>
     </pre>

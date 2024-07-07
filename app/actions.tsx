@@ -1,4 +1,6 @@
-import { ExecuteEffect, effects } from "./cardEffects";
+import { StatModifier } from "@/recoil/atoms";
+import { EventType, ExecuteEffect, effects } from "./cardEffects";
+import { uuid } from "uuidv4";
 
 export function drawCards(currentCards: CardExt[], amount: number) {
   const newCardsState = currentCards.map((card) => {
@@ -242,4 +244,31 @@ export const switchActiveCharacterCard = (
     return card;
   });
   return { myUpdatedCards };
+};
+
+type CheckIfUsable = (
+  myCards: CardExt[],
+  myDice: Dice,
+  opponentCards: CardExt[],
+  opponentDice: Dice
+) => boolean;
+
+export const createModifier = (
+  amount: number,
+  usages: number,
+  usagesThisTurn: number,
+  checkIfModifierUsable: CheckIfUsable,
+  forEvent: EventType,
+  forAttackID?: string
+): StatModifier => {
+  const id = uuid();
+  return {
+    id,
+    amount,
+    usages,
+    usagesThisTurn,
+    checkIfModifierUsable,
+    forEvent,
+    forAttackID,
+  };
 };

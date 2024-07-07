@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { atom, selector, selectorFamily, waitForAll } from "recoil";
 import { recoilPersist } from "recoil-persist";
 import { RealtimeChannel } from "@supabase/supabase-js";
-import effects, { ExecuteEffect, Trigger } from "@/app/cardEffects";
+import effects, { EventType, ExecuteEffect, Trigger } from "@/app/cardEffects";
 import { cardFromBasicInfo } from "@/app/utils";
 const { persistAtom } = recoilPersist();
 // const supabase = createClientComponentClient();
@@ -419,6 +419,28 @@ export const opponentCardsInDeckState = selector<Card[]>({
     const opponentCards = get(opponentCardsState);
     return opponentCards.filter((card) => card.location === "DECK");
   },
+});
+
+export type CheckIfModifierUsable = (
+  myCards: CardExt[],
+  myDice: Dice,
+  opponentCards: CardExt[],
+  opponentDice: Dice
+) => boolean;
+
+export interface StatModifier {
+  id: string;
+  forEvent: EventType;
+  forAttackID?: string;
+  amount: number;
+  usages: number;
+  usagesThisTurn: number;
+  checkIfModifierUsable: CheckIfModifierUsable;
+}
+
+export const StatModifiersState = atom<StatModifier[] | []>({
+  key: "modifiersState",
+  default: [],
 });
 
 //TODO: selectors for cards in hand, cards in play, etc.???, available attacks

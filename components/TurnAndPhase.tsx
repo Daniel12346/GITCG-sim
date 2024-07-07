@@ -132,13 +132,11 @@ export default ({}) => {
         const randomDice = createRandomDice(8);
         setMyDice(randomDice);
         //TODO: display and reroll dice
-        setTimeout(() => {
-          channel.send({
-            type: "broadcast",
-            event: "dice_change",
-            payload: { dice: randomDice, playerID: myID },
-          });
-        }, Math.random() * 1000);
+        channel.send({
+          type: "broadcast",
+          event: "dice_change",
+          payload: { dice: randomDice, playerID: myID },
+        });
         //throttled because messages from both players would be sent at the same time, exceeding the rate limit
         setTimeout(() => {
           setMyCards((prev) => prev && drawCards(prev, 5));
