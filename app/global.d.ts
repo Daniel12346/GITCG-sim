@@ -20,8 +20,10 @@ interface CardExtended extends Card {
   cost?: Cost;
   costJson?: Json;
   subtype?: string;
-  equippedCards?: CardExt[] | null;
-  equippedTo?: CardExt | null;
+  //IDs of cards equipped to this card
+  //TODO: remove?
+  // equippedCards?: string[] | null;
+  equippedTo?: string | null;
   //should only be used in deck builder
   quantity?: number;
   //TODO: remove equipped_to_id from card table

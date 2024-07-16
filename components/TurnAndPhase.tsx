@@ -138,18 +138,17 @@ export default ({}) => {
           payload: { dice: randomDice, playerID: myID },
         });
         //throttled because messages from both players would be sent at the same time, exceeding the rate limit
-        setTimeout(() => {
-          setMyCards((prev) => prev && drawCards(prev, 5));
-        }, Math.random() * 1000);
+        // setTimeout(() => {
+        //   setMyCards((prev) => prev && drawCards(prev, 5));
+        // }, Math.random() * 1000);
+        setMyCards((prev) => prev && drawCards(prev, 5));
 
         //TODO: switch cards
         break;
       case "ROLL":
         //TODO: reroll dice
         //TODO: are cards drawn in the first turn?
-        setTimeout(() => {
-          setMyCards((prev) => prev && drawCards(prev, 2));
-        }, Math.random() * 1000);
+        setMyCards((prev) => prev && drawCards(prev, 2));
         break;
     }
   }, [currentPhase]);
@@ -160,16 +159,19 @@ export default ({}) => {
     }
   }, [myCards, opponentCards]);
 
+  //broadcast changes to cards
   useEffect(() => {
-    myCards &&
-      myCards.length &&
-      channel
-        ?.send({
-          type: "broadcast",
-          event: "updated_cards",
-          payload: { playerID: myID, newCardsState: myCards },
-        })
-        .then((res) => console.log("updated_cards", res));
+    setTimeout(() => {
+      myCards &&
+        myCards.length &&
+        channel
+          ?.send({
+            type: "broadcast",
+            event: "updated_cards",
+            payload: { playerID: myID, newCardsState: myCards },
+          })
+          .then((res) => console.log("updated_cards", res));
+    }, Math.random() * 1000);
   }, [channel, myCards]);
 
   //only happens once at the beginning of the game

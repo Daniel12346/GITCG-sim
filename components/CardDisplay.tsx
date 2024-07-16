@@ -14,7 +14,7 @@ export default () => {
           {currentCard?.effects &&
             currentCard.effects.map((effect) => {
               return (
-                <div className="w-full p-2">
+                <div className="w-full p-2" key={effect.id}>
                   <p className="w-full text-slate-200">{effect.description}</p>
                   <div className="flex gap-[0.5rem]">
                     {effect.cost &&

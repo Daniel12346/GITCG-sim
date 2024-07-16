@@ -192,10 +192,10 @@ export const activateEffect: ExecuteEffect = ({
 }) => {
   //TODO: change everything
   if (!effect) return { errorMessage: "no effect" };
-  //TODO: ???????????
-  const effectCard =
+
+  const effectSourceCard =
     thisCard ?? myCards.find((card) => card.id === effect.card_id);
-  if (!effectCard) {
+  if (!effectSourceCard) {
     return { errorMessage: "no card with this effect" };
   }
 
@@ -211,7 +211,7 @@ export const activateEffect: ExecuteEffect = ({
       myDice,
       opponentCards,
       opponentDice,
-      thisCard: effectCard,
+      thisCard: effectSourceCard,
       targetCards,
     });
   }
@@ -253,22 +253,26 @@ type CheckIfUsable = (
   opponentDice: Dice
 ) => boolean;
 
-export const createModifier = (
-  amount: number,
-  usages: number,
-  usagesThisTurn: number,
-  checkIfModifierUsable: CheckIfUsable,
-  forEvent: EventType,
-  forAttackID?: string
-): StatModifier => {
-  const id = uuid();
-  return {
-    id,
-    amount,
-    usages,
-    usagesThisTurn,
-    checkIfModifierUsable,
-    forEvent,
-    forAttackID,
-  };
-};
+// export const createModifier = (
+//   amount: number,
+//   usages: number,
+//   usagesThisTurn: number,
+//   checkIfModifierUsable: CheckIfUsable,
+//   sourceCardID: string,
+//   targetCardID: string,
+//   forEvent?: EventType,
+//   forAttacks?: string[]
+// ): StatModifier => {
+//   const id = uuid();
+//   return {
+//     id,
+//     amount,
+//     usages,
+//     usagesThisTurn,
+//     checkIfModifierUsable,
+//     forEvent,
+//     forAttacks,
+//     sourceCardID,
+//     targetCardID,
+//   };
+// };

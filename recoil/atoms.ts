@@ -3,11 +3,14 @@ import {
   createClientComponentClient,
 } from "@supabase/auth-helpers-nextjs";
 import { uuid } from "uuidv4";
-import { useEffect } from "react";
 import { atom, selector, selectorFamily, waitForAll } from "recoil";
 import { recoilPersist } from "recoil-persist";
 import { RealtimeChannel } from "@supabase/supabase-js";
-import effects, { EventType, ExecuteEffect, Trigger } from "@/app/cardEffects";
+import effects, {
+  EventType,
+  ExecuteEffect,
+  TriggerEvent,
+} from "@/app/cardEffects";
 import { cardFromBasicInfo } from "@/app/utils";
 const { persistAtom } = recoilPersist();
 // const supabase = createClientComponentClient();
@@ -183,12 +186,12 @@ export const myInGameCardsInitialState = selector({
         //   effects: cardBasicInfo.effect_basic_info.map(
         //     (effectBasicInfo): Effect => {
         //       let execute: ExecuteEffect | undefined;
-        //       let trigger: Trigger | undefined;
+        //       let triggerEvent: TriggerEvent | undefined;
         //       let requiredTargets: number | undefined;
         //       const effectLogic = effects[effectBasicInfo.id];
         //       if (effectLogic) {
         //         execute = effectLogic.execute;
-        //         trigger = effectLogic.trigger;
+        //         triggerEvent = effectLogic.triggerEvent;
         //         requiredTargets = effectLogic.requiredTargets;
         //       }
 
@@ -206,7 +209,7 @@ export const myInGameCardsInitialState = selector({
         //         //TODO: generate cost object from cost json
         //         cost: effectBasicInfo.cost as Dice,
         //         execute,
-        //         trigger,
+        //         triggerEvent,
         //         requiredTargets,
         //         description: effectBasicInfo.description || "",
         //         effectType: effectBasicInfo.effect_type || "",
@@ -383,6 +386,11 @@ export const mySelectedTargetCardsState = atom<CardExt[]>({
   default: [],
 });
 
+export const currentlyBeingEquippedState = atom<CardExt | null>({
+  key: "currentlyBeingEquippedState",
+  default: null,
+});
+
 export const requiredTargetsState = atom<number | null>({
   key: "requiredTargetsState",
   default: null,
@@ -422,26 +430,33 @@ export const opponentCardsInDeckState = selector<Card[]>({
 });
 
 export type CheckIfModifierUsable = (
+  //TODO: does the modifier need to know more about the event that happened?
   myCards: CardExt[],
   myDice: Dice,
   opponentCards: CardExt[],
   opponentDice: Dice
 ) => boolean;
 
-export interface StatModifier {
+interface Modifier {
   id: string;
-  forEvent: EventType;
-  forAttackID?: string;
+  sourceCardID: string;
   amount: number;
-  usages: number;
-  usagesThisTurn: number;
-  checkIfModifierUsable: CheckIfModifierUsable;
+  // usages: number;
+  // usagesThisTurn: number;
+  // checkModifierOnEvent: EventType;
+  // checkIfModifierUsable: CheckIfModifierUsable;
 }
 
-export const StatModifiersState = atom<StatModifier[] | []>({
-  key: "modifiersState",
-  default: [],
-});
+export interface StatModifier extends Modifier {
+  targetCardID: string;
+  forAttacks: string[];
+}
+
+//TODO:
+// export const StatModifiersState = atom<StatModifier[]>({
+//   key: "modifiersState",
+//   default: [],
+// });
 
 //TODO: selectors for cards in hand, cards in play, etc.???, available attacks
 //TODO: add player count to game table

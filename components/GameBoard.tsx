@@ -12,6 +12,7 @@ import {
   currentEffectState,
   myInGameCardsState,
   currentActiveCharacterAttacksState,
+  currentlyBeingEquippedState,
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import TurnAndPhase from "./TurnAndPhase";
@@ -26,6 +27,7 @@ import {
   switchActiveCharacterCard,
 } from "@/app/actions";
 import { CardExtended } from "@/app/global";
+import { findEquippedCards } from "@/app/utils";
 
 //TODO: move to another file
 interface PlayerBoardProps {
@@ -51,6 +53,10 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
   const [requiredTargets, setRequiredTargets] =
     useRecoilState(requiredTargetsState);
   const [currentEffect, setCurrentEffect] = useRecoilState(currentEffectState);
+  const [currentlyBeingEquipped, setCurrentlyBeingEquipped] = useRecoilState(
+    currentlyBeingEquippedState
+  );
+
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const isMyBoard = playerID === myID;
@@ -63,20 +69,6 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
     const supabase = createClientComponentClient<Database>();
     const ch = supabase
       .channel("game-cards:" + gameID)
-      // .on(
-      //   "broadcast",
-      //   { event: "activate_card" },
-      //   ({ payload: { card_id } }) => {
-      //     setOpponentInGameCards((prev) => {
-      //       return prev.map((card) => {
-      //         if (card.id === card_id) {
-      //           return { ...card, location: "ACTION" };
-      //         }
-      //         return card;
-      //       });
-      //     });
-      //   }
-      // )
       .on("broadcast", { event: "effect_executed" }, ({ payload }) => {
         console.log("effect_executed", payload);
         const { effect, myCards, myDice, opponentCards, opponentDice } =
@@ -125,8 +117,22 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
       return;
     }
     myUpdatedCards && setMyCards(myUpdatedCards);
+    //TODO: broadcast
   };
 
+  const equipCard = (cardToEquip: CardExt, targetCard: CardExt) => {
+    if (!myCards) return;
+    const updatedCards = myCards.map((card) => {
+      if (card.id === cardToEquip.id) {
+        return { ...card, location: "EQUIPPED", equippedTo: targetCard.id };
+      }
+      return card;
+    });
+    setMyCards(updatedCards);
+    setCurrentlyBeingEquipped(null);
+    setAmSelectingTargets(false);
+    setRequiredTargets(null);
+  };
   const handleActivateEffect = (effect: Effect) => {
     if (!myCards) return;
 
@@ -138,7 +144,6 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
       setAmSelectingTargets(true);
       return;
     }
-
     const {
       myUpdatedCards,
       myUpdatedDice,
@@ -164,7 +169,7 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
       return;
     }
     //updating the the effect whose effect was activated
-    const updateEffectCard = (effectCard: CardExtended) => {
+    const updateEffectSourceCard = (effectCard: CardExtended) => {
       return {
         ...effectCard,
         location: "ACTION",
@@ -183,7 +188,7 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
     const myCurrentCards = myUpdatedCards || myCards;
     const myCurrentCardsWithUpdatedEffectCard = myCurrentCards.map((card) => {
       if (card.id === effectCard.id) {
-        return updateEffectCard(card);
+        return updateEffectSourceCard(card);
       }
       return card;
     });
@@ -209,6 +214,13 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
   };
   const handleUseAttackEffect = (effect: Effect) => {
     if (!myCards) return;
+    //TODO: check required cost and cost modifiers
+    let cost = effect.cost ?? {};
+    myCards.forEach((card) => {
+      if (card.effects.find((effect) => effect.effectType === "MODIFY_COST")) {
+        console.log("COST MODIFIER", card);
+      }
+    });
 
     //TODO: select effect
     if (effect.requiredTargets && !amSelectingTargets) {
@@ -292,7 +304,13 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
                 card={card}
                 isFaceDown={!isMyBoard}
                 handleClick={() => {
-                  handleActivateEffect(card.effects[0]);
+                  if (card.subtype?.includes("EQUIPMENT")) {
+                    setCurrentlyBeingEquipped(card);
+                    setRequiredTargets(1);
+                    setAmSelectingTargets(true);
+                  } else {
+                    handleActivateEffect(card.effects[0]);
+                  }
                 }}
               />
             ))}
@@ -302,6 +320,7 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
                 onClick={() => {
                   setAmSelectingTargets(false);
                   setCurrentEffect(null);
+                  setCurrentlyBeingEquipped(null);
                   setSelectedTargets([]);
                 }}
                 className="bg-orange-300"
@@ -313,8 +332,11 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
                   className="bg-yellow-200"
                   onClick={() => {
                     console.log("current effect", currentEffect);
-                    if (!currentEffect) return;
-                    handleActivateEffect(currentEffect);
+                    if (currentEffect) {
+                      handleActivateEffect(currentEffect);
+                    } else if (currentlyBeingEquipped) {
+                      equipCard(currentlyBeingEquipped, selectedTargetCards[0]);
+                    }
                   }}
                 >
                   confirm
@@ -370,9 +392,7 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
               (card) =>
                 card.location === "ACTION" &&
                 card.subtype &&
-                !["EQUIPMENT_ARTIFACT", "EQUIPMENT_WEAPON"].includes(
-                  card.subtype
-                )
+                !card.subtype.includes("EQUIPMENT")
             )
             .map((card) => (
               <Card
@@ -394,19 +414,25 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
         <div className="flex flex-row justify-evenly gap-2 px-2">
           {playerCards
             ?.filter((card) => card.card_type === "CHARACTER")
-            .map((card) => (
-              <Card
-                key={card.id}
-                card={card}
-                handleClick={() => {
-                  if (amSelectingTargets) {
-                    handleSelectCard(card);
-                    return;
-                  }
-                  isMyBoard && handleSwitchCharacter(card);
-                }}
-              />
-            ))}
+            .map((card) => {
+              const equippedCards = findEquippedCards(card, playerCards);
+              console.log("equipped", equippedCards);
+              return (
+                <Card
+                  key={card.id}
+                  card={card}
+                  equippedCards={equippedCards}
+                  handleClick={() => {
+                    if (amSelectingTargets) {
+                      handleSelectCard(card);
+                      return;
+                    }
+                    //TODO: only enable in certain phase
+                    isMyBoard && handleSwitchCharacter(card);
+                  }}
+                />
+              );
+            })}
         </div>
       </div>
       <div className="bg-yellow-50 h-full">summon zone</div>

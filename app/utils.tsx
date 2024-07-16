@@ -1,5 +1,5 @@
 import { uuid } from "uuidv4";
-import effects, { ExecuteEffect, Trigger } from "./cardEffects";
+import effects, { ExecuteEffect, TriggerEvent } from "./cardEffects";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 type CardBasicInfo = Database["public"]["Tables"]["card_basic_info"]["Row"];
@@ -31,18 +31,19 @@ export const cardFromBasicInfo = (
     subtype: cardBasicInfo.card_subtype || "",
     equipped_to_id: null,
     equippedTo: null,
-    equippedCards: cardBasicInfo.card_type === "CHARACTER" ? [] : null,
+    //TODO: remove this?
+    // equippedCards: cardBasicInfo.card_type === "CHARACTER" ? [] : null,
     //TODO: fix
     //@ts-ignore
     effects: cardBasicInfo.effect_basic_info.map(
       (effectBasicInfo: any): Effect => {
         let execute: ExecuteEffect | undefined;
-        let trigger: Trigger | undefined;
+        let triggerOn: TriggerEvent | undefined;
         let requiredTargets: number | undefined;
         const effectLogic = effects[effectBasicInfo.id];
         if (effectLogic) {
           execute = effectLogic.execute;
-          trigger = effectLogic.trigger;
+          triggerOn = effectLogic.triggerOn;
           requiredTargets = effectLogic.requiredTargets;
         }
 
@@ -60,7 +61,7 @@ export const cardFromBasicInfo = (
           //TODO: generate cost object from cost json
           cost: effectBasicInfo.cost as Dice,
           execute,
-          trigger,
+          triggerOn,
           requiredTargets,
           description: effectBasicInfo.description || "",
           effectType: effectBasicInfo.effect_type || "",
@@ -126,4 +127,8 @@ export const removeBasicInfoFromDeck = async (
   console.log(result);
   result.error && console.log(result.error);
   return result;
+};
+
+export const findEquippedCards = (target: CardExt, playerCards: CardExt[]) => {
+  return playerCards.filter((card) => card.equippedTo === target.id);
 };
