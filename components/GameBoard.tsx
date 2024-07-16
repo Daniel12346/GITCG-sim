@@ -17,7 +17,7 @@ import {
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import TurnAndPhase from "./TurnAndPhase";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Card from "./Card";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import {
@@ -117,11 +117,24 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
       return;
     }
     myUpdatedCards && setMyCards(myUpdatedCards);
-    //TODO: broadcast
   };
 
   const equipCard = (cardToEquip: CardExt, targetCard: CardExt) => {
     if (!myCards) return;
+    if (cardToEquip.cost) {
+      let updatedDice = null;
+      try {
+        console.log("subtr1", myDice, cardToEquip.cost);
+        console.log("subtr2", subtractCost(myDice, cardToEquip.cost));
+
+        updatedDice = subtractCost(myDice, cardToEquip.cost);
+      } catch (e) {
+        console.log(e);
+        setErrorMessage("Not enough dice");
+        return;
+      }
+      setMyDice(updatedDice);
+    }
     const updatedCards = myCards.map((card) => {
       if (card.id === cardToEquip.id) {
         return { ...card, location: "EQUIPPED", equippedTo: targetCard.id };
