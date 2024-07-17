@@ -80,6 +80,7 @@ export default ({}) => {
           //the preparation phase only happens once at the beginning of the game
           case "PREPARATION":
             nextPhase = "ROLL";
+            break;
           case "ROLL":
             nextPhase = "ACTION";
             break;
@@ -103,6 +104,9 @@ export default ({}) => {
         if (payload.playerID !== myID) {
           setOpponentDice(payload.dice);
         }
+      })
+      .on("broadcast", { event: "switch_player" }, ({ payload }) => {
+        setTurnPlayerID(payload.playerID);
       })
       .subscribe(async (status) => {
         console.log("status", status);
