@@ -13,6 +13,7 @@ import {
   myInGameCardsState,
   currentActiveCharacterAttacksState,
   currentlyBeingEquippedState,
+  targetingPurposeState,
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import TurnAndPhase from "./TurnAndPhase";
@@ -27,7 +28,7 @@ import {
   switchActiveCharacterCard,
 } from "@/app/actions";
 import { CardExtended } from "@/app/global";
-import { findEquippedCards } from "@/app/utils";
+import { findCostModifyingEffects, findEquippedCards } from "@/app/utils";
 
 //TODO: move to another file
 interface PlayerBoardProps {
@@ -52,6 +53,9 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
   );
   const [requiredTargets, setRequiredTargets] =
     useRecoilState(requiredTargetsState);
+  const [targetingPurpose, setTargetingPurpose] = useRecoilState(
+    targetingPurposeState
+  );
   const [currentEffect, setCurrentEffect] = useRecoilState(currentEffectState);
   const [currentlyBeingEquipped, setCurrentlyBeingEquipped] = useRecoilState(
     currentlyBeingEquippedState
@@ -137,13 +141,19 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
     }
     const updatedCards = myCards.map((card) => {
       if (card.id === cardToEquip.id) {
-        return { ...card, location: "EQUIPPED", equippedTo: targetCard.id };
+        return {
+          ...card,
+          location: "EQUIPPED",
+          equippedTo: targetCard.id,
+        };
       }
       return card;
     });
-    setMyCards(updatedCards);
+    setMyCards(updatedCards as CardExtended[]);
     setCurrentlyBeingEquipped(null);
     setAmSelectingTargets(false);
+    setTargetingPurpose(null);
+    setSelectedTargets([]);
     setRequiredTargets(null);
   };
   const handleActivateEffect = (effect: Effect) => {
@@ -169,7 +179,7 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
       myCards: myCards,
       myDice,
       opponentCards: opponentInGameCards,
-      opponentDice: {},
+      opponentDice: opponentDice,
       targetCards: selectedTargetCards,
     });
     if (errorMessage) {
@@ -205,7 +215,7 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
       }
       return card;
     });
-    setMyCards(myCurrentCardsWithUpdatedEffectCard);
+    setMyCards(myCurrentCardsWithUpdatedEffectCard as CardExtended[]);
 
     opponentUpdatedCards && setOpponentInGameCards(opponentUpdatedCards);
     myUpdatedDice && setMyDice(myUpdatedDice);
@@ -227,23 +237,41 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
   };
   const handleUseAttackEffect = (effect: Effect) => {
     if (!myCards) return;
-    //TODO: check required cost and cost modifiers
-    let cost = effect.cost ?? {};
-    myCards.forEach((card) => {
-      if (card.effects.find((effect) => effect.effectType === "MODIFY_COST")) {
-        console.log("COST MODIFIER", card);
-      }
-    });
+    let cost = effect.cost;
+    let myDiceAfterCost = myDice;
+    if (cost) {
+      const costModifyingEffects = findCostModifyingEffects(myCards);
+      console.log("modifiers", costModifyingEffects);
+      costModifyingEffects.forEach((effect) => {
+        if (!effect?.execute) return;
+        let { modifiedCost, errorMessage } = effect.execute({
+          effect,
+          playerID: myID,
+          myCards,
+          myDice,
+          opponentCards: opponentInGameCards,
+          opponentDice: opponentDice,
+        });
+        if (errorMessage) {
+          setErrorMessage(errorMessage);
+          //TODO: return?
+          return;
+        }
+        if (modifiedCost) {
+          cost = modifiedCost;
+        }
+      });
 
-    //TODO: select effect
-    if (effect.requiredTargets && !amSelectingTargets) {
-      setRequiredTargets(effect.requiredTargets);
-      setCurrentEffect(effect);
-      setAmSelectingTargets(true);
-      return;
+      try {
+        myDiceAfterCost = subtractCost(myDice, cost);
+      } catch (e) {
+        setErrorMessage("Not enough dice");
+        return;
+      }
     }
 
     // const effectCard = activateCard(card);
+    console.log("cost after", cost);
     const {
       myUpdatedCards,
       myUpdatedDice,
@@ -254,9 +282,9 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
       playerID: myID,
       effect,
       myCards: myCards,
-      myDice,
+      myDice: myDiceAfterCost,
       opponentCards: opponentInGameCards,
-      opponentDice: {},
+      opponentDice: opponentDice,
       targetCards: selectedTargetCards,
     });
     if (errorMessage) {
@@ -270,13 +298,10 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
     }
 
     myUpdatedCards && setMyCards(myUpdatedCards);
+    setMyDice(myUpdatedDice || myDiceAfterCost);
     opponentUpdatedCards && setOpponentInGameCards(opponentUpdatedCards);
     opponentUpdatedDice && setOpponentDice(opponentUpdatedDice);
-    const myDiceAfterAttack = myUpdatedDice || myDice;
-    const myUpdatedDiceAfterCost =
-      myDiceAfterAttack &&
-      effect.cost &&
-      subtractCost(myDiceAfterAttack, effect.cost);
+
     setAmSelectingTargets(false);
     setSelectedTargets([]);
     channel?.send({
@@ -287,7 +312,7 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
         effect,
         playerID: myID,
         myCards: myUpdatedCards,
-        myDice: myUpdatedDiceAfterCost,
+        myDice: myUpdatedDice,
         opponentCards: opponentUpdatedCards,
         opponentDice: opponentUpdatedDice,
       },
@@ -320,6 +345,7 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
                   if (card.subtype?.includes("EQUIPMENT")) {
                     setCurrentlyBeingEquipped(card);
                     setRequiredTargets(1);
+                    setTargetingPurpose("EQUIP");
                     setAmSelectingTargets(true);
                   } else {
                     handleActivateEffect(card.effects[0]);
@@ -334,6 +360,7 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
                   setAmSelectingTargets(false);
                   setCurrentEffect(null);
                   setCurrentlyBeingEquipped(null);
+                  setTargetingPurpose(null);
                   setSelectedTargets([]);
                 }}
                 className="bg-orange-300"
@@ -345,10 +372,15 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
                   className="bg-yellow-200"
                   onClick={() => {
                     console.log("current effect", currentEffect);
-                    if (currentEffect) {
-                      handleActivateEffect(currentEffect);
-                    } else if (currentlyBeingEquipped) {
+                    if (
+                      targetingPurpose === "EQUIP" &&
+                      currentlyBeingEquipped
+                    ) {
                       equipCard(currentlyBeingEquipped, selectedTargetCards[0]);
+                    } else if (targetingPurpose === "ATTACK" && currentEffect) {
+                      handleUseAttackEffect(currentEffect);
+                    } else if (targetingPurpose === "EFFECT" && currentEffect) {
+                      handleActivateEffect(currentEffect);
                     }
                   }}
                 >
@@ -368,11 +400,18 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
         <div className="flex justify-between gap-2 overflow-hidden">
           {isMyBoard && (
             <>
-              {/* //TODO: use attack on click */}
               {attacks?.map((attack) => (
                 <div
                   className=" bg-blue-300 cursor-pointer z-20"
-                  onClick={() => handleUseAttackEffect(attack)}
+                  onClick={() => {
+                    if (attack.requiredTargets && !amSelectingTargets) {
+                      setRequiredTargets(attack.requiredTargets);
+                      setCurrentEffect(attack);
+                      setTargetingPurpose("ATTACK");
+                      setAmSelectingTargets(true);
+                      return;
+                    }
+                  }}
                 >
                   {/* <p className="text-xs">{attack.description}</p> */}
                   <div className="h-full">
@@ -429,7 +468,6 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
             ?.filter((card) => card.card_type === "CHARACTER")
             .map((card) => {
               const equippedCards = findEquippedCards(card, playerCards);
-              console.log("equipped", equippedCards);
               return (
                 <Card
                   key={card.id}
@@ -449,7 +487,6 @@ const PlayerBoard = ({ playerID }: PlayerBoardProps) => {
         </div>
       </div>
       <div className="bg-yellow-50 h-full">summon zone</div>
-      {/* //TODO: move to another component and add opponent's dice */}
       {/* //TODO: display dice */}
       <div className="bg-yellow-50 h-full overflow-hidden">
         {Object.entries(playerDice)

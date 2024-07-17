@@ -35,6 +35,27 @@ type Params = {
 //   errorMessage?: string;
 // };
 
+//used to make the execute effect functions of 6 relics with their only difference being the element, all with the cost of 2 unaligned
+const makeExecuteFunctionOfElementalRelicWith2UnalignedCost = (
+  element: CostElementName
+): ExecuteEffect => {
+  return ({ triggerContext }) => {
+    //TODO: check if this card is equipped
+    let cost = triggerContext?.cost;
+    if (!triggerContext) {
+      return { errorMessage: "No trigger context" };
+    }
+    if (!["ATTACK", "EQUIP_TALENT"].includes(triggerContext.eventType)) {
+      return { errorMessage: "Wrong trigger context" };
+    }
+    try {
+      cost = subtractCost({ ...cost }, { [element]: 1 }) as Cost;
+    } finally {
+      return { modifiedCost: cost };
+    }
+  };
+};
+
 export type ExecuteEffect = (params: Params) => {
   //return all cards, including the ones that haven't changed
   myUpdatedCards?: CardExt[];
@@ -109,11 +130,11 @@ export const effects: { [key: string]: Execution } = {
           if (card.location === "SUMMON") {
             return {
               ...card,
-              location: "DISCARD",
+              location: "DISCARDED",
               //TODO: make a function for resetting cards
               effects: [],
               counters: 0,
-            };
+            } as CardExt;
           } else {
             return card;
           }
@@ -358,23 +379,18 @@ export const effects: { [key: string]: Execution } = {
       return { myUpdatedCards };
     },
   },
-  //Mask of Solitude Basalt
   //TODO: make copies for other elements
+  //Mask of Solitude Basalt
   "85247510-9f6b-4d6e-8da0-55264aba3c8b": {
-    execute: ({ myCards, triggerContext }) => {
-      //TODO: check if this card is equipped
-      let cost = triggerContext?.cost;
-      if (!triggerContext) {
-        return { errorMessage: "No trigger context" };
-      }
-      if (!["ATTACK", "EQUIP_TALENT"].includes(triggerContext.eventType)) {
-        return { errorMessage: "Wrong trigger context" };
-      }
-      cost = subtractCost({ ...cost }, { GEO: 1 }) as Cost;
-      return { modifiedCost: cost };
-    },
+    execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost("GEO"),
   },
+  //Viridescent Venerer's Diadem
+  "176b463b-fa66-454b-94f6-b81a60ff5598": {
+    execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost("ANEMO"),
+  },
+
   //--------------ATTACKS------------------
+
   "b4a1b3f5-45a1-4db8-8d07-a21cb5e5be11": {
     requiredTargets: 1,
     execute: ({ opponentCards, thisCard, targetCards }) => {

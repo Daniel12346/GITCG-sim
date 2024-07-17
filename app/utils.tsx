@@ -132,3 +132,22 @@ export const removeBasicInfoFromDeck = async (
 export const findEquippedCards = (target: CardExt, playerCards: CardExt[]) => {
   return playerCards.filter((card) => card.equippedTo === target.id);
 };
+
+export const findCostModifyingEffects = (cards: CardExt[]) => {
+  return cards.reduce((acc, card) => {
+    //TODO: add other allowed locations
+    return ["ACTION", "EQUIPPED"].includes(card.location!)
+      ? acc.concat(
+          card.effects.filter((effect) => effect.effectType === "COST_MODIFIER")
+        )
+      : acc;
+  }, [] as Effect[]);
+};
+
+export const findCostModifyingEffectsOfCardsEquippedTo = (
+  target: CardExt,
+  playerCards: CardExt[]
+) => {
+  const equippedCards = findEquippedCards(target, playerCards);
+  return findCostModifyingEffects(equippedCards);
+};

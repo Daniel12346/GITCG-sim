@@ -158,65 +158,6 @@ export const myInGameCardsInitialState = selector({
       for (let i = 0; i < quantity; i++) {
         const card = cardFromBasicInfo(cardBasicInfo, myID);
         myDeckCardsInGame.push(card);
-        // const cardID = uuid();
-        // myDeckCardsInGame.push({
-        //   ...cardBasicInfo,
-        //   //TODO: make cardType either nullalble or non-nullable for both cardBasicInfo and card
-        //   card_type: cardBasicInfo.card_type ?? "",
-        //   counters: 0,
-        //   location:
-        //     cardBasicInfo.card_type === "CHARACTER" ? "CHARACTER" : "DECK",
-        //   id: cardID,
-        //   card_basic_info_id: cardBasicInfo.id,
-        //   energy: 0,
-        //   health: cardBasicInfo.base_health,
-        //   statuses: [],
-        //   usages: 0,
-        //   //refers to whether the card is currently in play (only for character cards?)
-        //   is_active: false,
-        //   owner_id: myID,
-        //   //TODO: generate cost object from cost json
-        //   costJson: cardBasicInfo.cost,
-        //   cost: cardBasicInfo.cost as Dice,
-        //   //TODO: use JSON because the card itself is not stored in the database
-        //   subtype: cardBasicInfo.card_subtype || "",
-        //   equipped_to_id: null,
-        //   equippedTo: null,
-        //   equippedCards: cardBasicInfo.card_type === "CHARACTER" ? [] : null,
-        //   effects: cardBasicInfo.effect_basic_info.map(
-        //     (effectBasicInfo): Effect => {
-        //       let execute: ExecuteEffect | undefined;
-        //       let triggerEvent: TriggerEvent | undefined;
-        //       let requiredTargets: number | undefined;
-        //       const effectLogic = effects[effectBasicInfo.id];
-        //       if (effectLogic) {
-        //         execute = effectLogic.execute;
-        //         triggerEvent = effectLogic.triggerEvent;
-        //         requiredTargets = effectLogic.requiredTargets;
-        //       }
-
-        //       return {
-        //         ...effectBasicInfo,
-        //         id: uuid(),
-        //         effect_basic_info_id: effectBasicInfo.id,
-        //         card_id: cardID,
-        //         // card_basic_infoId: cardBasicInfo.id,
-        //         total_usages: 0,
-        //         usages_this_turn: 0,
-        //         costJson: effectBasicInfo.cost,
-        //         //TODO: ??????
-        //         effect_basic_infoIdId: effectBasicInfo.id,
-        //         //TODO: generate cost object from cost json
-        //         cost: effectBasicInfo.cost as Dice,
-        //         execute,
-        //         triggerEvent,
-        //         requiredTargets,
-        //         description: effectBasicInfo.description || "",
-        //         effectType: effectBasicInfo.effect_type || "",
-        //       };
-        //     }
-        //   ),
-        // });
       }
     });
     console.log("myDeckCardsInGame", myDeckCardsInGame);
@@ -396,6 +337,13 @@ export const requiredTargetsState = atom<number | null>({
   default: null,
 });
 
+export const targetingPurposeState = atom<"ATTACK" | "EQUIP" | "EFFECT" | null>(
+  {
+    key: "targetingPurposeState",
+    default: null,
+  }
+);
+
 export const currentEffectState = atom<Effect | null>({
   key: "currentEffect",
   default: null,
@@ -418,7 +366,7 @@ export const opponentCardsInDiscardPileState = selector<Card[]>({
   key: "opponentCardsInDiscardPileState",
   get: ({ get }) => {
     const opponentCards = get(opponentCardsState);
-    return opponentCards.filter((card) => card.location === "DISCARD_PILE");
+    return opponentCards.filter((card) => card.location === "DISCARDED");
   },
 });
 export const opponentCardsInDeckState = selector<Card[]>({
@@ -428,35 +376,6 @@ export const opponentCardsInDeckState = selector<Card[]>({
     return opponentCards.filter((card) => card.location === "DECK");
   },
 });
-
-export type CheckIfModifierUsable = (
-  //TODO: does the modifier need to know more about the event that happened?
-  myCards: CardExt[],
-  myDice: Dice,
-  opponentCards: CardExt[],
-  opponentDice: Dice
-) => boolean;
-
-interface Modifier {
-  id: string;
-  sourceCardID: string;
-  amount: number;
-  // usages: number;
-  // usagesThisTurn: number;
-  // checkModifierOnEvent: EventType;
-  // checkIfModifierUsable: CheckIfModifierUsable;
-}
-
-export interface StatModifier extends Modifier {
-  targetCardID: string;
-  forAttacks: string[];
-}
-
-//TODO:
-// export const StatModifiersState = atom<StatModifier[]>({
-//   key: "modifiersState",
-//   default: [],
-// });
 
 //TODO: selectors for cards in hand, cards in play, etc.???, available attacks
 //TODO: add player count to game table

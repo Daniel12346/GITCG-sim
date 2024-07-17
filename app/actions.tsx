@@ -219,7 +219,7 @@ export const activateEffect: ExecuteEffect = ({
   return { errorMessage: "could not execute effect" };
 };
 export const discardCard = (card: CardExt) => {
-  return { ...card, location: "DISCARD" };
+  return { ...card, location: "DISCARDED" } as CardExt;
 };
 
 export const switchActiveCharacterCard = (
