@@ -1,6 +1,7 @@
 import { uuid } from "uuidv4";
 import effects, { ExecuteEffect, TriggerEvent } from "./cardEffects";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { DieElementNameT } from "./global";
 
 type CardBasicInfo = Database["public"]["Tables"]["card_basic_info"]["Row"];
 export const cardFromBasicInfo = (
@@ -150,4 +151,33 @@ export const findCostModifyingEffectsOfCardsEquippedTo = (
 ) => {
   const equippedCards = findEquippedCards(target, playerCards);
   return findCostModifyingEffects(equippedCards);
+};
+
+export const findDamageModifyingEffects = (cards: CardExt[]) => {
+  return cards.reduce((acc, card) => {
+    return ["ACTION", "EQUIPPED"].includes(card.location!)
+      ? acc.concat(
+          card.effects.filter(
+            (effect) => effect.effectType === "DAMAGE_MODIFIER"
+          )
+        )
+      : acc;
+  }, [] as Effect[]);
+};
+
+export const createRandomElementalDice = (amount: number) => {
+  const elements: DieElementNameT[] = [
+    "ANEMO",
+    "DENDRO",
+    "PYRO",
+    "HYDRO",
+    "ELECTRO",
+    "CRYO",
+    "GEO",
+  ];
+  const dice: Dice = {};
+  for (let i = 0; i < amount; i++) {
+    const element = elements[Math.floor(Math.random() * elements.length)];
+    dice[element] = (dice[element] || 0) + 1;
+  }
 };

@@ -1,5 +1,5 @@
 import { addDice, discardCard, drawCards, subtractCost } from "./actions";
-import { findEquippedCards } from "./utils";
+import { findDamageModifyingEffects, findEquippedCards } from "./utils";
 
 //TODO: add missing events
 export type EventType =
@@ -11,18 +11,31 @@ export type EventType =
   | "EQUIP_WEAPON"
   | "SWITCH";
 
-type Params = {
-  playerID: string;
+type ExecuteEffectParams = {
+  //TODO: move some params to the trigger context
   myCards: CardExt[];
   opponentCards: CardExt[];
   myDice: Dice;
   opponentDice: Dice;
+  playerID?: string;
   triggerContext?: TriggerContext;
   effect?: Effect;
   thisCard?: CardExt;
   //the card that is being targeted by the activated card
   targetCards?: CardExt[];
 };
+
+type CanExecuteEffectParams = {
+  myCards?: CardExt[];
+  opponentCards?: CardExt[];
+  triggerContext?: TriggerContext;
+  effect?: Effect;
+  thisCard?: CardExt;
+  //the card that is being targeted by the activated card
+  targetCards?: CardExt[];
+  //TODO: add more params
+};
+
 //TODO: update only cards that have changed
 //type myUpdatedCards = {[id: string]: CardExt}
 
@@ -56,7 +69,35 @@ const makeExecuteFunctionOfElementalRelicWith2UnalignedCost = (
   };
 };
 
-export type ExecuteEffect = (params: Params) => {
+type MakeExecuteAndCanExecuteFunctionsOfWeaponWithPlus1Damage = (
+  weapon_type: string
+) => {
+  canExecute: CanExecuteEffect;
+  execute: ExecuteEffect;
+};
+//used to make the execute and canExecute functions of a weapon with +1 damage
+const makeExecuteAndCanExecuteFunctionsOfWeaponWithPlus1Damage: MakeExecuteAndCanExecuteFunctionsOfWeaponWithPlus1Damage =
+  (weapon_type: string) => {
+    return {
+      canExecute: ({ triggerContext }) => {
+        //TODO: throw an error if the weapon_type is not sword
+        if (triggerContext?.targetCard?.weapon_type === weapon_type)
+          return {
+            errorMessage: "Wrong weapon type",
+          };
+      },
+      execute: ({ triggerContext }) => {
+        return triggerContext?.damage
+          ? { modifiedDamage: triggerContext.damage + 1 }
+          : { errorMessage: "No damage found" };
+      },
+    };
+  };
+
+export type CanExecuteEffect = (
+  params: CanExecuteEffectParams
+) => { errorMessage?: string } | void;
+export type ExecuteEffect = (params: ExecuteEffectParams) => {
   //return all cards, including the ones that haven't changed
   myUpdatedCards?: CardExt[];
   myUpdatedDice?: Dice;
@@ -64,6 +105,7 @@ export type ExecuteEffect = (params: Params) => {
   opponentUpdatedDice?: Dice;
   errorMessage?: string;
   modifiedCost?: Cost;
+  modifiedDamage?: number;
 };
 
 export type TriggerEvent = EventType | EventType[] | null;
@@ -75,6 +117,7 @@ export type TriggerContext = {
   targetCard?: CardExt;
   attackID?: string;
   cost?: Cost;
+  damage?: number;
 };
 
 type Execution = {
@@ -83,6 +126,7 @@ type Execution = {
   //null would mean that the effect is activated immediately
   triggerOn?: TriggerEvent;
   //TODO: use a canBeActivated function instead?
+  canExecute?: CanExecuteEffect;
   execute: ExecuteEffect;
 };
 
@@ -171,6 +215,15 @@ export const effects: { [key: string]: Execution } = {
   //Quick Knit
   "a15baf43-884b-4e7d-86a7-9f3261d4d7f5": {
     requiredTargets: 1,
+    canExecute: ({ targetCards, myCards }) => {
+      const target = targetCards?.[0];
+      if (!target) {
+        return { errorMessage: "No target card found" };
+      }
+      if (target.location !== "SUMMON") {
+        return { errorMessage: "Target card is not a summon card" };
+      }
+    },
     execute: ({ targetCards, myCards }) => {
       const target = targetCards?.[0];
       if (!target) {
@@ -194,136 +247,93 @@ export const effects: { [key: string]: Execution } = {
   },
 
   // //Blessing of the Divine Relic's Installation
-  //TODO: rewrite
-  // "ce166d08-1be9-4937-a601-b34835c97dd2": {
-  //   //the effect targets character cards, the artifact does not need to be targeted because a character can only have one artifact at a time
-  //   requiredTargets: 2,
-  //   execute: ({ targetCards, myCards }) => {
-  //     if (!targetCards || targetCards.length < 2) {
-  //       return { errorMessage: "Two target cards are required" };
-  //     }
-  //     const [shiftFromTarget, shiftToTarget] = targetCards;
-  //     if (!shiftFromTarget || !shiftToTarget) {
-  //       return { errorMessage: "No target card found" };
-  //     }
-  //     if (
-  //       shiftFromTarget.location !== "CHARACTER" ||
-  //       shiftToTarget.location !== "CHARACTER"
-  //     ) {
-  //       return { errorMessage: "Target card is not a character card" };
-  //     }
-  //     const cardsEquippedToShiftFromTarget = findEquippedCards(
-  //       shiftFromTarget,
-  //       myCards
-  //     );
-  //     if (
-  //       cardsEquippedToShiftFromTarget.find(
-  //         (c) => c.subtype === "EQUIPMENT_ARTIFACT"
-  //       )
-  //     ) {
-  //       return { errorMessage: "No artifact found on the first target card" };
-  //     }
-  //     let artifactToShift: CardExt | null = null;
-  //     let shiftFromTargetIndex = -1;
-  //     let shiftToTargetIndex = -1;
-  //     const myUpdatedCards = [...myCards];
-  //     // myUpdatedCards.forEach((card, index) => {
-  //     //   if (card.id === shiftFromTarget?.id) {
-  //     //     artifactToShift =
-  //     //       card.equippedCards?.find(
-  //     //         (c) => c.subtype === "EQUIPMENT_ARTIFACT"
-  //     //       ) ?? null;
-  //     //     if (!artifactToShift) {
-  //     //       return {
-  //     //         errorMessage: "No artifact found on the first target card",
-  //     //       };
-  //     //     }
-  //     //     shiftFromTargetIndex = index;
-  //     //   }
-  //     //   if (card.id === shiftToTarget?.id) {
-  //     //     shiftToTargetIndex = index;
-  //     //   }
-  //     //   myUpdatedCards[shiftFromTargetIndex] = {
-  //     //     ...myUpdatedCards[shiftFromTargetIndex],
-  //     //     equippedCards: myUpdatedCards[
-  //     //       shiftFromTargetIndex
-  //     //     ].equippedCards?.filter((c) => c.id !== artifactToShift?.id),
-  //     //   };
-  //     //   myUpdatedCards[shiftToTargetIndex] = {
-  //     //     ...myUpdatedCards[shiftToTargetIndex],
-  //     //     equippedCards: [
-  //     //       ...(myUpdatedCards[shiftToTargetIndex].equippedCards ?? []),
-  //     //       artifactToShift!,
-  //     //     ],
-  //     //   };
-  //     // });
+  "ce166d08-1be9-4937-a601-b34835c97dd2": {
+    execute: ({ targetCards, myCards }) => {
+      if (!targetCards || targetCards.length < 2) {
+        return { errorMessage: "Two target cards are required" };
+      }
+      const [shiftFromTarget, shiftToTarget] = targetCards;
+      if (!shiftFromTarget || !shiftToTarget) {
+        return { errorMessage: "No target card found" };
+      }
+      if (
+        shiftFromTarget.location !== "CHARACTER" ||
+        shiftToTarget.location !== "CHARACTER"
+      ) {
+        return { errorMessage: "Target card is not a character card" };
+      }
+      const cardsEquippedToShiftFromTarget = findEquippedCards(
+        shiftFromTarget,
+        myCards
+      );
+      const artifactsEquippedToShiftFromTarget =
+        cardsEquippedToShiftFromTarget.filter(
+          (card) => card.subtype === "EQUIPMENT_ARTIFACT"
+        );
+      if (!artifactsEquippedToShiftFromTarget.length) {
+        return { errorMessage: "No artifact found on the first target card" };
+      }
+      const artifactToShift: CardExt = artifactsEquippedToShiftFromTarget[0];
+      const myUpdatedCards = myCards.map((card) => {
+        if (card.id === artifactToShift.id) {
+          return {
+            ...card,
+            equippedTo: shiftToTarget.id,
+          };
+        } else {
+          return card;
+        }
+      });
 
-  //     return { myUpdatedCards };
-  //   },
-  // },
+      return { myUpdatedCards };
+    },
+  },
 
-  //Master of Weaponry
-  //TODO: rewrite
-  // "916e111b-1418-4aad-9854-957c4c07e028": {
-  //   //the effect targets character cards, the weapon does not need to be targeted because a character can only have one weapon at a time
-  //   requiredTargets: 2,
-  //   execute: ({ targetCards, myCards }) => {
-  //     if (!targetCards || targetCards.length < 2) {
-  //       return { errorMessage: "Two target cards are required" };
-  //     }
-  //     const [shiftFromTarget, shiftToTarget] = targetCards;
-  //     if (!shiftFromTarget || !shiftToTarget) {
-  //       return { errorMessage: "No target card found" };
-  //     }
-  //     if (
-  //       shiftFromTarget.location !== "CHARACTER" ||
-  //       shiftToTarget.location !== "CHARACTER"
-  //     ) {
-  //       return { errorMessage: "Target card is not a character card" };
-  //     }
-  //     if (
-  //       !shiftFromTarget.equippedCards?.find(
-  //         (c) => c.subtype === "EQUIPMENT_WEAPON"
-  //       )
-  //     ) {
-  //       return { errorMessage: "No weapon found on the first target card" };
-  //     }
-  //     let weaponToShift: CardExt | null = null;
-  //     let shiftFromTargetIndex = -1;
-  //     let shiftToTargetIndex = -1;
-  //     const myUpdatedCards = [...myCards];
-  //     myUpdatedCards.forEach((card, index) => {
-  //       if (card.id === shiftFromTarget?.id) {
-  //         weaponToShift =
-  //           card.equippedCards?.find(
-  //             (c) => c.subtype === "EQUIPMENT_WEAPON  "
-  //           ) ?? null;
-  //         if (!weaponToShift) {
-  //           return { errorMessage: "No weapon found on the first target card" };
-  //         }
-  //         shiftFromTargetIndex = index;
-  //       }
-  //       if (card.id === shiftToTarget?.id) {
-  //         shiftToTargetIndex = index;
-  //       }
-  //       myUpdatedCards[shiftFromTargetIndex] = {
-  //         ...myUpdatedCards[shiftFromTargetIndex],
-  //         equippedCards: myUpdatedCards[
-  //           shiftFromTargetIndex
-  //         ].equippedCards?.filter((c) => c.id !== weaponToShift?.id),
-  //       };
-  //       myUpdatedCards[shiftToTargetIndex] = {
-  //         ...myUpdatedCards[shiftToTargetIndex],
-  //         equippedCards: [
-  //           ...(myUpdatedCards[shiftToTargetIndex].equippedCards ?? []),
-  //           weaponToShift!,
-  //         ],
-  //       };
-  //     });
+  // Master of Weaponry
+  "916e111b-1418-4aad-9854-957c4c07e028": {
+    //the effect targets character cards, the weapon does not need to be targeted because a character can only have one weapon at a time
+    requiredTargets: 2,
+    execute: ({ targetCards, myCards }) => {
+      if (!targetCards || targetCards.length < 2) {
+        return { errorMessage: "Two target cards are required" };
+      }
+      const [shiftFromTarget, shiftToTarget] = targetCards;
+      if (!shiftFromTarget || !shiftToTarget) {
+        return { errorMessage: "No target card found" };
+      }
+      if (
+        shiftFromTarget.location !== "CHARACTER" ||
+        shiftToTarget.location !== "CHARACTER"
+      ) {
+        return { errorMessage: "Target card is not a character card" };
+      }
+      const cardsEquippedToShiftFromTarget = findEquippedCards(
+        shiftFromTarget,
+        myCards
+      );
+      const weaponsEquippedToShiftFromTarget =
+        cardsEquippedToShiftFromTarget.filter(
+          (card) => card.subtype === "EQUIPMENT_WEAPON"
+        );
+      if (!weaponsEquippedToShiftFromTarget.length) {
+        return { errorMessage: "No weapon found on the first target card" };
+      }
+      //TODO: select weapon
+      const weaponToShift: CardExt = weaponsEquippedToShiftFromTarget[0];
+      const myUpdatedCards = myCards.map((card) => {
+        if (card.id === weaponToShift.id) {
+          return {
+            ...card,
+            equippedTo: shiftToTarget.id,
+          };
+        } else {
+          return card;
+        }
+      });
 
-  //     return { myUpdatedCards };
-  //   },
-  // },
+      return { myUpdatedCards };
+    },
+  },
 
   //When the Crane Returned
   //TODO: finish this
@@ -389,22 +399,78 @@ export const effects: { [key: string]: Execution } = {
     execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost("ANEMO"),
   },
 
+  //Traveler's Handy Sword
+  "e565dda8-5269-4d15-a31c-694835065dc3":
+    makeExecuteAndCanExecuteFunctionsOfWeaponWithPlus1Damage("SWORD"),
+  "b9c55fd7-53df-45a5-9414-69fb476d2bf8":
+    //White Iron Greatsword
+    makeExecuteAndCanExecuteFunctionsOfWeaponWithPlus1Damage("CLAYMORE"),
+  "90a07945-88d6-468e-96d8-32c2e6c19835":
+    //White Tassel
+    makeExecuteAndCanExecuteFunctionsOfWeaponWithPlus1Damage("POLEARM"),
+  "6d9e0cde-a9f7-4056-bebb-a2dfc7020320":
+    //Magic Guide
+    makeExecuteAndCanExecuteFunctionsOfWeaponWithPlus1Damage("CATALYST"),
+  "66cb8a2d-1f66-4229-96c0-cb91bd36e0d9":
+    //Raven's Bow
+    makeExecuteAndCanExecuteFunctionsOfWeaponWithPlus1Damage("BOW"),
   //--------------ATTACKS------------------
 
   "b4a1b3f5-45a1-4db8-8d07-a21cb5e5be11": {
     requiredTargets: 1,
-    execute: ({ opponentCards, thisCard, targetCards }) => {
+    execute: ({
+      myCards,
+      opponentCards,
+      thisCard,
+      targetCards,
+      myDice,
+      opponentDice,
+      //TODO: triggerContext,
+      // triggerContext,
+    }) => {
+      //the base damage of the attack
       if (!thisCard) {
         return { errorMessage: "No card passed to effect" };
       }
       if (!targetCards || targetCards.length < 1) {
         return { errorMessage: "One target card is required" };
       }
+      let damage = 1;
+      const damageModifiers = findDamageModifyingEffects(myCards);
+      damageModifiers.forEach((effect) => {
+        if (
+          effect?.execute &&
+          ((effect?.canExecute &&
+            effect.canExecute({ myCards, opponentCards })) ||
+            !effect.canExecute)
+        ) {
+          const { modifiedDamage } = effect.execute({
+            myCards,
+            opponentCards,
+            myDice,
+            opponentDice,
+            triggerContext: {
+              eventType: "ATTACK",
+              damage,
+              attackerCard: thisCard,
+              //TODO: add targetCard
+              targetCard: targetCards[0],
+            },
+          });
+          if (modifiedDamage) {
+            damage = modifiedDamage;
+          }
+        }
+      });
+      console.log("damage", damage);
+
+      //TODO: increase attack counter on attacker card
       const opponentUpdatedCards = opponentCards.map((card) => {
         if (card.id === targetCards[0].id) {
+          //TODO: add elemental reactions
           return {
             ...card,
-            health: card.health ? card.health - 1 : 0,
+            health: card.health ? card.health - damage : 0,
           };
         } else {
           return card;

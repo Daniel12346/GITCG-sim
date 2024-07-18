@@ -1,11 +1,18 @@
 import { Database as DB } from "@/lib/database.types";
-import { ExecuteEffect, EventType, Trigger } from "./cardEffects";
+import {
+  ExecuteEffect,
+  CanExecuteEffect,
+  EventType,
+  Trigger,
+} from "./cardEffects";
 
 type Effect = DB["public"]["Tables"]["effect"]["Row"];
 interface EffectT extends Effect {
   // cardID: string;
   //TODO: add
   execute?: ExecuteEffect;
+  canExecute?: CanExecuteEffect;
+
   trigger?: Trigger;
   requiredTargets?: number;
   costJson?: Json;

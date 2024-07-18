@@ -1,6 +1,4 @@
-import { StatModifier } from "@/recoil/atoms";
 import { EventType, ExecuteEffect, effects } from "./cardEffects";
-import { uuid } from "uuidv4";
 
 export function drawCards(currentCards: CardExt[], amount: number) {
   const newCardsState = currentCards.map((card) => {
@@ -154,7 +152,9 @@ export const getRandomElement = (): DieElementName => {
   return elements[Math.floor(Math.random() * elements.length)];
 };
 export const createRandomDice = (amount: number) => {
-  const result: Dice = {};
+  //just for testing, //TODO: remove
+  const result: Dice = { OMNI: 20 };
+
   for (let i = 0; i < amount; i++) {
     const randomElement = getRandomElement();
     if (!result[randomElement]) result[randomElement] = 0;
