@@ -9,7 +9,7 @@ import { RealtimeChannel } from "@supabase/supabase-js";
 import effects, {
   EventType,
   ExecuteEffect,
-  TriggerEvent,
+  TriggerEvents,
 } from "@/app/cardEffects";
 import { cardFromBasicInfo } from "@/app/utils";
 const { persistAtom } = recoilPersist();
@@ -109,7 +109,6 @@ export const myCurrentDeckCardsBasicInfoState = selector({
     const myCurrentDeck = get(myCurrentDeckState);
     console.log("myCurrentDeck in atom", myCurrentDeck);
     if (!myCurrentDeck) return null;
-    //TODO: move this to a selector family (?) that fetches the basic info for each card in the deck
     const myCardsBasicInfoIDs = myCurrentDeck.deck_card_basic_info.map(
       ({ card_basic_info_id }) => card_basic_info_id
     );
@@ -377,6 +376,5 @@ export const opponentCardsInDeckState = selector<Card[]>({
   },
 });
 
-//TODO: selectors for cards in hand, cards in play, etc.???, available attacks
 //TODO: add player count to game table
 //-----------------------------------------

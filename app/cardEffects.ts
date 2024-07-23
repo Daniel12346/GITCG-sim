@@ -1,9 +1,14 @@
 import { addDice, discardCard, drawCards, subtractCost } from "./actions";
-import { findDamageModifyingEffects, findEquippedCards } from "./utils";
+import {
+  calculateDamageAfterModifiers,
+  findDamageModifyingEffects,
+  findEquippedCards,
+} from "./utils";
 
 //TODO: add missing events
 export type EventType =
-  | "ACTIVATION"
+  | "THIS_CARD_ACTIVATION"
+  | "CARD_ACTIVATION"
   | "ATTACK"
   | "REACTION"
   | "EQUIP_TALENT"
@@ -25,12 +30,15 @@ type ExecuteEffectParams = {
   targetCards?: CardExt[];
 };
 
-type CanExecuteEffectParams = {
+type CheckIfEffectCanBeExecutedParams = {
   myCards?: CardExt[];
   opponentCards?: CardExt[];
   triggerContext?: TriggerContext;
   effect?: Effect;
   thisCard?: CardExt;
+  opponentDice?: Dice;
+  playerID?: string;
+  myDice?: Dice;
   //the card that is being targeted by the activated card
   targetCards?: CardExt[];
   //TODO: add more params
@@ -69,22 +77,25 @@ const makeExecuteFunctionOfElementalRelicWith2UnalignedCost = (
   };
 };
 
-type MakeExecuteAndCanExecuteFunctionsOfWeaponWithPlus1Damage = (
-  weapon_type: string
-) => {
-  canExecute: CanExecuteEffect;
-  execute: ExecuteEffect;
-};
-//used to make the execute and canExecute functions of a weapon with +1 damage
-const makeExecuteAndCanExecuteFunctionsOfWeaponWithPlus1Damage: MakeExecuteAndCanExecuteFunctionsOfWeaponWithPlus1Damage =
+type MakeTriggerAndExecuteAndCheckIfCanBeExecutedFunctionsOfWeaponWithPlus1Damage =
+  (weapon_type: string) => {
+    checkIfCanBeExecuted: CheckIfEffectCanBeExecuted;
+    execute: ExecuteEffect;
+    triggerOn?: TriggerEvents;
+  };
+//used to make the execute and checkIfCanBeExecuted functions of a weapon with +1 damage
+const makeTriggerAndExecuteAndCheckIfCanBeExecutedFunctionsOfWeaponWithPlus1Damage: MakeTriggerAndExecuteAndCheckIfCanBeExecutedFunctionsOfWeaponWithPlus1Damage =
   (weapon_type: string) => {
     return {
-      canExecute: ({ triggerContext }) => {
+      //TODO: how to display the damage increase on the character if it's only triggered on attack?
+      triggerOn: ["ATTACK"],
+      checkIfCanBeExecuted: ({ triggerContext }) => {
         //TODO: throw an error if the weapon_type is not sword
         if (triggerContext?.targetCard?.weapon_type === weapon_type)
           return {
             errorMessage: "Wrong weapon type",
           };
+        return {};
       },
       execute: ({ triggerContext }) => {
         return triggerContext?.damage
@@ -94,9 +105,9 @@ const makeExecuteAndCanExecuteFunctionsOfWeaponWithPlus1Damage: MakeExecuteAndCa
     };
   };
 
-export type CanExecuteEffect = (
-  params: CanExecuteEffectParams
-) => { errorMessage?: string } | void;
+export type CheckIfEffectCanBeExecuted = (
+  params: CheckIfEffectCanBeExecutedParams
+) => { errorMessage?: string };
 export type ExecuteEffect = (params: ExecuteEffectParams) => {
   //return all cards, including the ones that haven't changed
   myUpdatedCards?: CardExt[];
@@ -108,7 +119,7 @@ export type ExecuteEffect = (params: ExecuteEffectParams) => {
   modifiedDamage?: number;
 };
 
-export type TriggerEvent = EventType | EventType[] | null;
+export type TriggerEvents = EventType[] | null;
 export type TriggerContext = {
   //will be used with cost reduction effects
   eventType: EventType;
@@ -120,18 +131,13 @@ export type TriggerContext = {
   damage?: number;
 };
 
-type Execution = {
-  //TODO: is there a better way to do this?
-  requiredTargets?: number;
-  //null would mean that the effect is activated immediately
-  triggerOn?: TriggerEvent;
-  //TODO: use a canBeActivated function instead?
-  canExecute?: CanExecuteEffect;
-  execute: ExecuteEffect;
-};
-
 //only handles the execution, not the effect cost
-export const effects: { [key: string]: Execution } = {
+export const effects: {
+  [key: string]: Pick<
+    Effect,
+    "triggerOn" | "checkIfCanBeExecuted" | "execute" | "requiredTargets"
+  >;
+} = {
   //Chang the Ninth
   //TODO: when and how should this be executed?
   // "7c59cd7c-68d5-4428-99cb-c245f7522b0c": {
@@ -144,33 +150,29 @@ export const effects: { [key: string]: Execution } = {
 
   //The Bestest Travel Companion!
   "c4ba57f8-fd10-4d3c-9766-3b9b610de812": {
-    //TODO: set trigger to "ON_ACTIVATION"
-    execute: ({ thisCard, myCards, myDice }) => {
+    triggerOn: ["THIS_CARD_ACTIVATION"],
+    execute: ({ thisCard, myCards, myDice, triggerContext }) => {
       if (!thisCard) {
         return { errorMessage: "No card passed to effect" };
       }
-      //calculating the total cost of the activated card because it might change during the game
-      let cardCostTotal = 0;
-      const cost = thisCard.cost;
+      const cost = triggerContext?.cost;
       if (!cost) {
-        return { errorMessage: "No cost found for card" };
+        return { errorMessage: "No cost found" };
       }
-      Object.keys(cost).forEach((element) => {
-        cardCostTotal += cost[element as CostElementName]!;
-      });
 
       const available_dice = addDice(myDice, {
-        OMNI: cardCostTotal,
+        // OMNI: cardCostTotal,
+        //TODO:
       });
       return { myUpdatedDice: available_dice };
     },
   },
   //Guardian's Oath
   "2c4dfe38-cb2f-44d1-a40f-58feec6f8dbd": {
+    triggerOn: ["THIS_CARD_ACTIVATION"],
     execute: ({ myCards, opponentCards }) => {
       const destroySummons = (cards: CardExt[]) => {
         return cards.map((card) => {
-          //TODO: check the constants used for location
           if (card.location === "SUMMON") {
             return {
               ...card,
@@ -192,6 +194,7 @@ export const effects: { [key: string]: Execution } = {
 
   //Send Off
   "be33cd23-5caf-4aa4-8065-ce01fbaa8326": {
+    triggerOn: ["THIS_CARD_ACTIVATION"],
     requiredTargets: 1,
     execute: ({ targetCards, myCards, opponentCards }) => {
       const target = targetCards?.[0];
@@ -215,7 +218,8 @@ export const effects: { [key: string]: Execution } = {
   //Quick Knit
   "a15baf43-884b-4e7d-86a7-9f3261d4d7f5": {
     requiredTargets: 1,
-    canExecute: ({ targetCards, myCards }) => {
+    triggerOn: ["THIS_CARD_ACTIVATION"],
+    checkIfCanBeExecuted: ({ targetCards, myCards }) => {
       const target = targetCards?.[0];
       if (!target) {
         return { errorMessage: "No target card found" };
@@ -223,6 +227,7 @@ export const effects: { [key: string]: Execution } = {
       if (target.location !== "SUMMON") {
         return { errorMessage: "Target card is not a summon card" };
       }
+      return {};
     },
     execute: ({ targetCards, myCards }) => {
       const target = targetCards?.[0];
@@ -248,6 +253,7 @@ export const effects: { [key: string]: Execution } = {
 
   // //Blessing of the Divine Relic's Installation
   "ce166d08-1be9-4937-a601-b34835c97dd2": {
+    triggerOn: ["THIS_CARD_ACTIVATION"],
     execute: ({ targetCards, myCards }) => {
       if (!targetCards || targetCards.length < 2) {
         return { errorMessage: "Two target cards are required" };
@@ -291,6 +297,7 @@ export const effects: { [key: string]: Execution } = {
 
   // Master of Weaponry
   "916e111b-1418-4aad-9854-957c4c07e028": {
+    triggerOn: ["THIS_CARD_ACTIVATION"],
     //the effect targets character cards, the weapon does not need to be targeted because a character can only have one weapon at a time
     requiredTargets: 2,
     execute: ({ targetCards, myCards }) => {
@@ -336,8 +343,8 @@ export const effects: { [key: string]: Execution } = {
   },
 
   //When the Crane Returned
-  //TODO: finish this
   "369a3f69-dc1b-49dc-8487-83ad8eb6979d": {
+    triggerOn: ["ATTACK"],
     //is skill the same as attack?
     // trigger: "ATTACK",
     execute: ({ myCards }) => {
@@ -368,7 +375,6 @@ export const effects: { [key: string]: Execution } = {
       const myNewActiveCharacterIndex = myCards.findIndex(
         (card) => card.id === newActiveCharacter.id
       );
-      //TODO: deep copy?
       const myUpdatedCards = [...myCards];
       myUpdatedCards[myPreviousActiveCharacterIndex] = {
         ...myUpdatedCards[myPreviousActiveCharacterIndex],
@@ -384,36 +390,48 @@ export const effects: { [key: string]: Execution } = {
 
   //Strategize
   "0ecdb8f3-a1a3-4b3c-8ebc-ac0788e200ea": {
+    triggerOn: ["THIS_CARD_ACTIVATION"],
     execute: ({ myCards }) => {
       const myUpdatedCards = drawCards(myCards, 2);
       return { myUpdatedCards };
     },
   },
-  //TODO: make copies for other elements
   //Mask of Solitude Basalt
   "85247510-9f6b-4d6e-8da0-55264aba3c8b": {
+    triggerOn: ["ATTACK", "EQUIP_TALENT"],
     execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost("GEO"),
   },
   //Viridescent Venerer's Diadem
   "176b463b-fa66-454b-94f6-b81a60ff5598": {
+    triggerOn: ["ATTACK", "EQUIP_TALENT"],
     execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost("ANEMO"),
   },
 
   //Traveler's Handy Sword
   "e565dda8-5269-4d15-a31c-694835065dc3":
-    makeExecuteAndCanExecuteFunctionsOfWeaponWithPlus1Damage("SWORD"),
+    makeTriggerAndExecuteAndCheckIfCanBeExecutedFunctionsOfWeaponWithPlus1Damage(
+      "SWORD"
+    ),
   "b9c55fd7-53df-45a5-9414-69fb476d2bf8":
     //White Iron Greatsword
-    makeExecuteAndCanExecuteFunctionsOfWeaponWithPlus1Damage("CLAYMORE"),
+    makeTriggerAndExecuteAndCheckIfCanBeExecutedFunctionsOfWeaponWithPlus1Damage(
+      "CLAYMORE"
+    ),
   "90a07945-88d6-468e-96d8-32c2e6c19835":
     //White Tassel
-    makeExecuteAndCanExecuteFunctionsOfWeaponWithPlus1Damage("POLEARM"),
+    makeTriggerAndExecuteAndCheckIfCanBeExecutedFunctionsOfWeaponWithPlus1Damage(
+      "POLEARM"
+    ),
   "6d9e0cde-a9f7-4056-bebb-a2dfc7020320":
     //Magic Guide
-    makeExecuteAndCanExecuteFunctionsOfWeaponWithPlus1Damage("CATALYST"),
+    makeTriggerAndExecuteAndCheckIfCanBeExecutedFunctionsOfWeaponWithPlus1Damage(
+      "CATALYST"
+    ),
   "66cb8a2d-1f66-4229-96c0-cb91bd36e0d9":
     //Raven's Bow
-    makeExecuteAndCanExecuteFunctionsOfWeaponWithPlus1Damage("BOW"),
+    makeTriggerAndExecuteAndCheckIfCanBeExecutedFunctionsOfWeaponWithPlus1Damage(
+      "BOW"
+    ),
   //--------------ATTACKS------------------
 
   "b4a1b3f5-45a1-4db8-8d07-a21cb5e5be11": {
@@ -435,34 +453,15 @@ export const effects: { [key: string]: Execution } = {
       if (!targetCards || targetCards.length < 1) {
         return { errorMessage: "One target card is required" };
       }
-      let damage = 1;
-      const damageModifiers = findDamageModifyingEffects(myCards);
-      damageModifiers.forEach((effect) => {
-        if (
-          effect?.execute &&
-          ((effect?.canExecute &&
-            effect.canExecute({ myCards, opponentCards })) ||
-            !effect.canExecute)
-        ) {
-          const { modifiedDamage } = effect.execute({
-            myCards,
-            opponentCards,
-            myDice,
-            opponentDice,
-            triggerContext: {
-              eventType: "ATTACK",
-              damage,
-              attackerCard: thisCard,
-              //TODO: add targetCard
-              targetCard: targetCards[0],
-            },
-          });
-          if (modifiedDamage) {
-            damage = modifiedDamage;
-          }
-        }
+      let damage = calculateDamageAfterModifiers({
+        baseDamage: 1,
+        myCards,
+        opponentCards,
+        myDice,
+        opponentDice,
+        thisCard,
+        targetCards,
       });
-      console.log("damage", damage);
 
       //TODO: increase attack counter on attacker card
       const opponentUpdatedCards = opponentCards.map((card) => {

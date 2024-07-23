@@ -9,7 +9,7 @@ import {
 import { useRecoilState, useRecoilValue } from "recoil";
 
 interface Props {
-  handleEquipCard: (cardToEquip: CardExt, targetCard: CardExt) => void;
+  handleEquipCard: (cardToEquip: CardExt) => void;
   handleUseAttackEffect: (effect: Effect) => void;
   handleActivateEffect: (effect: Effect) => void;
   errorMessage: string | null;
@@ -54,7 +54,7 @@ export default function TargetSelectionOptions({
           onClick={() => {
             console.log("current effect", currentEffect);
             if (targetingPurpose === "EQUIP" && currentlyBeingEquipped) {
-              handleEquipCard(currentlyBeingEquipped, selectedTargetCards[0]);
+              handleEquipCard(currentlyBeingEquipped);
             } else if (targetingPurpose === "ATTACK" && currentEffect) {
               handleUseAttackEffect(currentEffect);
             } else if (targetingPurpose === "EFFECT" && currentEffect) {

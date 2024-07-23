@@ -175,23 +175,16 @@ const rerollDice = (diceToChooseFrom: Dice, chosenDice: Dice) => {
   return result;
 };
 
-export const activateCard = (card: CardExt) => {
-  //TODO: broadcast event
-  return { ...card, location: "ACTION" };
-};
-
 export const activateEffect: ExecuteEffect = ({
+  effect,
   playerID,
   myCards,
   myDice,
   opponentCards,
   opponentDice,
-  //TODO: use cardID?
-  effect,
   thisCard,
   targetCards,
 }) => {
-  //TODO: change everything
   if (!effect) return { errorMessage: "no effect" };
 
   const effectSourceCard =
@@ -201,8 +194,7 @@ export const activateEffect: ExecuteEffect = ({
   }
 
   //TODO: check if effect can be activated
-  const { execute, trigger, requiredTargets } = effect;
-  //set card location to action zone
+  const { execute, requiredTargets } = effect;
 
   if (execute) {
     return execute({
@@ -246,34 +238,3 @@ export const switchActiveCharacterCard = (
   });
   return { myUpdatedCards };
 };
-
-type CheckIfUsable = (
-  myCards: CardExt[],
-  myDice: Dice,
-  opponentCards: CardExt[],
-  opponentDice: Dice
-) => boolean;
-
-// export const createModifier = (
-//   amount: number,
-//   usages: number,
-//   usagesThisTurn: number,
-//   checkIfModifierUsable: CheckIfUsable,
-//   sourceCardID: string,
-//   targetCardID: string,
-//   forEvent?: EventType,
-//   forAttacks?: string[]
-// ): StatModifier => {
-//   const id = uuid();
-//   return {
-//     id,
-//     amount,
-//     usages,
-//     usagesThisTurn,
-//     checkIfModifierUsable,
-//     forEvent,
-//     forAttacks,
-//     sourceCardID,
-//     targetCardID,
-//   };
-// };

@@ -1,5 +1,9 @@
 import { uuid } from "uuidv4";
-import effects, { ExecuteEffect, TriggerEvent } from "./cardEffects";
+import effects, {
+  EventType,
+  ExecuteEffect,
+  TriggerEvents,
+} from "./cardEffects";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { DieElementNameT } from "./global";
 
@@ -32,14 +36,13 @@ export const cardFromBasicInfo = (
     subtype: cardBasicInfo.card_subtype || "",
     equipped_to_id: null,
     equippedTo: null,
-    //TODO: remove this?
-    // equippedCards: cardBasicInfo.card_type === "CHARACTER" ? [] : null,
-    //TODO: fix
+    wasActivatedThisTurn: false,
+
     //@ts-ignore
     effects: cardBasicInfo.effect_basic_info.map(
       (effectBasicInfo: any): Effect => {
         let execute: ExecuteEffect | undefined;
-        let triggerOn: TriggerEvent | undefined;
+        let triggerOn: TriggerEvents | undefined;
         let requiredTargets: number | undefined;
         const effectLogic = effects[effectBasicInfo.id];
         if (effectLogic) {
@@ -57,9 +60,7 @@ export const cardFromBasicInfo = (
           total_usages: 0,
           usages_this_turn: 0,
           costJson: effectBasicInfo.cost,
-          //TODO: ??????
           effect_basic_infoIdId: effectBasicInfo.id,
-          //TODO: generate cost object from cost json
           cost: effectBasicInfo.cost as Dice,
           execute,
           triggerOn,
@@ -163,6 +164,65 @@ export const findDamageModifyingEffects = (cards: CardExt[]) => {
         )
       : acc;
   }, [] as Effect[]);
+};
+
+export const findEffectsThatTriggerOn = (
+  trigger: EventType,
+  cards: CardExt[]
+) => {
+  return cards.reduce((acc, card) => {
+    return ["ACTION", "EQUIPPED"].includes(card.location!)
+      ? acc.concat(
+          card.effects.filter((effect) => effect.triggerOn?.includes(trigger))
+        )
+      : acc;
+  }, [] as Effect[]);
+};
+
+export const calculateDamageAfterModifiers = ({
+  baseDamage,
+  myCards,
+  opponentCards,
+  myDice,
+  opponentDice,
+  thisCard,
+  targetCards,
+}: {
+  baseDamage: number;
+  myCards: CardExt[];
+  opponentCards: CardExt[];
+  myDice: Dice;
+  opponentDice: Dice;
+  thisCard: CardExt;
+  targetCards: CardExt[];
+}) => {
+  let damage = baseDamage;
+  const damageModifiers = findDamageModifyingEffects(myCards);
+  damageModifiers.forEach((effect) => {
+    if (
+      effect?.execute &&
+      ((effect?.checkIfCanBeExecuted &&
+        effect.checkIfCanBeExecuted({ myCards, opponentCards })) ||
+        !effect.checkIfCanBeExecuted)
+    ) {
+      const { modifiedDamage } = effect.execute({
+        myCards,
+        opponentCards,
+        myDice,
+        opponentDice,
+        triggerContext: {
+          eventType: "ATTACK",
+          damage,
+          attackerCard: thisCard,
+          targetCard: targetCards[0],
+        },
+      });
+      if (modifiedDamage) {
+        damage = modifiedDamage;
+      }
+    }
+  });
+  return damage;
 };
 
 export const createRandomElementalDice = (amount: number) => {

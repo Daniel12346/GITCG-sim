@@ -21,7 +21,7 @@ import {
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { RealtimeChannel } from "@supabase/supabase-js";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 
 export default ({}) => {
@@ -41,7 +41,7 @@ export default ({}) => {
   );
   const opponentID = useRecoilValue(opponentIDState);
   const [myCards, setMyCards] = useRecoilState(myInGameCardsState);
-  const setMyDice = useSetRecoilState(myDiceState);
+  const [myDice, setMyDice] = useRecoilState(myDiceState);
   const [opponentDice, setOpponentDice] = useRecoilState(opponentDiceState);
   //TODO: move to recoil atom ?
   const [areDecksInitialized, setareDecksInitialized] = useState(false);
@@ -99,10 +99,9 @@ export default ({}) => {
         }
         setCurrentPhase(nextPhase);
       })
-      .on("broadcast", { event: "dice_change" }, ({ payload }) => {
-        console.log("dice_change", payload);
+      .on("broadcast", { event: "updated_dice" }, ({ payload }) => {
         if (payload.playerID !== myID) {
-          setOpponentDice(payload.dice);
+          setOpponentDice(payload.newDiceState);
         }
       })
       .on("broadcast", { event: "switch_player" }, ({ payload }) => {
@@ -141,10 +140,6 @@ export default ({}) => {
           event: "dice_change",
           payload: { dice: randomDice, playerID: myID },
         });
-        //throttled because messages from both players would be sent at the same time, exceeding the rate limit
-        // setTimeout(() => {
-        //   setMyCards((prev) => prev && drawCards(prev, 5));
-        // }, Math.random() * 1000);
         setMyCards((prev) => prev && drawCards(prev, 5));
 
         //TODO: switch cards
@@ -175,6 +170,19 @@ export default ({}) => {
             payload: { playerID: myID, newCardsState: myCards },
           })
           .then((res) => console.log("updated_cards", res));
+    }, Math.random() * 1000);
+  }, [channel, myCards]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      myDice &&
+        channel
+          ?.send({
+            type: "broadcast",
+            event: "updated_dice",
+            payload: { playerID: myID, newDiceState: myDice },
+          })
+          .then((res) => console.log("updated_dice", res));
     }, Math.random() * 1000);
   }, [channel, myCards]);
 

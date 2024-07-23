@@ -20,7 +20,6 @@ import {
 interface Props {
   card: CardExt;
   handleClick?: ReactEventHandler<HTMLDivElement>;
-  //TODO: fix
   isFaceDown?: boolean;
   isInDeckDisplay?: boolean;
   equippedCards?: CardExt[];
@@ -119,8 +118,6 @@ export default function Card({
           ))}
         </div>
       )}
-
-      {/* //TODO: display equipped cards */}
     </div>
   );
 }

@@ -21,13 +21,16 @@ import { useEffect, useState } from "react";
 import Card from "./Card";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import {
-  activateCard,
   activateEffect,
   subtractCost,
   switchActiveCharacterCard,
 } from "@/app/actions";
 import { CardExtended } from "@/app/global";
-import { findCostModifyingEffects, findEquippedCards } from "@/app/utils";
+import {
+  findCostModifyingEffects,
+  findEffectsThatTriggerOn,
+  findEquippedCards,
+} from "@/app/utils";
 import TargetSelectionOptions from "./TargetSelectionOptions";
 import CardAttackInfo from "./CardAttackInfo";
 
@@ -137,8 +140,13 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     });
   };
 
-  const handleEquipCard = (cardToEquip: CardExt, targetCard: CardExt) => {
+  const handleEquipCard = (cardToEquip: CardExt) => {
+    // setCurrentlyBeingEquipped(cardToEquip);
+    // setRequiredTargets(1);
+    // setTargetingPurpose("EQUIP");
+    // setAmSelectingTargets(true);
     if (!myCards) return;
+    const targetCard = selectedTargetCards[0];
     if (cardToEquip.cost) {
       let updatedDice = null;
       try {
@@ -153,6 +161,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       }
       setMyDice(updatedDice);
     }
+
     const updatedCards = myCards.map((card) => {
       if (card.id === cardToEquip.id) {
         return {
@@ -173,14 +182,37 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   const handleActivateEffect = (effect: Effect) => {
     if (!myCards) return;
 
-    //TODO: select effect
+    //regular effects don't have a cost, the cost of a card's activation is not handled here
+    //TODO: what if I try activating a card but could't use its effect?
+    //an effect won't change anything until the state is updated with its return values,
+    //so the execute function itself can be used to check if the effect can be executed and checkIfCanBeExecuted may not be needed
+    //TODO: effect selection
+    //TODO: do I need to check if effect can be executed or just return an error message when executing effect?
+
+    if (effect.checkIfCanBeExecuted) {
+      const { errorMessage: executionErrorMessage } =
+        effect.checkIfCanBeExecuted({
+          playerID: myID,
+          myCards,
+          myDice,
+          opponentCards: opponentInGameCards,
+          opponentDice: opponentDice,
+          targetCards: selectedTargetCards,
+        });
+      if (executionErrorMessage) {
+        setErrorMessage(executionErrorMessage);
+        return;
+      }
+    }
 
     if (effect.requiredTargets && !amSelectingTargets) {
       setRequiredTargets(effect.requiredTargets);
       setCurrentEffect(effect);
+      setTargetingPurpose("EFFECT");
       setAmSelectingTargets(true);
       return;
     }
+
     const {
       myUpdatedCards,
       myUpdatedDice,
@@ -197,20 +229,30 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       targetCards: selectedTargetCards,
     });
     if (errorMessage) {
+      //if an error occurs, effect execution is stopped
       setErrorMessage(errorMessage);
       return;
     }
-    const effectCard = myCards.find((c) => c.id === effect.card_id);
-    if (!effectCard) {
+    const effectSourceCard = myCards.find((c) => c.id === effect.card_id);
+    if (!effectSourceCard) {
       console.log("no effect card");
       return;
     }
+    //if the effect was activated from the hand, it should be moved to the action zone
+    let newLocation = effectSourceCard.location;
+    let wasActivatedThisTurn = effectSourceCard.wasActivatedThisTurn;
+    if (effectSourceCard.location === "HAND") {
+      newLocation = "ACTION";
+      wasActivatedThisTurn = true;
+      //TODO: check all effects that activate on card activation
+    }
     //updating the the effect whose effect was activated
-    const updateEffectSourceCard = (effectCard: CardExtended) => {
+    const updateEffectSourceCard = (effectSourceCard: CardExtended) => {
       return {
-        ...effectCard,
-        location: "ACTION",
-        effects: effectCard.effects.map((eff) => {
+        ...effectSourceCard,
+        location: newLocation,
+        wasActivatedThisTurn,
+        effects: effectSourceCard.effects.map((eff) => {
           return {
             ...eff,
             total_usages: eff.total_usages ? eff.total_usages + 1 : 0,
@@ -224,7 +266,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     //the most recent card state
     const myCurrentCards = myUpdatedCards || myCards;
     const myCurrentCardsWithUpdatedEffectCard = myCurrentCards.map((card) => {
-      if (card.id === effectCard.id) {
+      if (card.id === effectSourceCard.id) {
         return updateEffectSourceCard(card);
       }
       return card;
@@ -251,6 +293,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   };
   const handleUseAttackEffect = (effect: Effect) => {
     if (!myCards) return;
+    //attack effects have a cost
     let cost = effect.cost;
     let myDiceAfterCost = myDice;
     if (cost) {
@@ -268,7 +311,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         });
         if (errorMessage) {
           setErrorMessage(errorMessage);
-          //TODO: return?
           return;
         }
         if (modifiedCost) {
@@ -320,7 +362,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     setSelectedTargets([]);
     channel?.send({
       type: "broadcast",
-      //TODO: rename event
+      //TODO: use this event or delete it
       event: "effect_executed",
       payload: {
         effect,
@@ -332,14 +374,89 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       },
     });
   };
+  //TODO: make equipping work with this
+  const activateCard = (card: CardExt) => {
+    // if (card.subtype?.includes("EQUIPMENT")) {
+    //   setCurrentlyBeingEquipped(card);
+    //   setRequiredTargets(1);
+    //   setTargetingPurpose("EQUIP");
+    //   setAmSelectingTargets(true);
+    //   return;
+    // }
+    if (!myCards) return;
+    let updatedDice = null;
+    let cost = card.cost;
+    if (cost) {
+      try {
+        updatedDice = subtractCost(myDice, cost);
+      } catch (e) {
+        setErrorMessage("Not enough dice");
+        return;
+      }
+    }
+    const updatedCards = myCards.map((c) => {
+      if (c.id === card.id) {
+        // TODO: set wasActivatedThisTurn to false at the end of the turn
+        return { ...c, location: "ACTION", wasActivatedThisTurn: true };
+      }
+      return c;
+    });
+    //TODO: check all effects that activate on card activation (here?)
+    const effectsThatTriggerOnActivation = findEffectsThatTriggerOn(
+      "CARD_ACTIVATION",
+      myCards
+    );
+    if (effectsThatTriggerOnActivation.length === 0) {
+      setMyCards(updatedCards as CardExtended[]);
+      setMyDice(updatedDice || myDice);
+      return;
+    } else {
+      //TODO: check if this works
+      let myCardsAfterTriggeredEffects = updatedCards as CardExtended[];
+      let myDiceAfterTriggeredEffects = updatedDice || {};
+      let opponentInGameCardsAfterTriggeredEffects = opponentInGameCards;
+      let opponentDiceAfterTriggeredEffects = opponentDice;
+      effectsThatTriggerOnActivation.forEach((effect) => {
+        if (!effect.execute) return;
+        const {
+          myUpdatedCards,
+          myUpdatedDice,
+          opponentUpdatedCards,
+          opponentUpdatedDice,
+          errorMessage,
+        } = effect.execute({
+          effect,
+          playerID: myID,
+          myCards: myCardsAfterTriggeredEffects,
+          myDice: myDiceAfterTriggeredEffects,
+          opponentCards: opponentInGameCardsAfterTriggeredEffects,
+          opponentDice: opponentDiceAfterTriggeredEffects,
+        });
+        if (errorMessage) {
+          setErrorMessage(errorMessage);
+          return;
+        }
+        myUpdatedCards &&
+          (myCardsAfterTriggeredEffects = myUpdatedCards as CardExtended[]);
+        myUpdatedDice && (myDiceAfterTriggeredEffects = myUpdatedDice);
+        opponentUpdatedCards &&
+          (opponentInGameCardsAfterTriggeredEffects = opponentUpdatedCards);
+        opponentUpdatedDice &&
+          (opponentDiceAfterTriggeredEffects = opponentUpdatedDice);
+      });
+      setMyCards(myCardsAfterTriggeredEffects);
+      setMyDice(myDiceAfterTriggeredEffects);
+      setOpponentInGameCards(opponentInGameCardsAfterTriggeredEffects);
+      setOpponentDice(opponentDiceAfterTriggeredEffects);
+    }
+  };
 
   return (
     <div
       className={`${
         isMyBoard ? "bg-green-400" : "bg-red-400"
-      } grid grid-cols-[5%_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)_5%] 
+      } grid grid-cols-[10%_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)_10%] 
     gap-2 w-100% p-2 overflow-x-hidden`}
-      //TODO: default height
     >
       <div
         className={`${
@@ -362,7 +479,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                     setTargetingPurpose("EQUIP");
                     setAmSelectingTargets(true);
                   } else {
-                    handleActivateEffect(card.effects[0]);
+                    activateCard(card);
                   }
                 }}
               />

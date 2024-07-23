@@ -1,20 +1,18 @@
 import { Database as DB } from "@/lib/database.types";
 import {
   ExecuteEffect,
-  CanExecuteEffect,
+  CheckIfEffectCanBeExecuted,
   EventType,
-  Trigger,
+  TriggerEvents,
 } from "./cardEffects";
 
 type Effect = DB["public"]["Tables"]["effect"]["Row"];
 interface EffectT extends Effect {
-  // cardID: string;
-  //TODO: add
   execute?: ExecuteEffect;
-  canExecute?: CanExecuteEffect;
-
-  trigger?: Trigger;
+  checkIfCanBeExecuted?: CheckIfEffectCanBeExecuted;
   requiredTargets?: number;
+  triggerOn?: TriggerEvents;
+
   costJson?: Json;
   cost?: Cost;
   description?: string;
@@ -28,12 +26,12 @@ interface CardExtended extends Card {
   costJson?: Json;
   subtype?: string;
   //IDs of cards equipped to this card
-  //TODO: remove?
-  // equippedCards?: string[] | null;
   equippedTo?: string | null;
   //should only be used in deck builder
   quantity?: number;
   //TODO: remove equipped_to_id from card table
+  wasActivatedThisTurn?: boolean;
+  hasUsedFoodThisTurn?: boolean;
 }
 type BoardT = {
   id: string;
