@@ -84,15 +84,21 @@ export const subtractCost = (
       if (requiredElementName === "MATCHING") {
         let hasSubtracted = false;
         for (let elName of availableElements) {
-          //result[elName] does exist beacuse it is in availableElements
           if (!hasSubtracted && result[elName]! >= requiredAmount) {
             result[elName] = result[elName]! - requiredAmount;
             hasSubtracted = true;
-          } else {
+          } else if (!hasSubtracted && elName !== "OMNI" && result["OMNI"]) {
+            if (result[elName]! + result["OMNI"] >= requiredAmount) {
+              const extraOmniDiceNeeded = requiredAmount - result[elName]!;
+              result[elName] = 0;
+              result["OMNI"] = result["OMNI"] - extraOmniDiceNeeded;
+              hasSubtracted = true;
+            }
             //??
             // throw new Error("Not enough dice");
           }
         }
+
         //after all element have been checked, if no element has been subtracted, throw error
         //TODO: handle error
         if (!hasSubtracted) throw new Error("Not enough dice");

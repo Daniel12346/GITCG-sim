@@ -344,8 +344,13 @@ export const targetingPurposeState = atom<"ATTACK" | "EQUIP" | "EFFECT" | null>(
 );
 
 export const currentEffectState = atom<Effect | null>({
-  key: "currentEffect",
+  key: "currentEffectState",
   default: null,
+});
+
+export const selectedDiceState = atom<Dice>({
+  key: "selectedDiceState",
+  default: {},
 });
 //TODO: remove Card from database?
 type Card = Database["public"]["Tables"]["card"]["Row"];

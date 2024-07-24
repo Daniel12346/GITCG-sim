@@ -14,6 +14,7 @@ import {
   currentActiveCharacterAttacksState,
   currentlyBeingEquippedState,
   targetingPurposeState,
+  selectedDiceState,
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
@@ -33,6 +34,7 @@ import {
 } from "@/app/utils";
 import TargetSelectionOptions from "./TargetSelectionOptions";
 import CardAttackInfo from "./CardAttackInfo";
+import DiceDisplay from "./DiceDisplay";
 
 //TODO: move to another file
 interface PlayerBoardProps {
@@ -51,6 +53,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   );
   const [myCards, setMyCards] = useRecoilState(myInGameCardsState);
   const [myDice, setMyDice] = useRecoilState(myDiceState);
+  const [selectedDice, setSelectedDice] = useRecoilState(selectedDiceState);
   const [opponentDice, setOpponentDice] = useRecoilState(opponentDiceState);
   const [amSelectingTargets, setAmSelectingTargets] = useRecoilState(
     amSelectingTargetsState
@@ -146,20 +149,28 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     // setTargetingPurpose("EQUIP");
     // setAmSelectingTargets(true);
     if (!myCards) return;
+    if (!selectedDice) return;
     const targetCard = selectedTargetCards[0];
+    //TODO: compare selectedDice to cardToEquip.cost
+    console.log("selectedDice", selectedDice, "cost", cardToEquip.cost);
     if (cardToEquip.cost) {
       let updatedDice = null;
       try {
-        console.log("subtr1", myDice, cardToEquip.cost);
-        console.log("subtr2", subtractCost(myDice, cardToEquip.cost));
-
-        updatedDice = subtractCost(myDice, cardToEquip.cost);
+        //TODO: fix this
+        const difference = subtractCost(selectedDice, cardToEquip.cost);
+        console.log("difference", difference);
+        if (
+          Object.keys(difference).length === 0 ||
+          Object.values(difference).every((val) => val === 0)
+        ) {
+          updatedDice = subtractCost(myDice, selectedDice);
+        }
       } catch (e) {
         console.log(e);
-        setErrorMessage("Not enough dice");
+        setErrorMessage("Incorrect dice");
         return;
       }
-      setMyDice(updatedDice);
+      updatedDice && setMyDice(updatedDice);
     }
 
     const updatedCards = myCards.map((card) => {
@@ -418,6 +429,23 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       let opponentDiceAfterTriggeredEffects = opponentDice;
       effectsThatTriggerOnActivation.forEach((effect) => {
         if (!effect.execute) return;
+        if (effect.checkIfCanBeExecuted) {
+          //TODO: is this necessary?
+          const { errorMessage } = effect.checkIfCanBeExecuted({
+            playerID: myID,
+            myCards: myCardsAfterTriggeredEffects,
+            myDice: myDiceAfterTriggeredEffects,
+            opponentCards: opponentInGameCardsAfterTriggeredEffects,
+            opponentDice: opponentDiceAfterTriggeredEffects,
+            triggerContext: {
+              eventType: "CARD_ACTIVATION",
+            },
+          });
+          if (errorMessage) {
+            setErrorMessage(errorMessage);
+            return;
+          }
+        }
         const {
           myUpdatedCards,
           myUpdatedDice,
@@ -561,16 +589,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       </div>
       <div className="bg-yellow-50 h-full">summon zone</div>
       {/* //TODO: display dice */}
-      <div className="bg-yellow-50 h-full overflow-hidden">
-        {Object.entries(playerDice)
-          .sort()
-          .map(([element, amount]) => (
-            <span className="text-sm" key={element + playerID}>
-              {element}:{amount}
-              <br />
-            </span>
-          ))}
-      </div>
+      <DiceDisplay dice={playerDice} isMyBoard={isMyBoard}></DiceDisplay>
     </div>
   );
 }
