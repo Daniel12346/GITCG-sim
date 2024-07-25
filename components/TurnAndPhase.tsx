@@ -133,15 +133,14 @@ export default ({}) => {
     switch (currentPhase) {
       case "PREPARATION":
         const randomDice = createRandomDice(8);
-        setMyDice(randomDice);
         //TODO: display and reroll dice
         channel.send({
           type: "broadcast",
           event: "dice_change",
           payload: { dice: randomDice, playerID: myID },
         });
+        setMyDice(randomDice);
         setMyCards((prev) => prev && drawCards(prev, 5));
-
         //TODO: switch cards
         break;
       case "ROLL":
@@ -169,7 +168,7 @@ export default ({}) => {
             event: "updated_cards",
             payload: { playerID: myID, newCardsState: myCards },
           })
-          .then((res) => console.log("updated_cards", res));
+          .then((res) => console.log("updated_cards !:", res));
     }, Math.random() * 1000);
   }, [channel, myCards]);
 
@@ -183,7 +182,7 @@ export default ({}) => {
             payload: { playerID: myID, newDiceState: myDice },
           })
           .then((res) => console.log("updated_dice", res));
-    }, Math.random() * 1000);
+    }, 100 + Math.random() * 1000);
   }, [channel, myCards]);
 
   //only happens once at the beginning of the game

@@ -94,8 +94,6 @@ export const subtractCost = (
               result["OMNI"] = result["OMNI"] - extraOmniDiceNeeded;
               hasSubtracted = true;
             }
-            //??
-            // throw new Error("Not enough dice");
           }
         }
 

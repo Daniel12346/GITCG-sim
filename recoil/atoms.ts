@@ -186,7 +186,6 @@ export const currentActiveCharacterAttacksState = selector({
   get: ({ get }) => {
     const currentActiveCharacter = get(currentActiveCharacterState);
     if (!currentActiveCharacter) return null;
-    //TODO: filter out non-attack effects (do they exist on characters?)
     return currentActiveCharacter.effects;
   },
 });
@@ -316,40 +315,20 @@ export const currentPlayerIDState = atom<string>({
   default: "",
 });
 
-export const amSelectingTargetsState = atom<boolean>({
-  key: "amSelectingTargets",
-  default: false,
-});
-
-export const mySelectedTargetCardsState = atom<CardExt[]>({
-  key: "mySelectedTargetCardsState",
+export const mySelectedCardsState = atom<CardExt[]>({
+  key: "mySelectedCardsState",
   default: [],
 });
 
-export const currentlyBeingEquippedState = atom<CardExt | null>({
-  key: "currentlyBeingEquippedState",
-  default: null,
-});
-
-export const requiredTargetsState = atom<number | null>({
-  key: "requiredTargetsState",
-  default: null,
-});
-
-export const targetingPurposeState = atom<"ATTACK" | "EQUIP" | "EFFECT" | null>(
+export const selectionPurposeState = atom<"ATTACK" | "EQUIP" | "EFFECT" | null>(
   {
-    key: "targetingPurposeState",
+    key: "selectionPurposeState",
     default: null,
   }
 );
 
-export const currentEffectState = atom<Effect | null>({
-  key: "currentEffectState",
-  default: null,
-});
-
-export const selectedDiceState = atom<Dice>({
-  key: "selectedDiceState",
+export const mySelectedDiceState = atom<Dice>({
+  key: "mySelectedDiceState",
   default: {},
 });
 //TODO: remove Card from database?

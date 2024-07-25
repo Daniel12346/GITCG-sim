@@ -6,15 +6,11 @@ import {
   opponentInGameCardsState,
   myDiceState,
   opponentDiceState,
-  amSelectingTargetsState,
-  mySelectedTargetCardsState,
-  requiredTargetsState,
-  currentEffectState,
+  mySelectedCardsState,
   myInGameCardsState,
   currentActiveCharacterAttacksState,
-  currentlyBeingEquippedState,
-  targetingPurposeState,
-  selectedDiceState,
+  selectionPurposeState,
+  mySelectedDiceState,
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
@@ -32,9 +28,9 @@ import {
   findEffectsThatTriggerOn,
   findEquippedCards,
 } from "@/app/utils";
-import TargetSelectionOptions from "./TargetSelectionOptions";
-import CardAttackInfo from "./CardAttackInfo";
 import DiceDisplay from "./DiceDisplay";
+import CardAttack from "./CardAttack";
+import ElementalTuning from "./ElementalTuning";
 
 //TODO: move to another file
 interface PlayerBoardProps {
@@ -53,22 +49,14 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   );
   const [myCards, setMyCards] = useRecoilState(myInGameCardsState);
   const [myDice, setMyDice] = useRecoilState(myDiceState);
-  const [selectedDice, setSelectedDice] = useRecoilState(selectedDiceState);
+  const [selectedDice, setSelectedDice] = useRecoilState(mySelectedDiceState);
   const [opponentDice, setOpponentDice] = useRecoilState(opponentDiceState);
-  const [amSelectingTargets, setAmSelectingTargets] = useRecoilState(
-    amSelectingTargetsState
-  );
-  const [selectedTargetCards, setSelectedTargets] = useRecoilState(
-    mySelectedTargetCardsState
-  );
-  const [requiredTargets, setRequiredTargets] =
-    useRecoilState(requiredTargetsState);
-  const [targetingPurpose, setTargetingPurpose] = useRecoilState(
-    targetingPurposeState
-  );
-  const [currentEffect, setCurrentEffect] = useRecoilState(currentEffectState);
-  const [currentlyBeingEquipped, setCurrentlyBeingEquipped] = useRecoilState(
-    currentlyBeingEquippedState
+
+  const [selectedTargetCards, setSelectedTargets] =
+    useRecoilState(mySelectedCardsState);
+
+  const [selectionPurpose, setSelectionPurpose] = useRecoilState(
+    selectionPurposeState
   );
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -104,18 +92,19 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     };
   }, [gameID, myID]);
 
-  const handleSelectCard = (card: CardExt) => {
-    //don't select the same card twice
-    if (
-      selectedTargetCards.find(
-        (selected: CardExtended) => selected.id === card.id
-      )
-    ) {
-      return;
-    }
-    setSelectedTargets((prev) => [...prev, card]);
-    console.log("SELECTED", selectedTargetCards);
-  };
+  //TODO: change
+  // const handleSelectCard = (card: CardExt) => {
+  //   //don't select the same card twice
+  //   if (
+  //     selectedTargetCards.find(
+  //       (selected: CardExtended) => selected.id === card.id
+  //     )
+  //   ) {
+  //     return;
+  //   }
+  //   setSelectedTargets((prev) => [...prev, card]);
+  //   console.log("SELECTED", selectedTargetCards);
+  // };
 
   const handleSwitchCharacter = (card: CardExt) => {
     if (!myCards) return;
@@ -146,10 +135,15 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   const handleEquipCard = (cardToEquip: CardExt) => {
     // setCurrentlyBeingEquipped(cardToEquip);
     // setRequiredTargets(1);
-    // setTargetingPurpose("EQUIP");
+    // setSelectionPurpose("EQUIP");
     // setAmSelectingTargets(true);
+    console.log("Equipping", selectedDice, selectedTargetCards);
     if (!myCards) return;
     if (!selectedDice) return;
+    if (selectedTargetCards.length !== 1) {
+      setErrorMessage("Incorrect number of targets");
+      return;
+    }
     const targetCard = selectedTargetCards[0];
     //TODO: compare selectedDice to cardToEquip.cost
     console.log("selectedDice", selectedDice, "cost", cardToEquip.cost);
@@ -165,6 +159,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         ) {
           updatedDice = subtractCost(myDice, selectedDice);
         }
+        setSelectedDice({});
       } catch (e) {
         console.log(e);
         setErrorMessage("Incorrect dice");
@@ -184,12 +179,10 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       return card;
     });
     setMyCards(updatedCards as CardExtended[]);
-    setCurrentlyBeingEquipped(null);
-    setAmSelectingTargets(false);
-    setTargetingPurpose(null);
+    setSelectionPurpose(null);
     setSelectedTargets([]);
-    setRequiredTargets(null);
   };
+
   const handleActivateEffect = (effect: Effect) => {
     if (!myCards) return;
 
@@ -216,13 +209,13 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       }
     }
 
-    if (effect.requiredTargets && !amSelectingTargets) {
-      setRequiredTargets(effect.requiredTargets);
-      setCurrentEffect(effect);
-      setTargetingPurpose("EFFECT");
-      setAmSelectingTargets(true);
-      return;
-    }
+    // if (effect.requiredTargets && !amSelectingTargets) {
+    //   setRequiredTargets(effect.requiredTargets);
+    //   setCurrentEffect(effect);
+    //   setSelectionPurpose("EFFECT");
+    //   setAmSelectingTargets(true);
+    //   return;
+    // }
 
     const {
       myUpdatedCards,
@@ -287,7 +280,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     opponentUpdatedCards && setOpponentInGameCards(opponentUpdatedCards);
     myUpdatedDice && setMyDice(myUpdatedDice);
     opponentUpdatedDice && setOpponentDice(opponentUpdatedDice);
-    setAmSelectingTargets(false);
     setSelectedTargets([]);
     channel?.send({
       type: "broadcast",
@@ -302,8 +294,18 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       },
     });
   };
-  const handleUseAttackEffect = (effect: Effect) => {
+  const activateAttackEffect = (effect: Effect) => {
     if (!myCards) return;
+    if (effect.requiredTargets) {
+      if (!selectedTargetCards) {
+        setErrorMessage("No target selected");
+        return;
+      }
+      if (selectedTargetCards.length !== effect.requiredTargets) {
+        setErrorMessage("Incorrect number of targets");
+        return;
+      }
+    }
     //attack effects have a cost
     let cost = effect.cost;
     let myDiceAfterCost = myDice;
@@ -319,6 +321,10 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           myDice,
           opponentCards: opponentInGameCards,
           opponentDice: opponentDice,
+          triggerContext: {
+            eventType: "ATTACK",
+            cost: cost,
+          },
         });
         if (errorMessage) {
           setErrorMessage(errorMessage);
@@ -328,7 +334,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           cost = modifiedCost;
         }
       });
-
+      console.log("cost", cost);
       try {
         myDiceAfterCost = subtractCost(myDice, cost);
       } catch (e) {
@@ -368,8 +374,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     setMyDice(myUpdatedDice || myDiceAfterCost);
     opponentUpdatedCards && setOpponentInGameCards(opponentUpdatedCards);
     opponentUpdatedDice && setOpponentDice(opponentUpdatedDice);
-
-    setAmSelectingTargets(false);
     setSelectedTargets([]);
     channel?.send({
       type: "broadcast",
@@ -390,13 +394,26 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     // if (card.subtype?.includes("EQUIPMENT")) {
     //   setCurrentlyBeingEquipped(card);
     //   setRequiredTargets(1);
-    //   setTargetingPurpose("EQUIP");
+    //   setSelectionPurpose("EQUIP");
     //   setAmSelectingTargets(true);
     //   return;
     // }
     if (!myCards) return;
     let updatedDice = null;
     let cost = card.cost;
+    const thisCardEffectsThatTriggerOnActivation = card.effects.filter(
+      (effect) => effect.triggerOn?.includes("THIS_CARD_ACTIVATION")
+    );
+    thisCardEffectsThatTriggerOnActivation.forEach((effect) => {
+      if (
+        effect.requiredTargets &&
+        selectedTargetCards.length !== effect.requiredTargets
+      ) {
+        setErrorMessage("Incorrect number of targets");
+        return;
+      }
+    });
+
     if (cost) {
       try {
         updatedDice = subtractCost(myDice, cost);
@@ -405,19 +422,25 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         return;
       }
     }
-    const updatedCards = myCards.map((c) => {
+    let updatedCards = myCards.map((c) => {
       if (c.id === card.id) {
         // TODO: set wasActivatedThisTurn to false at the end of the turn
         return { ...c, location: "ACTION", wasActivatedThisTurn: true };
       }
       return c;
     });
+
     //TODO: check all effects that activate on card activation (here?)
-    const effectsThatTriggerOnActivation = findEffectsThatTriggerOn(
+    const otherCardEffectsThatTriggerOnActivation = findEffectsThatTriggerOn(
       "CARD_ACTIVATION",
       myCards
     );
-    if (effectsThatTriggerOnActivation.length === 0) {
+    console.log(thisCardEffectsThatTriggerOnActivation);
+    //TODO: how do I update the effect usage count on this and other cards?
+    if (
+      thisCardEffectsThatTriggerOnActivation.length === 0 &&
+      otherCardEffectsThatTriggerOnActivation.length === 0
+    ) {
       setMyCards(updatedCards as CardExtended[]);
       setMyDice(updatedDice || myDice);
       return;
@@ -427,7 +450,10 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       let myDiceAfterTriggeredEffects = updatedDice || {};
       let opponentInGameCardsAfterTriggeredEffects = opponentInGameCards;
       let opponentDiceAfterTriggeredEffects = opponentDice;
-      effectsThatTriggerOnActivation.forEach((effect) => {
+      [
+        ...thisCardEffectsThatTriggerOnActivation,
+        ...otherCardEffectsThatTriggerOnActivation,
+      ].forEach((effect) => {
         if (!effect.execute) return;
         if (effect.checkIfCanBeExecuted) {
           //TODO: is this necessary?
@@ -491,7 +517,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           isMyBoard && "order-2"
         } bg-blue-200 col-span-full h-32 p-2 grid grid-cols-[4fr_8fr_4fr] `}
       >
-        <div></div>
+        <div className="text-red-700">{errorMessage || ""}</div>
         <div className="flex flex-row justify-center items-center gap-2">
           {playerCards
             ?.filter((card) => card.location === "HAND")
@@ -502,31 +528,32 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                 isFaceDown={!isMyBoard}
                 handleClick={() => {
                   if (card.subtype?.includes("EQUIPMENT")) {
-                    setCurrentlyBeingEquipped(card);
-                    setRequiredTargets(1);
-                    setTargetingPurpose("EQUIP");
-                    setAmSelectingTargets(true);
+                    handleEquipCard(card);
                   } else {
                     activateCard(card);
                   }
                 }}
               />
             ))}
-          {amSelectingTargets && isMyBoard && (
+          {/* {amSelectingTargets && isMyBoard && (
             <TargetSelectionOptions
               handleEquipCard={handleEquipCard}
-              handleUseAttackEffect={handleUseAttackEffect}
+              activateAttackEffect={activateAttackEffect}
               handleActivateEffect={handleActivateEffect}
               errorMessage={errorMessage}
             />
-          )}
+          )} */}
         </div>
         {/* //TODO: display dice, move to new component, fix overflow */}
         <div className="flex justify-between gap-2 overflow-hidden">
           {isMyBoard && (
             <>
               {attacks?.map((attack) => (
-                <CardAttackInfo playerID={playerID} attack={attack} />
+                <CardAttack
+                  playerID={playerID}
+                  attack={attack}
+                  handleAttack={() => activateAttackEffect(attack)}
+                />
               ))}
             </>
           )}
@@ -548,17 +575,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                 !card.subtype.includes("EQUIPMENT")
             )
             .map((card) => (
-              <Card
-                isFaceDown={false}
-                key={card.id}
-                card={card}
-                handleClick={() => {
-                  if (amSelectingTargets) {
-                    handleSelectCard(card);
-                    return;
-                  }
-                }}
-              />
+              <Card isFaceDown={false} key={card.id} card={card} />
             ))}
         </div>
       </div>
@@ -575,11 +592,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                   card={card}
                   equippedCards={equippedCards}
                   handleClick={() => {
-                    if (amSelectingTargets) {
-                      handleSelectCard(card);
-                      return;
-                    }
-                    //TODO: only enable in certain phase
+                    //TODO: only enable in certain phases
                     isMyBoard && handleSwitchCharacter(card);
                   }}
                 />
@@ -590,6 +603,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       <div className="bg-yellow-50 h-full">summon zone</div>
       {/* //TODO: display dice */}
       <DiceDisplay dice={playerDice} isMyBoard={isMyBoard}></DiceDisplay>
+      {isMyBoard && <ElementalTuning />}
     </div>
   );
 }
