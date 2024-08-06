@@ -29,9 +29,22 @@ export const usersInLobbyIDsState = atom<string[]>({
   key: "usersInLobbyIDsState",
   default: [],
 });
-export const myProfileState = atom<Profile | null>({
+
+//TODO: set profile data at login
+export const myProfileState = selector<Profile | null>({
   key: "myProfileState",
-  default: null,
+  get: async ({ get }) => {
+    const supabase = createClientComponentClient<Database>();
+    const myID = get(myIDState);
+    if (!myID) return null;
+    const { data, error } = await supabase
+      .from("profile")
+      .select("*")
+      .eq("id", myID)
+      .single();
+    if (error) console.log("error", error);
+    return data;
+  },
 });
 export const myIDState = selector<string>({
   key: "myIDState",

@@ -241,3 +241,7 @@ export const createRandomElementalDice = (amount: number) => {
     dice[element] = (dice[element] || 0) + 1;
   }
 };
+
+export const calculateTotalDice = (dice: Dice) => {
+  return Object.values(dice).reduce((acc, curr) => acc + curr, 0);
+};

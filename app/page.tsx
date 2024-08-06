@@ -1,11 +1,15 @@
-export const dynamic = "force-dynamic";
-import BattleIcon from "@/public/swords_icon1.svg";
+import MyID from "@/components/MyID";
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+const MyIDNoSSR = dynamic(() => import("@/components/MyID"), {
+  ssr: false,
+});
 
 export default async function Index() {
   return (
     <div className="flex w-full flex-col pt-12">
+      <MyIDNoSSR />
       <div className="flex justify-center">
         <h1 className="text-indigo-200 font-semibold text-3xl mb-10 text-center">
           Genshin Impact TCG simulator

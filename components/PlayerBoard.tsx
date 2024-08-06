@@ -24,6 +24,7 @@ import {
 } from "@/app/actions";
 import { CardExtended } from "@/app/global";
 import {
+  calculateTotalDice,
   findCostModifyingEffects,
   findEffectsThatTriggerOn,
   findEquippedCards,
@@ -108,17 +109,71 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
 
   const handleSwitchCharacter = (card: CardExt) => {
     if (!myCards) return;
-    const { errorMessage, myUpdatedCards } = switchActiveCharacterCard(
-      myCards,
-      card
-    );
-    console.log("switch", myUpdatedCards);
 
-    if (errorMessage) {
-      setErrorMessage(errorMessage);
-      return;
+    const hasActiveCharacter = myCards.find(
+      (card) => card.location === "CHARACTER" && card.is_active
+    );
+    //if there is no active character, the card can be switched to active without a cost
+    if (!hasActiveCharacter) {
+      setMyCards(
+        myCards.map((c) => {
+          if (c.id === card.id) {
+            return { ...c, is_active: true };
+          }
+          return c;
+        }) as CardExtended[]
+      );
+    } else {
+      let cost = selectedDice;
+      console.log("switch dice", selectedDice);
+      if (calculateTotalDice(selectedDice) !== 1) {
+        setErrorMessage("Incorrect number of dice");
+        return;
+      }
+      const { errorMessage, myUpdatedCards } = switchActiveCharacterCard(
+        myCards,
+        card
+      );
+
+      if (errorMessage) {
+        setErrorMessage(errorMessage);
+        return;
+      }
+
+      const costModifyingEffects = findCostModifyingEffects(myCards);
+      costModifyingEffects.forEach((effect) => {
+        if (!effect?.execute) return;
+        let { modifiedCost, errorMessage } = effect.execute({
+          effect,
+          playerID: myID,
+          myCards,
+          myDice,
+          opponentCards: opponentInGameCards,
+          opponentDice: opponentDice,
+          triggerContext: {
+            //TODO: rename to SWITCH_CHARACTER because SWITCH_PLAYER will be used for changing turns
+            eventType: "SWITCH",
+            cost,
+          },
+        });
+        if (errorMessage) {
+          setErrorMessage(errorMessage);
+          return;
+        }
+        if (modifiedCost) {
+          cost = modifiedCost;
+        }
+      });
+      try {
+        const diceAfterCost = subtractCost(myDice, cost);
+        setMyDice(diceAfterCost);
+        setSelectedDice({});
+      } catch (e) {
+        setErrorMessage("Not enough dice");
+        return;
+      }
+      myUpdatedCards && setMyCards(myUpdatedCards);
     }
-    myUpdatedCards && setMyCards(myUpdatedCards);
   };
   const switchCurrentPlayer = () => {
     const nextPlayerID = currentPlayerID === myID ? opponentID : myID;
@@ -525,7 +580,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
               <Card
                 key={card.id}
                 card={card}
-                isFaceDown={!isMyBoard}
                 handleClick={() => {
                   if (card.subtype?.includes("EQUIPMENT")) {
                     handleEquipCard(card);
@@ -550,6 +604,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             <>
               {attacks?.map((attack) => (
                 <CardAttack
+                  key={attack.id}
                   playerID={playerID}
                   attack={attack}
                   handleAttack={() => activateAttackEffect(attack)}
@@ -575,7 +630,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                 !card.subtype.includes("EQUIPMENT")
             )
             .map((card) => (
-              <Card isFaceDown={false} key={card.id} card={card} />
+              <Card key={card.id} card={card} />
             ))}
         </div>
       </div>

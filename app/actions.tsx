@@ -220,8 +220,7 @@ export const discardCard = (card: CardExt) => {
 
 export const switchActiveCharacterCard = (
   myCards: CardExt[],
-  character: CardExt,
-  errorMessage?: string
+  character: CardExt
 ) => {
   if (!character) return { errorMessage: "No character found" };
   if (character.health === 0)

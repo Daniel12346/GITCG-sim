@@ -4,6 +4,7 @@ import {
   myCurrentDeckCardsBasicInfoState,
   myCurrentDeckIDState,
   mySelectedCardsState,
+  myIDState,
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import {
@@ -16,14 +17,12 @@ import {
 interface Props {
   card: CardExt;
   handleClick?: () => void;
-  isFaceDown?: boolean;
   isInDeckDisplay?: boolean;
   equippedCards?: CardExt[];
 }
 export default function Card({
   card,
   handleClick,
-  isFaceDown,
   isInDeckDisplay,
   equippedCards,
 }: Props) {
@@ -35,7 +34,10 @@ export default function Card({
   const refreshDeck = useRecoilRefresher_UNSTABLE(
     myCurrentDeckCardsBasicInfoState
   );
+  const myID = useRecoilValue(myIDState);
+  const isMyCard = card.owner_id === myID;
   const isSelected = selectedTargets.find((target) => target.id === card.id);
+  const isFaceDown = card.location === "HAND" && !isMyCard;
   return (
     <div
       className={`group bg-blue-200 flex flex-col items-center relative h-24 w-16 border-4
@@ -43,10 +45,12 @@ export default function Card({
         ${isSelected && "ring-4 ring-blue-600"}
         ${card && card.is_active && "scale-125"}
         `}
-      onMouseEnter={() => setCurrentViewedCard(card)}
+      onMouseEnter={() => {
+        setCurrentViewedCard(card);
+      }}
     >
       {/* used for activating cards from hand */}
-      {card.location === "HAND" && (
+      {card.location === "HAND" && isMyCard && (
         <span
           className="z-10 hidden group-hover:block absolute top-1 left-1 bg-green-200 text-green-800 p-1"
           onClick={handleClick}
@@ -55,7 +59,7 @@ export default function Card({
         </span>
       )}
       {/* used for switching active character */}
-      {card.location === "CHARACTER" && !card.is_active && (
+      {card.location === "CHARACTER" && isMyCard && !card.is_active && (
         <span
           className="z-10 hidden group-hover:block absolute top-1 left-1 bg-green-200 text-green-800 p-1"
           onClick={handleClick}
