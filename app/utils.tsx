@@ -250,37 +250,6 @@ export const createRandomElementalDice = (amount: number) => {
 export const calculateTotalDice = (dice: Dice) => {
   return Object.values(dice).reduce((acc, curr) => acc + curr, 0);
 };
-export type DamageElement =
-  | "PHYSICAL"
-  | "PIERCING"
-  | Omit<DieElementNameT, "OMNI">;
-export type ElementalReaction =
-  | "MELT"
-  | "VAPORIZE"
-  | "OVERLOADED"
-  | "SUPERCONDUCT"
-  | "ELECTROCHARGED"
-  | "SHATTERED"
-  | "CRYSTALLIZE"
-  | "SWIRL"
-  | "BURNING"
-  | "FROZEN"
-  | "QUICKEN";
-
-export type ElementalInfusion =
-  | "CRYO_INFUSION"
-  | "PYRO_INFUSION"
-  | "ELECTRO_INFUSION"
-  | "ANEMO_INFUSION"
-  | "DENDRO_INFUSION"
-  | "GEO_INFUSION";
-export type Status = ElementName | ElementalReaction | ElementalInfusion;
-export type CardStatus = {
-  name: Status;
-  turnsLeft?: number;
-  //for Dendro spores, etc.
-  amount?: number;
-};
 
 // const calculateElementalReaction = (
 //   newElement: DieElementNameT,
@@ -329,6 +298,7 @@ const clearCardStatuses = (card: CardExt, statuses: Status[]) => {
     statuses: card.statuses?.filter((s) => !statuses.includes(s.name)),
   } as CardExt;
 };
+
 //TODO: rename because this also calculates damage (?)
 export const calculateAttackElementalReaction: CalculateAttackElementalReaction =
   ({
@@ -379,6 +349,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
     let damageAfterReaction = damage;
     let reactions = [];
     let opponentUpdatedCards = opponentCards;
+    //vaporize
     if (
       reactingElements.includes("PYRO") &&
       reactingElements.includes("HYDRO")
@@ -391,7 +362,62 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
         }
         return card;
       });
+      //electrocharged
+    } else if (
+      reactingElements.includes("HYDRO") &&
+      reactingElements.includes("ELECTRO")
+    ) {
+      damageAfterReaction += 1;
+      reactions.push("ELECTROCHARGED");
+      opponentUpdatedCards = opponentCards.map((card) => {
+        if (card.id === targetCardId) {
+          return clearCardStatuses(card, ["HYDRO", "ELECTRO"]);
+          //doing 1 damage to all characters except the target
+        } else if (card.location === "CHARACTER") {
+          const updatedHealth = card.health && Math.max(0, card.health - 1);
+          return { ...card, health: updatedHealth };
+        } else {
+          return card;
+        }
+      });
+    } else if (
+      //swirl
+      targetStatuses.find((status: CardStatus) =>
+        ["PYRO", "HYDRO", "ELECTRO", "CRYO"].includes(status.name)
+      ) &&
+      damageElement === "ANEMO"
+    ) {
+      console.log("swirl", targetStatuses);
+      const elementToSwirl = targetStatuses.find((status) =>
+        ["PYRO", "HYDRO", "ELECTRO", "CRYO"].includes(status.name)
+      );
+      opponentUpdatedCards = opponentCards.map((card) => {
+        if (card.id === targetCardId) {
+          return clearCardStatuses(card, [elementToSwirl?.name]);
+        }
+        return card;
+      });
+      damageAfterReaction += 1;
+      const swirlTargets = opponentCards.filter(
+        (card) => card.location === "CHARACTER" && card.id !== targetCardId
+      );
+      swirlTargets.forEach((card) => {
+        const { reactions, opponentCardsAfterReaction, myCardsAfterReaction } =
+          calculateAttackElementalReaction({
+            damage: 1,
+            damageElement: elementToSwirl?.name,
+            attackerCardId,
+            targetCardId: card.id,
+            myCards,
+            opponentCards: opponentUpdatedCards,
+          });
+        reactions && reactions.forEach((reaction) => reactions.push(reaction));
+        if (opponentCardsAfterReaction) {
+          opponentUpdatedCards = opponentCardsAfterReaction;
+        }
+      });
     } else {
+      console.log(targetStatuses);
       //adding the attacking element to the target's statuses if no other reaction happened
       opponentUpdatedCards = opponentCards.map((card) => {
         if (card.id === targetCardId) {

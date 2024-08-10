@@ -62,6 +62,45 @@ type CostT = {
   [key in CostElementName]?: number;
 };
 
+type EventTypeT =
+  | "THIS_CARD_ACTIVATION"
+  | "CARD_ACTIVATION"
+  | "ATTACK"
+  | "REACTION"
+  | "EQUIP_TALENT"
+  | "EQUIP_ARTIFACT"
+  | "EQUIP_WEAPON"
+  | "SWITCH";
+
+type DamageElementT = "PHYSICAL" | "PIERCING" | Omit<DieElementNameT, "OMNI">;
+type ElementalReactionT =
+  | "MELT"
+  | "VAPORIZE"
+  | "OVERLOADED"
+  | "SUPERCONDUCT"
+  | "ELECTROCHARGED"
+  | "SHATTERED"
+  | "CRYSTALLIZE"
+  | "SWIRL"
+  | "BURNING"
+  | "FROZEN"
+  | "QUICKEN";
+
+type ElementalInfusionT =
+  | "CRYO_INFUSION"
+  | "PYRO_INFUSION"
+  | "ELECTRO_INFUSION"
+  | "ANEMO_INFUSION"
+  | "DENDRO_INFUSION"
+  | "GEO_INFUSION";
+type StatusT = ElementName | ElementalReaction | ElementalInfusion;
+type CardStatusT = {
+  name: Status;
+  turnsLeft?: number;
+  //for Dendro spores, etc.
+  amount?: number;
+};
+
 declare global {
   type Database = DB;
   //extends Card with effects
@@ -73,4 +112,10 @@ declare global {
   type Dice = DiceT;
   type Cost = CostT;
   type ElementName = ElementNameT;
+  type EventType = EventTypeT;
+  type DamageElement = DamageElementT;
+  type ElementalReaction = ElementalReactionT;
+  type ElementalInfusion = ElementalInfusionT;
+  type Status = StatusT;
+  type CardStatus = CardStatusT;
 }

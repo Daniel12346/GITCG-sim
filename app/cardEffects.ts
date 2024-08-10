@@ -2,7 +2,6 @@ import { addDice, discardCard, drawCards, subtractCost } from "./actions";
 import {
   calculateAttackElementalReaction,
   calculateDamageAfterModifiers,
-  ElementalReaction,
   findDamageModifyingEffects,
   findEquippedCards,
 } from "./utils";
