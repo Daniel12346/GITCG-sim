@@ -52,7 +52,7 @@ export default function Card({
       {/* used for activating cards from hand */}
       {card.location === "HAND" && isMyCard && (
         <span
-          className="z-10 hidden group-hover:block absolute top-1 left-1 bg-green-200 text-green-800 p-1"
+          className="z-30 cursor-pointer hidden group-hover:block absolute top-1 left-1 bg-green-200 text-green-800 p-1"
           onClick={handleClick}
         >
           activate
@@ -61,7 +61,7 @@ export default function Card({
       {/* used for switching active character */}
       {card.location === "CHARACTER" && isMyCard && !card.is_active && (
         <span
-          className="z-10 hidden group-hover:block absolute top-1 left-1 bg-green-200 text-green-800 p-1"
+          className="z-30 cursor-pointer hidden group-hover:block absolute top-1 left-1 bg-green-200 text-green-800 p-1"
           onClick={handleClick}
         >
           switch
@@ -69,7 +69,7 @@ export default function Card({
       )}
       {/* used for selecting cards */}
       <span
-        className="z-10 hidden group-hover:block absolute top-10 left-1 bg-slate-200 text-blue-800 p-1"
+        className="z-30 cursor-pointer hidden group-hover:block absolute top-10 left-1 bg-slate-200 text-blue-800 p-1"
         onClick={() => {
           setSelectedTargets((prev) => {
             if (prev.find((target) => target.id === card.id)) {
@@ -88,6 +88,14 @@ export default function Card({
         </span>
         {/* //TODO: display dice cost and energy */}
         <span className="bg-orange-300 rounded-sm text-orange-800">{}</span>
+        {/* statuses */}
+        <div className="bg-orange-100 rounded-sm text-blue-800">
+          {card.statuses?.map((status) => (
+            <span>
+              {status.name}: {status.turnsLeft}
+            </span>
+          ))}
+        </div>
       </div>
       {
         //only used in deck builder

@@ -5,6 +5,7 @@ import {
   EventType,
   TriggerEvents,
 } from "./cardEffects";
+import { CardStatus } from "./utils";
 
 type Effect = DB["public"]["Tables"]["effect"]["Row"];
 interface EffectT extends Effect {
@@ -32,6 +33,7 @@ interface CardExtended extends Card {
   //TODO: remove equipped_to_id from card table
   wasActivatedThisTurn?: boolean;
   hasUsedFoodThisTurn?: boolean;
+  statuses?: CardStatus[];
 }
 type BoardT = {
   id: string;
@@ -41,25 +43,16 @@ type BoardT = {
   cards: CardExt[];
 };
 
-type CostElementNameT =
+type ElementNameT =
   | "ANEMO"
   | "DENDRO"
   | "PYRO"
   | "HYDRO"
   | "ELECTRO"
   | "CRYO"
-  | "GEO"
-  | "MATCHING"
-  | "UNALIGNED";
-type DieElementNameT =
-  | "ANEMO"
-  | "DENDRO"
-  | "PYRO"
-  | "HYDRO"
-  | "ELECTRO"
-  | "CRYO"
-  | "GEO"
-  | "OMNI";
+  | "GEO";
+type CostElementNameT = ElementName | "MATCHING" | "UNALIGNED";
+type DieElementNameT = ElementName | "OMNI";
 
 type DiceT = {
   [key in DieElementName]?: number;
@@ -79,4 +72,5 @@ declare global {
   type DieElementName = DieElementNameT;
   type Dice = DiceT;
   type Cost = CostT;
+  type ElementName = ElementNameT;
 }

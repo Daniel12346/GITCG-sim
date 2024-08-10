@@ -21,6 +21,16 @@ export default () => {
         <span className="text-xl">{currentCard?.name}</span>
         <img src={currentCard?.img_src} className="h-80" />
         <span>{currentCard?.cost && printCost(currentCard.cost)}</span>
+        {currentCard?.statuses && (
+          <div className="flex flex-col gap-1">
+            {currentCard.statuses.map((status) => (
+              <span
+                //TODO: use a unique key
+                key={status.name}
+              >{`${status.name} : ${status.turnsLeft}`}</span>
+            ))}
+          </div>
+        )}
         <div className="flex flex-col gap-1 max-h-[10rem] overflow-y-scroll translate-x-0">
           {currentCard?.effects &&
             currentCard.effects.map((effect) => {

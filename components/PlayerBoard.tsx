@@ -93,20 +93,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     };
   }, [gameID, myID]);
 
-  //TODO: change
-  // const handleSelectCard = (card: CardExt) => {
-  //   //don't select the same card twice
-  //   if (
-  //     selectedTargetCards.find(
-  //       (selected: CardExtended) => selected.id === card.id
-  //     )
-  //   ) {
-  //     return;
-  //   }
-  //   setSelectedTargets((prev) => [...prev, card]);
-  //   console.log("SELECTED", selectedTargetCards);
-  // };
-
   const handleSwitchCharacter = (card: CardExt) => {
     if (!myCards) return;
 
@@ -143,6 +129,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       const costModifyingEffects = findCostModifyingEffects(myCards);
       costModifyingEffects.forEach((effect) => {
         if (!effect?.execute) return;
+        if (!effect.triggerOn?.includes("SWITCH")) return;
         let { modifiedCost, errorMessage } = effect.execute({
           effect,
           playerID: myID,
@@ -192,7 +179,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     // setRequiredTargets(1);
     // setSelectionPurpose("EQUIP");
     // setAmSelectingTargets(true);
-    console.log("Equipping", selectedDice, selectedTargetCards);
     if (!myCards) return;
     if (!selectedDice) return;
     if (selectedTargetCards.length !== 1) {
@@ -201,7 +187,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     }
     const targetCard = selectedTargetCards[0];
     //TODO: compare selectedDice to cardToEquip.cost
-    console.log("selectedDice", selectedDice, "cost", cardToEquip.cost);
     if (cardToEquip.cost) {
       let updatedDice = null;
       try {
@@ -589,14 +574,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                 }}
               />
             ))}
-          {/* {amSelectingTargets && isMyBoard && (
-            <TargetSelectionOptions
-              handleEquipCard={handleEquipCard}
-              activateAttackEffect={activateAttackEffect}
-              handleActivateEffect={handleActivateEffect}
-              errorMessage={errorMessage}
-            />
-          )} */}
         </div>
         {/* //TODO: display dice, move to new component, fix overflow */}
         <div className="flex justify-between gap-2 overflow-hidden">
@@ -607,7 +584,10 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                   key={attack.id}
                   playerID={playerID}
                   attack={attack}
-                  handleAttack={() => activateAttackEffect(attack)}
+                  handleAttack={() => {
+                    activateAttackEffect(attack);
+                    setSelectedDice({});
+                  }}
                 />
               ))}
             </>

@@ -154,12 +154,17 @@ export const findCostModifyingEffectsOfCardsEquippedTo = (
   return findCostModifyingEffects(equippedCards);
 };
 
-export const findDamageModifyingEffects = (cards: CardExt[]) => {
+export const findDamageModifyingEffects = (
+  cards: CardExt[],
+  trigger?: EventType
+) => {
   return cards.reduce((acc, card) => {
     return ["ACTION", "EQUIPPED"].includes(card.location!)
       ? acc.concat(
           card.effects.filter(
-            (effect) => effect.effectType === "DAMAGE_MODIFIER"
+            (effect) =>
+              effect.effectType === "DAMAGE_MODIFIER" &&
+              (trigger ? effect.triggerOn?.includes(trigger) : true)
           )
         )
       : acc;
@@ -245,3 +250,174 @@ export const createRandomElementalDice = (amount: number) => {
 export const calculateTotalDice = (dice: Dice) => {
   return Object.values(dice).reduce((acc, curr) => acc + curr, 0);
 };
+export type DamageElement =
+  | "PHYSICAL"
+  | "PIERCING"
+  | Omit<DieElementNameT, "OMNI">;
+export type ElementalReaction =
+  | "MELT"
+  | "VAPORIZE"
+  | "OVERLOADED"
+  | "SUPERCONDUCT"
+  | "ELECTROCHARGED"
+  | "SHATTERED"
+  | "CRYSTALLIZE"
+  | "SWIRL"
+  | "BURNING"
+  | "FROZEN"
+  | "QUICKEN";
+
+export type ElementalInfusion =
+  | "CRYO_INFUSION"
+  | "PYRO_INFUSION"
+  | "ELECTRO_INFUSION"
+  | "ANEMO_INFUSION"
+  | "DENDRO_INFUSION"
+  | "GEO_INFUSION";
+export type Status = ElementName | ElementalReaction | ElementalInfusion;
+export type CardStatus = {
+  name: Status;
+  turnsLeft?: number;
+  //for Dendro spores, etc.
+  amount?: number;
+};
+
+// const calculateElementalReaction = (
+//   newElement: DieElementNameT,
+//   oldElement: DieElementNameT
+// ) => {
+//   if (newElement === "PYRO" && oldElement === "CRYO") {
+//     return "MELT";
+//   }
+//   if (newElement === "HYDRO" && oldElement === "PYRO") {
+//     return "VAPORIZE";
+//   }
+//   if (newElement === "ELECTRO" && oldElement === "HYDRO") {
+//     return "OVERLOADED";
+//   }
+//   if (newElement === "CRYO" && oldElement === "ELECTRO") {
+//     return "SUPERCONDUCT";
+//   }
+//   if (newElement === "ELECTRO" && oldElement === "HYDRO") {
+//     return "ELECTROCHARGED";
+//   }
+// };
+
+type CalculateAttackElementalReaction = ({
+  damage,
+  damageElement,
+  attackerCardId,
+  targetCardId,
+}: {
+  damage: number;
+  damageElement: DamageElement;
+  attackerCardId: string;
+  targetCardId: string;
+  myCards: CardExt[];
+  opponentCards: CardExt[];
+}) => {
+  errorMessage?: string;
+  updatedDamage?: number;
+  myCardsAfterReaction?: CardExt[];
+  opponentCardsAfterReaction?: CardExt[];
+  reactions?: ElementalReaction[];
+};
+
+const clearCardStatuses = (card: CardExt, statuses: Status[]) => {
+  return {
+    ...card,
+    statuses: card.statuses?.filter((s) => !statuses.includes(s.name)),
+  } as CardExt;
+};
+//TODO: rename because this also calculates damage (?)
+export const calculateAttackElementalReaction: CalculateAttackElementalReaction =
+  ({
+    damage,
+    damageElement,
+    attackerCardId,
+    targetCardId,
+    myCards,
+    opponentCards,
+  }) => {
+    if (!myCards || !opponentCards) {
+      return {
+        errorMessage: "My cards or opponent cards are missing",
+      };
+    }
+    const attackerCard = myCards.find((card) => card.id === attackerCardId);
+    const targetCard = opponentCards.find((card) => card.id === targetCardId);
+    //TODO: check attacker statuses for elemental infusion
+    if (!attackerCard || !targetCard) {
+      return {
+        errorMessage: "Attacker or target card is missing",
+      };
+    }
+
+    //  if (damageElement === "PHYSICAL") {
+    //    return { updatedDamage: damage };
+    //  }
+    //  //TODO: check for shields
+    //  if (damageElement === "PIERCING") {
+    //    return { updatedDamage: damage };
+    //  }
+    //  if (!targetStatuses || targetStatuses.length === 0) {
+    //    let updatedTargetStatuses = [
+    //      { name: damageElement as ElementName, turnsLeft: 1 },
+    //    ];
+    //    return {
+    //      updatedDamage: damage,
+    //      updatedTargetCard: { ...targetCard, statuses: updatedTargetStatuses },
+    //    };
+    //  }
+    const attackerStatuses = attackerCard.statuses;
+    const targetStatuses = targetCard.statuses || [];
+
+    const reactingElements = [
+      ...targetStatuses.map((status) => status.name),
+      damageElement,
+    ];
+    let damageAfterReaction = damage;
+    let reactions = [];
+    let opponentUpdatedCards = opponentCards;
+    if (
+      reactingElements.includes("PYRO") &&
+      reactingElements.includes("HYDRO")
+    ) {
+      damageAfterReaction += 2;
+      reactions.push("VAPORIZE");
+      opponentUpdatedCards = opponentCards.map((card) => {
+        if (card.id === targetCardId) {
+          return clearCardStatuses(card, ["PYRO", "HYDRO"]);
+        }
+        return card;
+      });
+    } else {
+      //adding the attacking element to the target's statuses if no other reaction happened
+      opponentUpdatedCards = opponentCards.map((card) => {
+        if (card.id === targetCardId) {
+          return {
+            ...card,
+            statuses: [
+              ...(card.statuses || []),
+              { name: damageElement, turnsLeft: 1 },
+            ],
+          } as CardExt;
+        }
+        return card;
+      });
+    }
+    opponentUpdatedCards = opponentUpdatedCards.map((card) => {
+      const updatedHealth =
+        card.health && Math.max(0, card.health - damageAfterReaction);
+
+      if (card.id === targetCardId) {
+        return { ...card, health: updatedHealth };
+      }
+      return card;
+    });
+
+    return {
+      opponentCardsAfterReaction: opponentUpdatedCards,
+      myCardsAfterReaction: myCards,
+    };
+  };

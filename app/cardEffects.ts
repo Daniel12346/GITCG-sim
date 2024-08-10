@@ -1,6 +1,8 @@
 import { addDice, discardCard, drawCards, subtractCost } from "./actions";
 import {
+  calculateAttackElementalReaction,
   calculateDamageAfterModifiers,
+  ElementalReaction,
   findDamageModifyingEffects,
   findEquippedCards,
 } from "./utils";
@@ -56,6 +58,7 @@ type CheckIfEffectCanBeExecutedParams = {
 //   errorMessage?: string;
 // };
 
+//TODO: add trigger
 //used to make the execute effect functions of 6 relics with their only difference being the element, all with the cost of 2 unaligned
 const makeExecuteFunctionOfElementalRelicWith2UnalignedCost = (
   element: CostElementName
@@ -67,7 +70,7 @@ const makeExecuteFunctionOfElementalRelicWith2UnalignedCost = (
       return { errorMessage: "No trigger context" };
     }
     if (!["ATTACK", "EQUIP_TALENT"].includes(triggerContext.eventType)) {
-      return { errorMessage: "Wrong trigger context" };
+      return {};
     }
     try {
       cost = subtractCost({ ...cost }, { [element]: 1 }) as Cost;
@@ -104,6 +107,62 @@ const makeTriggerAndExecuteAndCheckIfCanBeExecutedFunctionsOfWeaponWithPlus1Dama
       },
     };
   };
+
+const makeNormalAttackExecuteFunction = (
+  attackElement: ElementName,
+  baseDamage: number
+): ExecuteEffect => {
+  const execute = ({
+    myCards,
+    opponentCards,
+    thisCard,
+    targetCards,
+    myDice,
+    opponentDice,
+  }: //TODO: triggerContext,
+  // triggerContext,
+  ExecuteEffectParams) => {
+    //the base damage of the attack
+    if (!thisCard) {
+      return { errorMessage: "No card passed to effect" };
+    }
+    if (!targetCards || targetCards.length < 1) {
+      return { errorMessage: "One target card is required" };
+    }
+    //TODO: only use modifiers that activate before the attack?
+    let damageBeforeElementalReactions = calculateDamageAfterModifiers({
+      baseDamage,
+      myCards,
+      opponentCards,
+      myDice,
+      opponentDice,
+      thisCard,
+      targetCards,
+    });
+    const targetCardId = targetCards[0].id;
+    const attackerCardId = thisCard.id;
+    const { opponentCardsAfterReaction, myCardsAfterReaction, reactions } =
+      calculateAttackElementalReaction({
+        damage: damageBeforeElementalReactions,
+        damageElement: attackElement,
+        attackerCardId,
+        //TODO: what if there are multiple target cards?
+        targetCardId,
+        myCards,
+        opponentCards,
+      });
+    reactions?.forEach((reaction) => {
+      console.log("reaction", reaction);
+    });
+
+    //TODO: increase attack counter on attacker card, trigger effects after attack or reaction
+    return {
+      myUpdatedCards: myCardsAfterReaction,
+      opponentUpdatedCards: opponentCardsAfterReaction,
+    };
+  };
+  return execute;
+};
 
 export type CheckIfEffectCanBeExecuted = (
   params: CheckIfEffectCanBeExecutedParams
@@ -434,49 +493,20 @@ export const effects: {
     ),
   //--------------ATTACKS------------------
 
+  //Sucrose's Normal Attack
   "b4a1b3f5-45a1-4db8-8d07-a21cb5e5be11": {
     requiredTargets: 1,
-    execute: ({
-      myCards,
-      opponentCards,
-      thisCard,
-      targetCards,
-      myDice,
-      opponentDice,
-      //TODO: triggerContext,
-      // triggerContext,
-    }) => {
-      //the base damage of the attack
-      if (!thisCard) {
-        return { errorMessage: "No card passed to effect" };
-      }
-      if (!targetCards || targetCards.length < 1) {
-        return { errorMessage: "One target card is required" };
-      }
-      let damage = calculateDamageAfterModifiers({
-        baseDamage: 1,
-        myCards,
-        opponentCards,
-        myDice,
-        opponentDice,
-        thisCard,
-        targetCards,
-      });
-
-      //TODO: increase attack counter on attacker card
-      const opponentUpdatedCards = opponentCards.map((card) => {
-        if (card.id === targetCards[0].id) {
-          //TODO: add elemental reactions
-          return {
-            ...card,
-            health: card.health ? card.health - damage : 0,
-          };
-        } else {
-          return card;
-        }
-      });
-      return { opponentUpdatedCards };
-    },
+    execute: makeNormalAttackExecuteFunction("ANEMO", 1),
+  },
+  //Kaeya's Normal Attack
+  "b17045ef-f632-4864-b72d-c0cd048eb4b3": {
+    requiredTargets: 1,
+    execute: makeNormalAttackExecuteFunction("HYDRO", 2),
+  },
+  //Diluc's Normal Attack
+  "d0054e26-1bcd-45bf-9dbe-eaeac45b9048": {
+    requiredTargets: 1,
+    execute: makeNormalAttackExecuteFunction("PYRO", 2),
   },
 };
 export default effects;
