@@ -10,7 +10,7 @@ export default function CardAttackInfo({
   handleAttack,
 }: Props) {
   return (
-    <div className=" bg-blue-300 cursor-pointer z-20" onClick={handleAttack}>
+    <div className="bg-blue-300 cursor-pointer z-20" onClick={handleAttack}>
       {/* <p className="text-xs">{attack.description}</p> */}
       <div className="h-full">
         {Object.entries(attack.cost!)

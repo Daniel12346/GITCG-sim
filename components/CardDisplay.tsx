@@ -15,8 +15,9 @@ export default () => {
           {element}:{amount}
         </span>
       ));
+
   return (
-    <div className="w-full flex justify-center text-slate-200">
+    <div className="w-full flex justify-center text-slate-200 position-relative">
       <div className="flex flex-col items-center gap-3">
         <span className="text-xl">{currentCard?.name}</span>
         <img src={currentCard?.img_src} className="h-80" />

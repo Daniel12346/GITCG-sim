@@ -107,6 +107,7 @@ const makeTriggerAndExecuteAndCheckIfCanBeExecutedFunctionsOfWeaponWithPlus1Dama
     };
   };
 
+//TODO: fix attack happening even when there's not enough dice
 const makeNormalAttackExecuteFunction = (
   attackElement: ElementName,
   baseDamage: number
@@ -495,12 +496,12 @@ export const effects: {
   //Sucrose's Normal Attack
   "b4a1b3f5-45a1-4db8-8d07-a21cb5e5be11": {
     requiredTargets: 1,
-    execute: makeNormalAttackExecuteFunction("ANEMO", 1),
+    execute: makeNormalAttackExecuteFunction("HYDRO", 1),
   },
   //Kaeya's Normal Attack
   "b17045ef-f632-4864-b72d-c0cd048eb4b3": {
     requiredTargets: 1,
-    execute: makeNormalAttackExecuteFunction("HYDRO", 2),
+    execute: makeNormalAttackExecuteFunction("CRYO", 2),
   },
   //Diluc's Normal Attack
   "d0054e26-1bcd-45bf-9dbe-eaeac45b9048": {

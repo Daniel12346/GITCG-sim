@@ -558,7 +558,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         } bg-blue-200 col-span-full h-32 p-2 grid grid-cols-[4fr_8fr_4fr] `}
       >
         <div className="text-red-700">{errorMessage || ""}</div>
-        <div className="flex flex-row justify-center items-center gap-2">
+        <div className="flex flex-row justify-center items-center gap-2 ">
           {playerCards
             ?.filter((card) => card.location === "HAND")
             .map((card) => (
