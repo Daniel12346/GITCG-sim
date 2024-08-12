@@ -101,10 +101,25 @@ export const subtractCost = (
         //TODO: handle error
         if (!hasSubtracted) throw new Error("Not enough dice");
       } else if (requiredElementName === "UNALIGNED") {
+        console.log(
+          "checking for unaligned dice 0",
+          result,
+          "requiredAmount",
+          requiredAmount
+        );
         let i = requiredAmount;
         while (i > 0) {
+          console.log(
+            "checking for unaligned dice",
+            availableElements,
+            i,
+            result
+          );
+          if (availableElements.length === 0) {
+            throw new Error("Not enough dice");
+          }
           for (let elName of availableElements) {
-            if (i > 0 && result[elName]! > 0) {
+            if (i > 0 && result[elName] && result[elName] > 0) {
               result[elName] = result[elName]! - 1;
               i--;
             }
@@ -225,7 +240,7 @@ export const switchActiveCharacterCard = (
   if (!character) return { errorMessage: "No character found" };
   if (character.health === 0)
     return { errorMessage: "Character has no health left" };
-  //TODO: pay cost
+
   const myUpdatedCards = myCards.map((card) => {
     if (card.id === character.id) {
       return { ...card, is_active: true };

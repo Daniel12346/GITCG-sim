@@ -223,6 +223,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     setSelectedTargets([]);
   };
 
+  //TODO: why is this not used?
   const handleActivateEffect = (effect: Effect) => {
     if (!myCards) return;
 
@@ -349,6 +350,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     //attack effects have a cost
     let cost = effect.cost;
     let myDiceAfterCost = myDice;
+    const mySelectedDice = selectedDice;
     if (cost) {
       const costModifyingEffects = findCostModifyingEffects(myCards);
       console.log("modifiers", costModifyingEffects);
@@ -374,11 +376,24 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           cost = modifiedCost;
         }
       });
-      console.log("cost", cost);
       try {
-        myDiceAfterCost = subtractCost(myDice, cost);
+        console.log("before subtracting cost", mySelectedDice, cost);
+        //checking if there are enough dice among the selected dice
+        if (calculateTotalDice(mySelectedDice) !== calculateTotalDice(cost)) {
+          throw new Error("Incorrect dice amount");
+        }
+        //subtracting the cost from the selected dice to check if the dice are correct
+        subtractCost(mySelectedDice, cost);
       } catch (e) {
-        setErrorMessage("Not enough dice");
+        setErrorMessage("Incorrect dice amount");
+        return;
+      }
+      //if there are enough dice, subtract the selected dice from the total dice
+      try {
+        myDiceAfterCost = subtractCost(myDice, mySelectedDice);
+      } catch (e) {
+        console.log(e, myDiceAfterCost);
+        setErrorMessage("Not enough total dice");
         return;
       }
     }

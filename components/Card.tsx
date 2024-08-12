@@ -97,6 +97,7 @@ export default function Card({
         {/* statuses */}
         <div className="bg-orange-100 rounded-sm text-blue-800">
           {card.statuses?.map((status) => (
+            //TODO: use unique key
             <span>
               {status.name}: {status.turnsLeft}
             </span>
@@ -149,6 +150,7 @@ export default function Card({
         <div className="flex gap-1 z-20 absolute">
           {equippedCards.map((equippedCard) => (
             <div className="scale-50">
+              {/* //TODO: use unique key */}
               <Card key={equippedCard.id} card={equippedCard} />
             </div>
           ))}
