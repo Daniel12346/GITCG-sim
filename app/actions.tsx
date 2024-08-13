@@ -1,4 +1,5 @@
-import { EventType, ExecuteEffect, effects } from "./cardEffects";
+import { get } from "http";
+import { EventType, ExecuteEffect, findEffectLogic } from "./cardEffects";
 
 export function drawCards(currentCards: CardExt[], amount: number) {
   const newCardsState = currentCards.map((card) => {
@@ -56,17 +57,7 @@ const subtractDice = (diceToSubtractFrom: Dice, diceToSubtract: Dice) => {
   });
   return result;
 };
-// function payEffectCost(
-//   cost: DiceOfElement
-//   myDice: DiceOfElement,
-//   selectedDice: DiceOfElement
-// ) {
-//   const cost = {...effect}.cost as DiceOfElement;
-//   //check if selected dice can pay cost
-//   for (const [selectedElement, selectedamount] of Object.entries(selectedDice)) {
 
-//   }
-// }
 export const subtractCost = (
   diceToSubtractFrom: Dice,
   costToSubtract: Cost
@@ -193,6 +184,7 @@ export const activateEffect: ExecuteEffect = ({
   targetCards,
 }) => {
   if (!effect) return { errorMessage: "no effect" };
+  const effectLogic = findEffectLogic(effect);
 
   const effectSourceCard =
     thisCard ?? myCards.find((card) => card.id === effect.card_id);
@@ -202,7 +194,7 @@ export const activateEffect: ExecuteEffect = ({
 
   //TODO!: separate the effect execution logic from the effects themselves
   // because it gets lost when sending over the channel
-  const { execute, requiredTargets } = effect;
+  const { execute, requiredTargets } = effectLogic;
 
   if (execute) {
     return execute({

@@ -6,11 +6,7 @@ import { uuid } from "uuidv4";
 import { atom, selector, selectorFamily, waitForAll } from "recoil";
 import { recoilPersist } from "recoil-persist";
 import { RealtimeChannel } from "@supabase/supabase-js";
-import effects, {
-  EventType,
-  ExecuteEffect,
-  TriggerEvents,
-} from "@/app/cardEffects";
+
 import { cardFromBasicInfo } from "@/app/utils";
 const { persistAtom } = recoilPersist();
 // const supabase = createClientComponentClient();

@@ -32,6 +32,7 @@ import {
 import DiceDisplay from "./DiceDisplay";
 import CardAttack from "./CardAttack";
 import ElementalTuning from "./ElementalTuning";
+import { findEffectLogic } from "@/app/cardEffects";
 
 //TODO: move to another file
 interface PlayerBoardProps {
@@ -128,9 +129,10 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
 
       const costModifyingEffects = findCostModifyingEffects(myCards);
       costModifyingEffects.forEach((effect) => {
-        if (!effect?.execute) return;
-        if (!effect.triggerOn?.includes("SWITCH")) return;
-        let { modifiedCost, errorMessage } = effect.execute({
+        const effectLogic = findEffectLogic(effect);
+        if (!effectLogic?.execute) return;
+        if (!effectLogic.triggerOn?.includes("SWITCH")) return;
+        let { modifiedCost, errorMessage } = effectLogic.execute({
           effect,
           playerID: myID,
           myCards,
@@ -233,10 +235,10 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     //so the execute function itself can be used to check if the effect can be executed and checkIfCanBeExecuted may not be needed
     //TODO: effect selection
     //TODO: do I need to check if effect can be executed or just return an error message when executing effect?
-
-    if (effect.checkIfCanBeExecuted) {
+    const effectLogic = findEffectLogic(effect);
+    if (effectLogic.checkIfCanBeExecuted) {
       const { errorMessage: executionErrorMessage } =
-        effect.checkIfCanBeExecuted({
+        effectLogic.checkIfCanBeExecuted({
           playerID: myID,
           myCards,
           myDice,
@@ -337,12 +339,13 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   };
   const activateAttackEffect = (effect: Effect) => {
     if (!myCards) return;
-    if (effect.requiredTargets) {
+    const effectLogic = findEffectLogic(effect);
+    if (effectLogic.requiredTargets) {
       if (!selectedTargetCards) {
         setErrorMessage("No target selected");
         return;
       }
-      if (selectedTargetCards.length !== effect.requiredTargets) {
+      if (selectedTargetCards.length !== effectLogic.requiredTargets) {
         setErrorMessage("Incorrect number of targets");
         return;
       }
@@ -355,8 +358,9 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       const costModifyingEffects = findCostModifyingEffects(myCards);
       console.log("modifiers", costModifyingEffects);
       costModifyingEffects.forEach((effect) => {
-        if (!effect?.execute) return;
-        let { modifiedCost, errorMessage } = effect.execute({
+        const effectLogic = findEffectLogic(effect);
+        if (!effectLogic?.execute) return;
+        let { modifiedCost, errorMessage } = effectLogic.execute({
           effect,
           playerID: myID,
           myCards,
@@ -457,12 +461,16 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     let updatedDice = null;
     let cost = card.cost;
     const thisCardEffectsThatTriggerOnActivation = card.effects.filter(
-      (effect) => effect.triggerOn?.includes("THIS_CARD_ACTIVATION")
+      (effect) => {
+        const effectLogic = findEffectLogic(effect);
+        effectLogic.triggerOn?.includes("THIS_CARD_ACTIVATION");
+      }
     );
     thisCardEffectsThatTriggerOnActivation.forEach((effect) => {
+      const effectLogic = findEffectLogic(effect);
       if (
-        effect.requiredTargets &&
-        selectedTargetCards.length !== effect.requiredTargets
+        effectLogic.requiredTargets &&
+        selectedTargetCards.length !== effectLogic.requiredTargets
       ) {
         setErrorMessage("Incorrect number of targets");
         return;
@@ -509,10 +517,12 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         ...thisCardEffectsThatTriggerOnActivation,
         ...otherCardEffectsThatTriggerOnActivation,
       ].forEach((effect) => {
-        if (!effect.execute) return;
-        if (effect.checkIfCanBeExecuted) {
+        const effectLogic = findEffectLogic(effect);
+
+        if (!effectLogic.execute) return;
+        if (effectLogic.checkIfCanBeExecuted) {
           //TODO: is this necessary?
-          const { errorMessage } = effect.checkIfCanBeExecuted({
+          const { errorMessage } = effectLogic.checkIfCanBeExecuted({
             playerID: myID,
             myCards: myCardsAfterTriggeredEffects,
             myDice: myDiceAfterTriggeredEffects,
@@ -533,7 +543,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           opponentUpdatedCards,
           opponentUpdatedDice,
           errorMessage,
-        } = effect.execute({
+        } = effectLogic.execute({
           effect,
           playerID: myID,
           myCards: myCardsAfterTriggeredEffects,

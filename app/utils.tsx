@@ -1,5 +1,7 @@
 import { uuid } from "uuidv4";
-import effects, {
+import {
+  effects,
+  findEffectLogic,
   EventType,
   ExecuteEffect,
   TriggerEvents,
@@ -41,15 +43,15 @@ export const cardFromBasicInfo = (
     //@ts-ignore
     effects: cardBasicInfo.effect_basic_info.map(
       (effectBasicInfo: any): Effect => {
-        let execute: ExecuteEffect | undefined;
-        let triggerOn: TriggerEvents | undefined;
-        let requiredTargets: number | undefined;
-        const effectLogic = effects[effectBasicInfo.id];
-        if (effectLogic) {
-          execute = effectLogic.execute;
-          triggerOn = effectLogic.triggerOn;
-          requiredTargets = effectLogic.requiredTargets;
-        }
+        // let execute: ExecuteEffect | undefined;
+        // let triggerOn: TriggerEvents | undefined;
+        // let requiredTargets: number | undefined;
+        // const effectLogic = effects[effectBasicInfo.id];
+        // if (effectLogic) {
+        //   execute = effectLogic.execute;
+        //   triggerOn = effectLogic.triggerOn;
+        //   requiredTargets = effectLogic.requiredTargets;
+        // }
 
         return {
           ...effectBasicInfo,
@@ -62,9 +64,9 @@ export const cardFromBasicInfo = (
           costJson: effectBasicInfo.cost,
           effect_basic_infoIdId: effectBasicInfo.id,
           cost: effectBasicInfo.cost as Dice,
-          execute,
-          triggerOn,
-          requiredTargets,
+          // execute,
+          // triggerOn,
+          // requiredTargets,
           description: effectBasicInfo.description || "",
           effectType: effectBasicInfo.effect_type || "",
         };
@@ -158,11 +160,13 @@ export const findDamageModifyingEffects = (
   return cards.reduce((acc, card) => {
     return ["ACTION", "EQUIPPED"].includes(card.location!)
       ? acc.concat(
-          card.effects.filter(
-            (effect) =>
+          card.effects.filter((effect) => {
+            const effectLogic = findEffectLogic(effect);
+            return (
               effect.effectType === "DAMAGE_MODIFIER" &&
-              (trigger ? effect.triggerOn?.includes(trigger) : true)
-          )
+              (trigger ? effectLogic.triggerOn?.includes(trigger) : true)
+            );
+          })
         )
       : acc;
   }, [] as Effect[]);
@@ -175,7 +179,10 @@ export const findEffectsThatTriggerOn = (
   return cards.reduce((acc, card) => {
     return ["ACTION", "EQUIPPED"].includes(card.location!)
       ? acc.concat(
-          card.effects.filter((effect) => effect.triggerOn?.includes(trigger))
+          card.effects.filter((effect) => {
+            const effectLogic = findEffectLogic(effect);
+            return effectLogic.triggerOn?.includes(trigger);
+          })
         )
       : acc;
   }, [] as Effect[]);
@@ -201,13 +208,14 @@ export const calculateDamageAfterModifiers = ({
   let damage = baseDamage;
   const damageModifiers = findDamageModifyingEffects(myCards);
   damageModifiers.forEach((effect) => {
+    const effectLogic = findEffectLogic(effect);
     if (
-      effect?.execute &&
-      ((effect?.checkIfCanBeExecuted &&
-        effect.checkIfCanBeExecuted({ myCards, opponentCards })) ||
-        !effect.checkIfCanBeExecuted)
+      effectLogic.execute &&
+      ((effectLogic?.checkIfCanBeExecuted &&
+        effectLogic.checkIfCanBeExecuted({ myCards, opponentCards })) ||
+        !effectLogic.checkIfCanBeExecuted)
     ) {
-      const { modifiedDamage } = effect.execute({
+      const { modifiedDamage } = effectLogic.execute({
         myCards,
         opponentCards,
         myDice,

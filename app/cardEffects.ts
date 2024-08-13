@@ -190,12 +190,16 @@ export type TriggerContext = {
   damage?: number;
 };
 
+export type EffectLogic = {
+  triggerOn?: TriggerEvents;
+  checkIfCanBeExecuted?: CheckIfEffectCanBeExecuted;
+  execute: ExecuteEffect;
+  requiredTargets?: number;
+};
+
 //only handles the execution, not the effect cost
 export const effects: {
-  [key: string]: Pick<
-    Effect,
-    "triggerOn" | "checkIfCanBeExecuted" | "execute" | "requiredTargets"
-  >;
+  [key: string]: EffectLogic;
 } = {
   //Chang the Ninth
   //TODO: when and how should this be executed?
@@ -509,4 +513,9 @@ export const effects: {
     execute: makeNormalAttackExecuteFunction("PYRO", 2),
   },
 };
-export default effects;
+
+export const findEffectLogic = (effect: Effect) => {
+  //TODO: does effect_basic_info_id always exist?
+  const basicInfoId = effect.effect_basic_info_id!;
+  return effects[basicInfoId];
+};
