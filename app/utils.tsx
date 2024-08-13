@@ -84,7 +84,6 @@ export const addCardBasicInfoToDeck = async (
     .eq("deck_id", deckID)
     .eq("card_basic_info_id", basicInfoID);
   const currentQuantity = currentQuantityData.data?.[0]?.quantity || 0;
-  console.log("currentQuantity", currentQuantity);
   const query = currentQuantity
     ? client
         .from("deck_card_basic_info")
@@ -98,7 +97,6 @@ export const addCardBasicInfoToDeck = async (
       });
 
   const result = await query;
-  console.log(result);
   return result;
 };
 
@@ -126,7 +124,6 @@ export const removeBasicInfoFromDeck = async (
           .eq("deck_id", deckID)
           .eq("card_basic_info_id", basicInfoID);
   const result = await query(client);
-  console.log(result);
   result.error && console.log(result.error);
   return result;
 };
@@ -250,27 +247,6 @@ export const createRandomElementalDice = (amount: number) => {
 export const calculateTotalDice = (dice: Dice) => {
   return Object.values(dice).reduce((acc, curr) => acc + curr, 0);
 };
-
-// const calculateElementalReaction = (
-//   newElement: DieElementNameT,
-//   oldElement: DieElementNameT
-// ) => {
-//   if (newElement === "PYRO" && oldElement === "CRYO") {
-//     return "MELT";
-//   }
-//   if (newElement === "HYDRO" && oldElement === "PYRO") {
-//     return "VAPORIZE";
-//   }
-//   if (newElement === "ELECTRO" && oldElement === "HYDRO") {
-//     return "OVERLOADED";
-//   }
-//   if (newElement === "CRYO" && oldElement === "ELECTRO") {
-//     return "SUPERCONDUCT";
-//   }
-//   if (newElement === "ELECTRO" && oldElement === "HYDRO") {
-//     return "ELECTROCHARGED";
-//   }
-// };
 
 type CalculateAttackElementalReaction = ({
   damage,

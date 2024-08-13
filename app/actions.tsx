@@ -101,20 +101,8 @@ export const subtractCost = (
         //TODO: handle error
         if (!hasSubtracted) throw new Error("Not enough dice");
       } else if (requiredElementName === "UNALIGNED") {
-        console.log(
-          "checking for unaligned dice 0",
-          result,
-          "requiredAmount",
-          requiredAmount
-        );
         let i = requiredAmount;
         while (i > 0) {
-          console.log(
-            "checking for unaligned dice",
-            availableElements,
-            i,
-            result
-          );
           if (availableElements.length === 0) {
             throw new Error("Not enough dice");
           }
@@ -212,7 +200,8 @@ export const activateEffect: ExecuteEffect = ({
     return { errorMessage: "no card with this effect" };
   }
 
-  //TODO: check if effect can be activated
+  //TODO!: separate the effect execution logic from the effects themselves
+  // because it gets lost when sending over the channel
   const { execute, requiredTargets } = effect;
 
   if (execute) {

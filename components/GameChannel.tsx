@@ -26,9 +26,7 @@ export default function GameChannel() {
     // setcurrentPlayer(Math.random() > 0.5 ? myID : opponentID);
     channel
       .on("presence", { event: "join" }, () => {
-        console.log("opp. ", opponentCards);
         if (!opponentCards || !opponentCards.length) {
-          console.log("sending deck", channel);
           channel.send({
             type: "broadcast",
             event: "share_deck",
@@ -37,9 +35,7 @@ export default function GameChannel() {
         }
       })
       .on("presence", { event: "sync" }, () => {
-        console.log("opp. ", opponentCards);
         if (!opponentCards || !opponentCards.length) {
-          console.log("sending deck", channel);
           channel.send({
             type: "broadcast",
             event: "share_deck",
@@ -48,7 +44,6 @@ export default function GameChannel() {
         }
       })
       .on("broadcast", { event: "share_deck" }, ({ payload }) => {
-        console.log("share_deck", payload);
         if (
           payload?.cards &&
           payload?.cards.length > 0 &&
