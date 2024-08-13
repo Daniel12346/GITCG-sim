@@ -51,7 +51,7 @@ const Die = ({
       key={element + isMyBoard}
       onClick={handleSelectDie}
       className={`text-sm w-4 h-4 ${bgColors[element]} ${
-        isSelected && "ring-2 ring-gray-700"
+        isMyBoard && isSelected && "ring-2 ring-gray-700"
       }`}
     ></div>
   );

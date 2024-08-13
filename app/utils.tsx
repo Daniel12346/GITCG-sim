@@ -27,6 +27,7 @@ export const cardFromBasicInfo = (
     id: cardID,
     card_basic_info_id: cardBasicInfo.id,
     energy: 0,
+    shield: 0,
     health: cardBasicInfo.base_health,
     statuses: [],
     usages: 0,
@@ -58,15 +59,12 @@ export const cardFromBasicInfo = (
           id: uuid(),
           effect_basic_info_id: effectBasicInfo.id,
           card_id: cardID,
-          // card_basic_infoId: cardBasicInfo.id,
           total_usages: 0,
           usages_this_turn: 0,
           costJson: effectBasicInfo.cost,
+          //TODO: remove this
           effect_basic_infoIdId: effectBasicInfo.id,
           cost: effectBasicInfo.cost as Dice,
-          // execute,
-          // triggerOn,
-          // requiredTargets,
           description: effectBasicInfo.description || "",
           effectType: effectBasicInfo.effect_type || "",
         };
@@ -300,6 +298,7 @@ const addStatusToCard = (
   } as CardExt;
 };
 
+//TODO?: move to a new file
 //TODO: rename because this also calculates damage (?)
 export const calculateAttackElementalReaction: CalculateAttackElementalReaction =
   ({
@@ -348,24 +347,25 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       damageElement,
     ];
     let damageAfterReaction = damage;
-    let reactions = [];
+    let reactions: ElementalReaction[] = [];
     let opponentUpdatedCards = opponentCards;
-    // if (damageElement === "PHYSICAL") {
-    //   if (
-    //     targetStatuses.find((status: CardStatus) => status.name === "FROZEN")
-    //   ) {
-    //     damageAfterReaction += 2;
-    //     reactions.push("SHATTER");
-    //     opponentUpdatedCards = opponentCards.map((card) => {
-    //       if (card.id === targetCardId) {
-    //         return clearCardStatuses(card, ["FROZEN"]);
-    //       }
-    //       return card;
-    //     });
-    //   }
-    //   return { damageAfterReaction };
-    // }
-    //vaporize
+    //SHATTERED
+    if (damageElement === "PHYSICAL") {
+      if (
+        targetStatuses.find((status: CardStatus) => status.name === "FROZEN")
+      ) {
+        damageAfterReaction += 2;
+        reactions.push("SHATTERED");
+        opponentUpdatedCards = opponentCards.map((card) => {
+          if (card.id === targetCardId) {
+            return clearCardStatuses(card, ["FROZEN"]);
+          }
+          return card;
+        });
+      }
+      return { damageAfterReaction };
+    }
+    //VAPORIZE
     if (
       reactingElements.includes("PYRO") &&
       reactingElements.includes("HYDRO")
@@ -378,8 +378,9 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
         }
         return card;
       });
-      //electrocharged
-    } else if (
+    }
+    //ELECTROCHARGED
+    else if (
       reactingElements.includes("HYDRO") &&
       reactingElements.includes("ELECTRO")
     ) {
@@ -396,13 +397,14 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
           return card;
         }
       });
-      //freeze
-    } else if (
+    }
+    //FROZEN
+    else if (
       reactingElements.includes("CRYO") &&
       reactingElements.includes("HYDRO")
     ) {
       damageAfterReaction += 1;
-      reactions.push("FREEZE");
+      reactions.push("FROZEN");
       opponentUpdatedCards = opponentUpdatedCards.map((card) => {
         console.log("cardid", card.id, "targetCardId", targetCardId);
         if (card.id === targetCardId) {
@@ -412,8 +414,9 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
         }
         return card;
       });
-      //swirl
-    } else if (
+    }
+    //SWIRL
+    else if (
       targetStatuses.find((status: CardStatus) =>
         ["PYRO", "HYDRO", "ELECTRO", "CRYO"].includes(status.name)
       ) &&
@@ -447,8 +450,53 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
           opponentUpdatedCards = opponentCardsAfterReaction;
         }
       });
+    }
+    //SUPERCONDUCT
+    else if (
+      reactingElements.includes("CRYO") &&
+      reactingElements.includes("ELECTRO")
+    ) {
+      //TODO: check logic for superconduct
+      opponentUpdatedCards = opponentCards.map((card) => {
+        if (card.id === targetCardId) {
+          return clearCardStatuses(card, ["CRYO", "ELECTRO"]);
+        }
+        return card;
+      });
+      damageAfterReaction += 1;
+      const piercingTargets = opponentCards.filter(
+        (card) => card.location === "CHARACTER" && card.id !== targetCardId
+      );
+      piercingTargets.forEach((card) => {
+        const { reactions, opponentCardsAfterReaction, myCardsAfterReaction } =
+          calculateAttackElementalReaction({
+            damage: 1,
+            damageElement: "PIERCING",
+            attackerCardId,
+            targetCardId: card.id,
+            myCards,
+            opponentCards: opponentUpdatedCards,
+          });
+        reactions && reactions.forEach((reaction) => reactions.push(reaction));
+        if (opponentCardsAfterReaction) {
+          opponentUpdatedCards = opponentCardsAfterReaction;
+        }
+      });
+    }
+    //MELT
+    else if (
+      reactingElements.includes("PYRO") &&
+      reactingElements.includes("CRYO")
+    ) {
+      damageAfterReaction += 2;
+      reactions.push("MELT");
+      opponentUpdatedCards = opponentUpdatedCards.map((card) => {
+        if (card.id === targetCardId) {
+          return clearCardStatuses(card, ["PYRO", "CRYO"]);
+        }
+        return card;
+      });
     } else {
-      console.log(targetStatuses);
       //adding the attacking element to the target's statuses if no other reaction happened
       opponentUpdatedCards = opponentCards.map((card) => {
         if (card.id === targetCardId) {
@@ -464,8 +512,12 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       });
     }
     opponentUpdatedCards = opponentUpdatedCards.map((card) => {
+      const damageToHealth =
+        damageElement === "PIERCING"
+          ? damageAfterReaction
+          : damageAfterReaction - (card.shield || 0);
       const updatedHealth =
-        card.health && Math.max(0, card.health - damageAfterReaction);
+        card.health && Math.max(0, card.health - damageToHealth);
 
       if (card.id === targetCardId) {
         return { ...card, health: updatedHealth };

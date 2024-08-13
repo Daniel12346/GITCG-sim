@@ -192,8 +192,6 @@ export const activateEffect: ExecuteEffect = ({
     return { errorMessage: "no card with this effect" };
   }
 
-  //TODO!: separate the effect execution logic from the effects themselves
-  // because it gets lost when sending over the channel
   const { execute, requiredTargets } = effectLogic;
 
   if (execute) {

@@ -51,7 +51,8 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   );
   const [myCards, setMyCards] = useRecoilState(myInGameCardsState);
   const [myDice, setMyDice] = useRecoilState(myDiceState);
-  const [selectedDice, setSelectedDice] = useRecoilState(mySelectedDiceState);
+  const [mySelectedDice, setMySelectedDice] =
+    useRecoilState(mySelectedDiceState);
   const [opponentDice, setOpponentDice] = useRecoilState(opponentDiceState);
 
   const [selectedTargetCards, setSelectedTargets] =
@@ -111,9 +112,9 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         }) as CardExtended[]
       );
     } else {
-      let cost = selectedDice;
-      console.log("switch dice", selectedDice);
-      if (calculateTotalDice(selectedDice) !== 1) {
+      let cost = mySelectedDice;
+      console.log("switch dice", mySelectedDice);
+      if (calculateTotalDice(mySelectedDice) !== 1) {
         setErrorMessage("Incorrect number of dice");
         return;
       }
@@ -156,7 +157,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       try {
         const diceAfterCost = subtractCost(myDice, cost);
         setMyDice(diceAfterCost);
-        setSelectedDice({});
+        setMySelectedDice({});
       } catch (e) {
         setErrorMessage("Not enough dice");
         return;
@@ -182,7 +183,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     // setSelectionPurpose("EQUIP");
     // setAmSelectingTargets(true);
     if (!myCards) return;
-    if (!selectedDice) return;
+    if (!mySelectedDice) return;
     if (selectedTargetCards.length !== 1) {
       setErrorMessage("Incorrect number of targets");
       return;
@@ -193,15 +194,15 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       let updatedDice = null;
       try {
         //TODO: fix this
-        const difference = subtractCost(selectedDice, cardToEquip.cost);
+        const difference = subtractCost(mySelectedDice, cardToEquip.cost);
         console.log("difference", difference);
         if (
           Object.keys(difference).length === 0 ||
           Object.values(difference).every((val) => val === 0)
         ) {
-          updatedDice = subtractCost(myDice, selectedDice);
+          updatedDice = subtractCost(myDice, mySelectedDice);
         }
-        setSelectedDice({});
+        setMySelectedDice({});
       } catch (e) {
         console.log(e);
         setErrorMessage("Incorrect dice");
@@ -353,7 +354,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     //attack effects have a cost
     let cost = effect.cost;
     let myDiceAfterCost = myDice;
-    const mySelectedDice = selectedDice;
     if (cost) {
       const costModifyingEffects = findCostModifyingEffects(myCards);
       console.log("modifiers", costModifyingEffects);
@@ -463,9 +463,11 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     const thisCardEffectsThatTriggerOnActivation = card.effects.filter(
       (effect) => {
         const effectLogic = findEffectLogic(effect);
-        effectLogic.triggerOn?.includes("THIS_CARD_ACTIVATION");
+
+        return effectLogic.triggerOn?.includes("THIS_CARD_ACTIVATION");
       }
     );
+
     thisCardEffectsThatTriggerOnActivation.forEach((effect) => {
       const effectLogic = findEffectLogic(effect);
       if (
@@ -477,11 +479,16 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       }
     });
 
+    //TODO: modified cost
     if (cost) {
+      if (calculateTotalDice(mySelectedDice) !== calculateTotalDice(cost)) {
+        setErrorMessage("Incorrect number of dice");
+        return;
+      }
       try {
-        updatedDice = subtractCost(myDice, cost);
+        updatedDice = subtractCost(myDice, mySelectedDice);
       } catch (e) {
-        setErrorMessage("Not enough dice");
+        setErrorMessage("Incorrect dice");
         return;
       }
     }
@@ -493,12 +500,10 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       return c;
     });
 
-    //TODO: check all effects that activate on card activation (here?)
     const otherCardEffectsThatTriggerOnActivation = findEffectsThatTriggerOn(
       "CARD_ACTIVATION",
       myCards
     );
-    console.log(thisCardEffectsThatTriggerOnActivation);
     //TODO: how do I update the effect usage count on this and other cards?
     if (
       thisCardEffectsThatTriggerOnActivation.length === 0 &&
@@ -513,6 +518,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       let myDiceAfterTriggeredEffects = updatedDice || {};
       let opponentInGameCardsAfterTriggeredEffects = opponentInGameCards;
       let opponentDiceAfterTriggeredEffects = opponentDice;
+      console.log("found effects", thisCardEffectsThatTriggerOnActivation);
       [
         ...thisCardEffectsThatTriggerOnActivation,
         ...otherCardEffectsThatTriggerOnActivation,
@@ -567,6 +573,8 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       setMyDice(myDiceAfterTriggeredEffects);
       setOpponentInGameCards(opponentInGameCardsAfterTriggeredEffects);
       setOpponentDice(opponentDiceAfterTriggeredEffects);
+      setSelectedTargets([]);
+      setMySelectedDice({});
     }
   };
 
@@ -611,7 +619,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                   attack={attack}
                   handleAttack={() => {
                     activateAttackEffect(attack);
-                    setSelectedDice({});
+                    setMySelectedDice({});
                   }}
                 />
               ))}

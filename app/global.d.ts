@@ -9,10 +9,6 @@ import { CardStatus } from "./utils";
 
 type Effect = DB["public"]["Tables"]["effect"]["Row"];
 interface EffectT extends Effect {
-  // execute?: ExecuteEffect;
-  // checkIfCanBeExecuted?: CheckIfEffectCanBeExecuted;
-  // requiredTargets?: number;
-  // triggerOn?: TriggerEvents;
   costJson?: Json;
   cost?: Cost;
   description?: string;
@@ -22,6 +18,7 @@ interface EffectT extends Effect {
 type Card = DB["public"]["Tables"]["card"]["Row"];
 interface CardExtended extends Card {
   effects: EffectT[];
+  shield?: number;
   cost?: Cost;
   costJson?: Json;
   subtype?: string;
