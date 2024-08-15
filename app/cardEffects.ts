@@ -110,7 +110,8 @@ const makeTriggerAndExecuteAndCheckIfCanBeExecutedFunctionsOfWeaponWithPlus1Dama
 //TODO: fix attack happening even when there's not enough dice
 const makeNormalAttackExecuteFunction = (
   attackElement: ElementName,
-  baseDamage: number
+  baseDamage: number,
+  attackBaseEffectID?: string
 ): ExecuteEffect => {
   const execute = ({
     myCards,
@@ -150,6 +151,7 @@ const makeNormalAttackExecuteFunction = (
         targetCardId,
         myCards,
         opponentCards,
+        attackBaseEffectID,
       });
     reactions?.forEach((reaction) => {
       console.log("reaction", reaction);

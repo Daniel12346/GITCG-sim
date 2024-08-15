@@ -26,7 +26,7 @@ export const cardFromBasicInfo = (
     location: cardBasicInfo.card_type === "CHARACTER" ? "CHARACTER" : "DECK",
     id: cardID,
     card_basic_info_id: cardBasicInfo.id,
-    energy: 0,
+    energy: cardBasicInfo.card_type === "CHARACTER" ? 0 : null,
     shield: 0,
     health: cardBasicInfo.base_health,
     statuses: [],
@@ -259,6 +259,7 @@ type CalculateAttackElementalReaction = ({
   damageElement,
   attackerCardId,
   targetCardId,
+  attackBaseEffectID,
 }: {
   damage: number;
   damageElement: DamageElement;
@@ -266,6 +267,7 @@ type CalculateAttackElementalReaction = ({
   targetCardId: string;
   myCards: CardExt[];
   opponentCards: CardExt[];
+  attackBaseEffectID?: string;
 }) => {
   errorMessage?: string;
   updatedDamage?: number;
@@ -308,6 +310,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
     targetCardId,
     myCards,
     opponentCards,
+    attackBaseEffectID,
   }) => {
     if (!myCards || !opponentCards) {
       return {
@@ -349,6 +352,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
     let damageAfterReaction = damage;
     let reactions: ElementalReaction[] = [];
     let opponentUpdatedCards = opponentCards;
+    let myUpdatedCards = myCards;
     //SHATTERED
     if (damageElement === "PHYSICAL") {
       if (
@@ -442,12 +446,15 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
             damageElement: elementToSwirl?.name,
             attackerCardId,
             targetCardId: card.id,
-            myCards,
+            myCards: myUpdatedCards,
             opponentCards: opponentUpdatedCards,
           });
         reactions && reactions.forEach((reaction) => reactions.push(reaction));
         if (opponentCardsAfterReaction) {
           opponentUpdatedCards = opponentCardsAfterReaction;
+        }
+        if (myCardsAfterReaction) {
+          myUpdatedCards = myCardsAfterReaction;
         }
       });
     }
@@ -474,12 +481,15 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
             damageElement: "PIERCING",
             attackerCardId,
             targetCardId: card.id,
-            myCards,
+            myCards: myUpdatedCards,
             opponentCards: opponentUpdatedCards,
           });
         reactions && reactions.forEach((reaction) => reactions.push(reaction));
         if (opponentCardsAfterReaction) {
           opponentUpdatedCards = opponentCardsAfterReaction;
+        }
+        if (myCardsAfterReaction) {
+          myUpdatedCards = myCardsAfterReaction;
         }
       });
     }
@@ -525,8 +535,31 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       return card;
     });
 
+    myUpdatedCards = myCards.map((card) => {
+      if (card.id === attackerCardId) {
+        const updatedCardEffects = card.effects.map((effect) => {
+          if (attackBaseEffectID && effect.id === attackBaseEffectID) {
+            return {
+              ...effect,
+              usages_this_turn: effect.usages_this_turn || 0 + 1,
+            };
+          }
+          return effect;
+        });
+        const currentEnergy = card.energy;
+        const updatedEnergy =
+          currentEnergy !== null
+            ? //summon etc. don't have max_energy (?)
+              card.max_energy && currentEnergy < card.max_energy!
+              ? currentEnergy + 1
+              : currentEnergy
+            : null;
+        return { ...card, effects: updatedCardEffects, energy: updatedEnergy };
+      }
+      return card;
+    });
     return {
       opponentCardsAfterReaction: opponentUpdatedCards,
-      myCardsAfterReaction: myCards,
+      myCardsAfterReaction: myUpdatedCards,
     };
   };

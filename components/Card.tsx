@@ -88,21 +88,42 @@ export default function Card({
       >
         {isSelected ? "deselect" : "select"}
       </span>
-      <div className="z-10 flex justify-between w-full ml-[-1rem] mt-[-0.5rem]">
-        <span className="bg-orange-300 rounded-sm text-orange-800">
+      {/* health */}
+      <div className="z-10 flex justify-between w-full">
+        <span className="bg-orange-300 rounded-sm text-orange-800 -ml-1 ">
           {isInDeckDisplay ? card.base_health : card.health}
         </span>
-        {/* //TODO: display dice cost and energy */}
-        <span className="bg-orange-300 rounded-sm text-orange-800">{}</span>
-        {/* statuses */}
-        <div className="bg-orange-100 rounded-sm text-blue-800">
-          {card.statuses?.map((status) => (
-            //TODO: use unique key
-            <span>
-              {status.name}: {status.turnsLeft}
-            </span>
-          ))}
-        </div>
+      </div>
+      {/* energy */}
+      <div className="z-10 absolute h-full w-2 top-0 right-0">
+        {card.energy !== null && (
+          <div className="flex flex-col rounded-sm gap-2 items-center text-orange-300 -mr-1">
+            {card.max_energy &&
+              Array.from({ length: card.max_energy }).map((_, i) => {
+                const isEnergyUsed = i < card.energy!;
+                return (
+                  <div className="flex flex-col gap-1 justify-center">
+                    <span
+                      className={`${
+                        isEnergyUsed ? "bg-amber-300" : "bg-slate-100 opacity-90"
+                      }  w-2  h-2  outline-orange-600 outline-double outline-2
+                    rounded-full
+                    `}
+                    ></span>
+                  </div>
+                );
+              })}
+          </div>
+        )}
+      </div>
+      {/* statuses */}
+      <div className="bg-orange-100 rounded-sm text-blue-800">
+        {card.statuses?.map((status) => (
+          //TODO: use unique key
+          <span>
+            {status.name}: {status.turnsLeft}
+          </span>
+        ))}
       </div>
       {
         //only used in deck builder
