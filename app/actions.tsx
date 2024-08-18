@@ -182,6 +182,7 @@ export const activateEffect: ExecuteEffect = ({
   opponentDice,
   thisCard,
   targetCards,
+  summons,
 }) => {
   if (!effect) return { errorMessage: "no effect" };
   const effectLogic = findEffectLogic(effect);
@@ -200,6 +201,7 @@ export const activateEffect: ExecuteEffect = ({
       playerID,
       myCards,
       myDice,
+      summons,
       opponentCards,
       opponentDice,
       thisCard: effectSourceCard,

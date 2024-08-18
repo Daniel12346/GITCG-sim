@@ -12,7 +12,8 @@ import { DieElementNameT } from "./global";
 type CardBasicInfo = Database["public"]["Tables"]["card_basic_info"]["Row"];
 export const cardFromBasicInfo = (
   cardBasicInfo: CardBasicInfo,
-  ownerID?: string
+  ownerID?: string,
+  location?: Database["public"]["Tables"]["card"]["Row"]["location"]
 ): CardExt => {
   const cardID = uuid();
   return {
@@ -23,7 +24,9 @@ export const cardFromBasicInfo = (
     //TODO: make cardType either nullalble or non-nullable for both cardBasicInfo and card
     card_type: cardBasicInfo.card_type ?? "",
     counters: 0,
-    location: cardBasicInfo.card_type === "CHARACTER" ? "CHARACTER" : "DECK",
+    location:
+      location ||
+      (cardBasicInfo.card_type === "CHARACTER" ? "CHARACTER" : "DECK"),
     id: cardID,
     card_basic_info_id: cardBasicInfo.id,
     energy: cardBasicInfo.card_type === "CHARACTER" ? 0 : null,
@@ -44,16 +47,6 @@ export const cardFromBasicInfo = (
     //@ts-ignore
     effects: cardBasicInfo.effect_basic_info.map(
       (effectBasicInfo: any): Effect => {
-        // let execute: ExecuteEffect | undefined;
-        // let triggerOn: TriggerEvents | undefined;
-        // let requiredTargets: number | undefined;
-        // const effectLogic = effects[effectBasicInfo.id];
-        // if (effectLogic) {
-        //   execute = effectLogic.execute;
-        //   triggerOn = effectLogic.triggerOn;
-        //   requiredTargets = effectLogic.requiredTargets;
-        // }
-
         return {
           ...effectBasicInfo,
           id: uuid(),
@@ -218,6 +211,7 @@ export const calculateDamageAfterModifiers = ({
         opponentCards,
         myDice,
         opponentDice,
+
         triggerContext: {
           eventType: "ATTACK",
           damage,
@@ -293,7 +287,6 @@ const addStatusToCard = (
     ...(card.statuses || []),
     { name: status, turnsLeft: duration || 1, amount },
   ];
-  console.log(statuses);
   return {
     ...card,
     statuses,
@@ -563,3 +556,45 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       myCardsAfterReaction: myUpdatedCards,
     };
   };
+
+export const createSummon = ({
+  summonBasicInfoID,
+  myCards,
+  summonerCard,
+  myDice,
+  summons,
+  usages,
+  opponentCards,
+  opponentDice,
+}: {
+  summonBasicInfoID: string;
+  summons: CardExt[];
+  myCards: CardExt[];
+  summonerCard?: CardExt;
+  myDice?: Dice;
+  usages: number;
+  opponentCards?: CardExt[];
+  opponentDice?: Dice;
+}) => {
+  const summonOriginal = summons.find(
+    (summon: CardExt) => summon.card_basic_info_id === summonBasicInfoID
+  );
+  if (!summonOriginal) {
+    return { errorMessage: "Summon not found" };
+  }
+  // const summoner =
+  //   summonerCard || myCards.find((card) => card.id === summonerCard);
+  // if (!summoner) {
+  //   return { errorMessage: "Summoner not found" };
+  // }
+  const summon: CardExt = {
+    ...summonOriginal,
+    id: uuid(),
+    location: "SUMMON",
+    usages,
+  };
+  //TODO: can a summon be summoned to the opponent's side?
+  const myUpdatedCards = [...myCards, summon];
+  //TODO: effects that trigger on summon
+  return { myUpdatedCards };
+};

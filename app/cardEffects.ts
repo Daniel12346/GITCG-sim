@@ -2,6 +2,7 @@ import { addDice, discardCard, drawCards, subtractCost } from "./actions";
 import {
   calculateAttackElementalReaction,
   calculateDamageAfterModifiers,
+  createSummon,
   findDamageModifyingEffects,
   findEquippedCards,
 } from "./utils";
@@ -29,6 +30,7 @@ type ExecuteEffectParams = {
   thisCard?: CardExt;
   //the card that is being targeted by the activated card
   targetCards?: CardExt[];
+  summons?: CardExt[];
 };
 
 type CheckIfEffectCanBeExecutedParams = {
@@ -504,6 +506,81 @@ export const effects: {
     requiredTargets: 1,
     execute: makeNormalAttackExecuteFunction("HYDRO", 1),
   },
+  // Sucrose's Burst
+  "0fedcf14-f037-45a5-bfe7-81954da86c54": {
+    requiredTargets: 1,
+    execute: ({
+      myCards,
+      summons,
+      opponentCards,
+      thisCard,
+      targetCards,
+      myDice,
+      opponentDice,
+    }: //TODO: triggerContext,
+    // triggerContext,
+    ExecuteEffectParams) => {
+      console.log("SUMMONS IN EFFECT", summons);
+      if (!thisCard) {
+        return { errorMessage: "No card passed to effect" };
+      }
+      if (!targetCards || targetCards.length < 1) {
+        return { errorMessage: "One target card is required" };
+      }
+
+      let myUpdatedCards = myCards;
+      let opponentUpdatedCards = opponentCards;
+      let damageBeforeElementalReactions = calculateDamageAfterModifiers({
+        baseDamage: 1,
+        myCards,
+        opponentCards,
+        myDice,
+        opponentDice,
+        thisCard,
+        targetCards,
+      });
+      const targetCardId = targetCards[0].id;
+      const attackerCardId = thisCard.id;
+      const { opponentCardsAfterReaction, myCardsAfterReaction, reactions } =
+        calculateAttackElementalReaction({
+          damage: damageBeforeElementalReactions,
+          damageElement: "ANEMO",
+          attackerCardId,
+          //TODO: what if there are multiple target cards?
+          targetCardId,
+          myCards,
+          opponentCards,
+          attackBaseEffectID: "0fedcf14-f037-45a5-bfe7-81954da86c54",
+        });
+      reactions?.forEach((reaction) => {
+        console.log("reaction", reaction);
+      });
+      if (myCardsAfterReaction) {
+        myUpdatedCards = myCardsAfterReaction;
+      }
+      if (opponentCardsAfterReaction) {
+        opponentUpdatedCards = opponentCardsAfterReaction;
+      }
+      if (!summons) {
+        return { errorMessage: "No summons found" };
+      }
+      //TODO: return opponentUpdatedCards
+      const { myUpdatedCards: myUpdatedCardsAfterSummon } = createSummon({
+        summonBasicInfoID: "c9835b98-7a88-4493-9023-62f9ea7e729a",
+        summons,
+        myCards: myUpdatedCards,
+        usages: 3,
+      });
+      if (myUpdatedCardsAfterSummon) {
+        myUpdatedCards = myUpdatedCardsAfterSummon;
+      }
+
+      return {
+        myUpdatedCards,
+        opponentUpdatedCards,
+      };
+    },
+  },
   //Kaeya's Normal Attack
   "b17045ef-f632-4864-b72d-c0cd048eb4b3": {
     requiredTargets: 1,
@@ -517,7 +594,7 @@ export const effects: {
 };
 
 export const findEffectLogic = (effect: Effect) => {
-  //TODO: does effect_basic_info_id always exist?
+  //TODO: does effect_basic_info_id really always exist?
   const basicInfoId = effect.effect_basic_info_id!;
   return effects[basicInfoId];
 };

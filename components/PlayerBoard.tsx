@@ -11,6 +11,7 @@ import {
   currentActiveCharacterAttacksState,
   selectionPurposeState,
   mySelectedDiceState,
+  summonsState,
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
@@ -61,6 +62,8 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   const [selectionPurpose, setSelectionPurpose] = useRecoilState(
     selectionPurposeState
   );
+
+  const summons = useRecoilValue(summonsState);
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -140,6 +143,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           myDice,
           opponentCards: opponentInGameCards,
           opponentDice: opponentDice,
+          summons,
           triggerContext: {
             //TODO: rename to SWITCH_CHARACTER because SWITCH_PLAYER will be used for changing turns
             eventType: "SWITCH",
@@ -340,6 +344,28 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   };
   const activateAttackEffect = (effect: Effect) => {
     if (!myCards) return;
+    const effectCard = myCards.find((c) => c.id === effect.card_id);
+
+    if (effect.effectType === "ELEMENTAL_BURST") {
+      if (!effectCard) {
+        setErrorMessage("No effect card");
+        return;
+      }
+      if (effectCard.location !== "CHARACTER") {
+        setErrorMessage("Effect card not a character");
+        return;
+      }
+      if (effectCard.energy !== effectCard.max_energy) {
+        setErrorMessage("Not enough energy");
+        return;
+      }
+    }
+    // const effectCard = myCards.find((c) => c.id === effect.card_id);
+    // if (!effectCard) {
+    //   //TODO: do I need to stop the effect execution here?
+    //   console.log("no effect card");
+    //   return;
+    // }
     const effectLogic = findEffectLogic(effect);
     if (effectLogic.requiredTargets) {
       if (!selectedTargetCards) {
@@ -352,7 +378,12 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       }
     }
     //attack effects have a cost
-    let cost = effect.cost;
+    //TODO: remove energy from cost
+    let cost =
+      effect.cost &&
+      Object.fromEntries(
+        Object.entries(effect.cost).filter(([key, value]) => key != "ENERGY")
+      );
     let myDiceAfterCost = myDice;
     if (cost) {
       const costModifyingEffects = findCostModifyingEffects(myCards);
@@ -361,6 +392,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         const effectLogic = findEffectLogic(effect);
         if (!effectLogic?.execute) return;
         let { modifiedCost, errorMessage } = effectLogic.execute({
+          summons,
           effect,
           playerID: myID,
           myCards,
@@ -404,7 +436,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
 
     // const effectCard = activateCard(card);
     console.log("cost after", cost);
-    const {
+    let {
       myUpdatedCards,
       myUpdatedDice,
       opponentUpdatedCards,
@@ -414,6 +446,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       playerID: myID,
       effect,
       myCards: myCards,
+      summons,
       myDice: myDiceAfterCost,
       opponentCards: opponentInGameCards,
       opponentDice: opponentDice,
@@ -423,12 +456,20 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       setErrorMessage(errorMessage);
       return;
     }
-    const effectCard = myCards.find((c) => c.id === effect.card_id);
-    if (!effectCard) {
-      console.log("no effect card");
-      return;
+    if (effect.effectType === "ELEMENTAL_BURST") {
+      if (myUpdatedCards) {
+        //setting the energy of the character to 0 after using the burst
+        myUpdatedCards = myUpdatedCards.map((c) => {
+          if (c.id === effectCard!.id) {
+            return {
+              ...c,
+              energy: 0,
+            };
+          }
+          return c;
+        }) as CardExtended[];
+      }
     }
-
     myUpdatedCards && setMyCards(myUpdatedCards);
     setMyDice(myUpdatedDice || myDiceAfterCost);
     opponentUpdatedCards && setOpponentInGameCards(opponentUpdatedCards);
@@ -552,6 +593,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         } = effectLogic.execute({
           effect,
           playerID: myID,
+          summons,
           myCards: myCardsAfterTriggeredEffects,
           myDice: myDiceAfterTriggeredEffects,
           opponentCards: opponentInGameCardsAfterTriggeredEffects,
@@ -668,7 +710,14 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             })}
         </div>
       </div>
-      <div className="bg-yellow-50 h-full">summon zone</div>
+      <div className="bg-yellow-50 h-full">
+        {/* SUMMONS */}
+        {playerCards
+          ?.filter((card) => card.location === "SUMMON")
+          .map((card) => (
+            <Card key={card.id} card={card} />
+          ))}
+      </div>
       {/* //TODO: display dice */}
       <DiceDisplay dice={playerDice} isMyBoard={isMyBoard}></DiceDisplay>
       {isMyBoard && <ElementalTuning />}

@@ -369,5 +369,21 @@ export const opponentCardsInDeckState = selector<Card[]>({
   },
 });
 
+export const summonsState = selector({
+  key: "summonsState",
+  get: async ({}) => {
+    const supabase = createClientComponentClient<Database>();
+    //fetch all summons with their effects
+    const { data, error } = await supabase
+      .from("card_basic_info")
+      .select("*, effect_basic_info(*)")
+      .eq("card_type", "SUMMON");
+    if (error) console.log("error", error);
+    const summons = data?.map((cardBasicInfo) =>
+      cardFromBasicInfo(cardBasicInfo)
+    );
+    return summons;
+  },
+});
 //TODO: add player count to game table
 //-----------------------------------------
