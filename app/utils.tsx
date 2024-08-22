@@ -534,7 +534,9 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
           if (attackBaseEffectID && effect.id === attackBaseEffectID) {
             return {
               ...effect,
+              //TODO: reset usages this turn
               usages_this_turn: effect.usages_this_turn || 0 + 1,
+              total_usages: effect.total_usages || 0 + 1,
             };
           }
           return effect;
@@ -587,11 +589,19 @@ export const createSummon = ({
   // if (!summoner) {
   //   return { errorMessage: "Summoner not found" };
   // }
+  const summonId = uuid();
   const summon: CardExt = {
     ...summonOriginal,
-    id: uuid(),
+    id: summonId,
     location: "SUMMON",
     usages,
+    effects: summonOriginal.effects.map((effect) => ({
+      ...effect,
+      id: uuid(),
+      card_id: summonId,
+      total_usages: 0,
+      usages_this_turn: 0,
+    })),
   };
   //TODO: can a summon be summoned to the opponent's side?
   const myUpdatedCards = [...myCards, summon];
