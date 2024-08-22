@@ -39,6 +39,7 @@ export default function Card({
   const isSelected = selectedTargets.find((target) => target.id === card.id);
   const isFaceDown = card.location === "HAND" && !isMyCard;
   const isFrozen = card.statuses?.find((status) => status.name === "FROZEN");
+  const isSummon = card.location === "SUMMON";
   return (
     <div
       className={`group bg-blue-200 flex flex-col items-center relative h-24 w-16 border-4
@@ -47,6 +48,7 @@ export default function Card({
         ${card && card.is_active && "scale-125"}
         `}
       onMouseEnter={() => {
+        console.log(card);
         setCurrentViewedCard(card);
       }}
     >
@@ -64,6 +66,16 @@ export default function Card({
           activate
         </span>
       )}
+      {/* TODO: remove  */}
+      {card.location === "SUMMON" && (
+        <span
+          className="z-30 cursor-pointer hidden group-hover:block absolute top-1 left-1 bg-green-200 text-green-800 p-1"
+          onClick={handleClick}
+        >
+          activate
+        </span>
+      )}
+
       {/* used for switching active character */}
       {card.location === "CHARACTER" && isMyCard && !card.is_active && (
         <span
@@ -89,6 +101,13 @@ export default function Card({
         {isSelected ? "deselect" : "select"}
       </span>
       {/* health */}
+      {isSummon && (
+        <div className="z-10 flex justify-between w-full">
+          <span className="bg-blue-600 rounded-sm text-blue-100  -mr-1 ">
+            {card.usages}
+          </span>
+        </div>
+      )}
       <div className="z-10 flex justify-between w-full">
         <span className="bg-orange-300 rounded-sm text-orange-800 -ml-1 ">
           {isInDeckDisplay ? card.base_health : card.health}
@@ -105,7 +124,9 @@ export default function Card({
                   <div className="flex flex-col gap-1 justify-center">
                     <span
                       className={`${
-                        isEnergyUsed ? "bg-amber-300" : "bg-slate-100 opacity-90"
+                        isEnergyUsed
+                          ? "bg-amber-300"
+                          : "bg-slate-100 opacity-90"
                       }  w-2  h-2  outline-orange-600 outline-double outline-2
                     rounded-full
                     `}

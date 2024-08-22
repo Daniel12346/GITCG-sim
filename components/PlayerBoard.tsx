@@ -81,7 +81,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         const { effect, myCards, myDice, opponentCards, opponentDice } =
           payload;
         //TODO: name this in a less confusing way
-        effect && console.log("effect", effect);
         myCards && setOpponentInGameCards(myCards);
         myDice && setOpponentDice(myDice);
         opponentCards && setMyCards(opponentCards);
@@ -116,7 +115,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       );
     } else {
       let cost = mySelectedDice;
-      console.log("switch dice", mySelectedDice);
       if (calculateTotalDice(mySelectedDice) !== 1) {
         setErrorMessage("Incorrect number of dice");
         return;
@@ -199,7 +197,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       try {
         //TODO: fix this
         const difference = subtractCost(mySelectedDice, cardToEquip.cost);
-        console.log("difference", difference);
         if (
           Object.keys(difference).length === 0 ||
           Object.values(difference).every((val) => val === 0)
@@ -345,6 +342,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   const activateAttackEffect = (effect: Effect) => {
     if (!myCards) return;
     const effectCard = myCards.find((c) => c.id === effect.card_id);
+    console.log(effectCard);
 
     if (effect.effectType === "ELEMENTAL_BURST") {
       if (!effectCard) {
@@ -355,17 +353,13 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         setErrorMessage("Effect card not a character");
         return;
       }
-      if (effectCard.energy !== effectCard.max_energy) {
-        setErrorMessage("Not enough energy");
-        return;
-      }
+      //TODO: uncomment this
+      // if (effectCard.energy !== effectCard.max_energy) {
+      //   setErrorMessage("Not enough energy");
+      //   return;
+      // }
     }
-    // const effectCard = myCards.find((c) => c.id === effect.card_id);
-    // if (!effectCard) {
-    //   //TODO: do I need to stop the effect execution here?
-    //   console.log("no effect card");
-    //   return;
-    // }
+
     const effectLogic = findEffectLogic(effect);
     if (effectLogic.requiredTargets) {
       if (!selectedTargetCards) {
@@ -387,13 +381,13 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     let myDiceAfterCost = myDice;
     if (cost) {
       const costModifyingEffects = findCostModifyingEffects(myCards);
-      console.log("modifiers", costModifyingEffects);
       costModifyingEffects.forEach((effect) => {
         const effectLogic = findEffectLogic(effect);
         if (!effectLogic?.execute) return;
         let { modifiedCost, errorMessage } = effectLogic.execute({
           summons,
           effect,
+          thisCard: effectCard,
           playerID: myID,
           myCards,
           myDice,
@@ -413,7 +407,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         }
       });
       try {
-        console.log("before subtracting cost", mySelectedDice, cost);
         //checking if there are enough dice among the selected dice
         if (calculateTotalDice(mySelectedDice) !== calculateTotalDice(cost)) {
           throw new Error("Incorrect dice amount");
@@ -428,14 +421,12 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       try {
         myDiceAfterCost = subtractCost(myDice, mySelectedDice);
       } catch (e) {
-        console.log(e, myDiceAfterCost);
         setErrorMessage("Not enough total dice");
         return;
       }
     }
 
     // const effectCard = activateCard(card);
-    console.log("cost after", cost);
     let {
       myUpdatedCards,
       myUpdatedDice,
@@ -715,7 +706,18 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         {playerCards
           ?.filter((card) => card.location === "SUMMON")
           .map((card) => (
-            <Card key={card.id} card={card} />
+            <Card
+              key={card.id}
+              card={card}
+              //TODO: remove (just for testing)
+              handleClick={() => {
+                const effect = card.effects.find((eff) => {
+                  const effectLogic = findEffectLogic(eff);
+                  return effectLogic.triggerOn?.includes("END_PHASE");
+                });
+                effect && myCards && activateAttackEffect(effect);
+              }}
+            />
           ))}
       </div>
       {/* //TODO: display dice */}

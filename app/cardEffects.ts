@@ -16,7 +16,8 @@ export type EventType =
   | "EQUIP_TALENT"
   | "EQUIP_ARTIFACT"
   | "EQUIP_WEAPON"
-  | "SWITCH";
+  | "SWITCH"
+  | "END_PHASE";
 
 type ExecuteEffectParams = {
   //TODO: move some params to the trigger context
@@ -590,6 +591,87 @@ export const effects: {
   "d0054e26-1bcd-45bf-9dbe-eaeac45b9048": {
     requiredTargets: 1,
     execute: makeNormalAttackExecuteFunction("PYRO", 2),
+  },
+
+  //---------------SUMMONS----------------
+  //Large Wind Spirit - End Phase Effect
+  "0f9f109f-3310-46df-a18a-3a659181c23e": {
+    triggerOn: ["END_PHASE"],
+    execute: ({ thisCard, myCards, opponentCards, myDice, opponentDice }) => {
+      //TODO? check if it is the end phase
+
+      if (!thisCard) {
+        return { errorMessage: "No card passed to effect" };
+      }
+
+      const targetCards = opponentCards.filter(
+        (card) => card.location === "CHARACTER" && card.is_active
+      );
+      //TODO: move this to a function ---------
+
+      let myUpdatedCards = myCards;
+      let opponentUpdatedCards = opponentCards;
+      let damageBeforeElementalReactions = calculateDamageAfterModifiers({
+        baseDamage: 2,
+        myCards,
+        opponentCards,
+        myDice,
+        opponentDice,
+        thisCard,
+        targetCards,
+      });
+      const damageElement = thisCard.element || "ANEMO";
+      //TODO: does this attack the active character?
+      const targetCardId = opponentCards.find((c) => c.is_active)?.id;
+      if (!targetCardId) {
+        return { errorMessage: "No target card found" };
+      }
+      const attackerCardId = thisCard.id;
+      const { opponentCardsAfterReaction, myCardsAfterReaction, reactions } =
+        calculateAttackElementalReaction({
+          damage: damageBeforeElementalReactions,
+          damageElement,
+          attackerCardId,
+          //TODO: what if there are multiple target cards?
+          targetCardId,
+          myCards,
+          opponentCards,
+          attackBaseEffectID: "0f9f109f-3310-46df-a18a-3a659181c23e",
+        });
+      reactions?.forEach((reaction) => {
+        console.log("reaction", reaction);
+      });
+      if (myCardsAfterReaction) {
+        myUpdatedCards = myCardsAfterReaction;
+      }
+      if (opponentCardsAfterReaction) {
+        opponentUpdatedCards = opponentCardsAfterReaction;
+      }
+      // -------------------------------------
+      const thisEffect = thisCard.effects.find(
+        (effect) => effect.id === "0f9f109f-3310-46df-a18a-3a659181c23e"
+      );
+      const thisEffectTotalUsages = thisEffect?.total_usages;
+      if (
+        thisEffectTotalUsages !== undefined &&
+        thisEffectTotalUsages !== null
+      ) {
+        if (thisEffectTotalUsages === thisCard.usages) {
+          //discard the summon
+          myUpdatedCards = myUpdatedCards.map((card) => {
+            if (card.id === thisCard.id) {
+              return { ...card, location: "DISCARDED" };
+            } else {
+              return card;
+            }
+          });
+        }
+      }
+      return {
+        myUpdatedCards,
+        opponentUpdatedCards,
+      };
+    },
   },
 };
 
