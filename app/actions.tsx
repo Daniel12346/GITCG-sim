@@ -173,39 +173,22 @@ const rerollDice = (diceToChooseFrom: Dice, chosenDice: Dice) => {
   return result;
 };
 
-export const activateEffect: ExecuteEffect = ({
-  effect,
-  playerID,
-  myCards,
-  myDice,
-  opponentCards,
-  opponentDice,
-  thisCard,
-  targetCards,
-  summons,
-}) => {
+export const activateEffect: ExecuteEffect = (params) => {
+  const { myCards, thisCard, effect } = params;
   if (!effect) return { errorMessage: "no effect" };
   const effectLogic = findEffectLogic(effect);
-
+  // TODO: handle somewhere else
   const effectSourceCard =
     thisCard ?? myCards.find((card) => card.id === effect.card_id);
   if (!effectSourceCard) {
     return { errorMessage: "no card with this effect" };
   }
-
   const { execute, requiredTargets } = effectLogic;
 
   if (execute) {
     return execute({
-      effect,
-      playerID,
-      myCards,
-      myDice,
-      summons,
-      opponentCards,
-      opponentDice,
+      ...params,
       thisCard: effectSourceCard,
-      targetCards,
     });
   }
   return { errorMessage: "could not execute effect" };

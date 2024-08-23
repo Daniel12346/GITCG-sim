@@ -117,6 +117,7 @@ const makeNormalAttackExecuteFunction = (
   attackBaseEffectID?: string
 ): ExecuteEffect => {
   const execute = ({
+    effect,
     myCards,
     opponentCards,
     thisCard,
@@ -124,8 +125,10 @@ const makeNormalAttackExecuteFunction = (
     myDice,
     opponentDice,
   }: //TODO: triggerContext,
-  // triggerContext,
   ExecuteEffectParams) => {
+    thisCard =
+      thisCard ||
+      (effect && myCards.find((card) => card.id === effect.card_id));
     //the base damage of the attack
     if (!thisCard) {
       return { errorMessage: "No card passed to effect" };
@@ -193,6 +196,10 @@ export type TriggerContext = {
   attackID?: string;
   cost?: Cost;
   damage?: number;
+  reaction?: {
+    name: ElementalReaction;
+    resultingElement?: ElementName;
+  };
 };
 
 export type EffectLogic = {
@@ -505,7 +512,7 @@ export const effects: {
   //Sucrose's Normal Attack
   "b4a1b3f5-45a1-4db8-8d07-a21cb5e5be11": {
     requiredTargets: 1,
-    execute: makeNormalAttackExecuteFunction("HYDRO", 1),
+    execute: makeNormalAttackExecuteFunction("ANEMO", 1),
   },
   // Sucrose's Burst
   "0fedcf14-f037-45a5-bfe7-81954da86c54": {
@@ -671,6 +678,56 @@ export const effects: {
         myUpdatedCards,
         opponentUpdatedCards,
       };
+    },
+  },
+  //Large Wind Spirit - On Reaction Effect
+  "d10fc5e1-231c-41f2-8a27-594e4777c795": {
+    triggerOn: ["REACTION"],
+    execute: ({
+      effect,
+      myCards,
+      opponentCards,
+      myDice,
+      opponentDice,
+      thisCard,
+      triggerContext,
+    }) => {
+      console.log("REACTION", triggerContext);
+
+      thisCard =
+        thisCard ||
+        (effect && myCards.find((card) => card.id === effect.card_id));
+      if (!thisCard) {
+        return { errorMessage: "No card passed to effect" };
+      }
+      if (!triggerContext) {
+        return { errorMessage: "No trigger context" };
+      }
+      const { reaction } = triggerContext;
+      if (!reaction) {
+        return { errorMessage: "No reaction found" };
+      }
+      if (
+        triggerContext.eventType !== "REACTION" ||
+        reaction.name !== "SWIRL"
+      ) {
+        return {
+          errorMessage: "Effect can only be triggered on swirl reactions",
+        };
+      }
+      const swirledElement = reaction.resultingElement;
+      if (!swirledElement) {
+        return { errorMessage: "No swirled element found" };
+      }
+      //change the element of the summon to the swirled element
+      const myUpdatedCards = myCards.map((card) => {
+        if (card.id === thisCard.id) {
+          return { ...card, element: swirledElement };
+        } else {
+          return card;
+        }
+      });
+      return { myUpdatedCards };
     },
   },
 };

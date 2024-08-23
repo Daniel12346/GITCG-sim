@@ -710,13 +710,35 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
               key={card.id}
               card={card}
               //TODO: remove (just for testing)
-              handleClick={() => {
-                const effect = card.effects.find((eff) => {
-                  const effectLogic = findEffectLogic(eff);
-                  return effectLogic.triggerOn?.includes("END_PHASE");
-                });
-                effect && myCards && activateAttackEffect(effect);
-              }}
+              // handleClick={() => {
+              //   if (!myCards) return;
+              //   const effect = card.effects.find((eff) => {
+              //     const effectLogic = findEffectLogic(eff);
+              //     return effectLogic.triggerOn?.includes("REACTION");
+              //   });
+              //   if (!effect) return;
+              //   const { myUpdatedCards, errorMessage } = activateEffect({
+              //     effect,
+              //     playerID: myID,
+              //     myCards,
+              //     myDice,
+              //     opponentCards: opponentInGameCards,
+              //     opponentDice: opponentDice,
+              //     targetCards: selectedTargetCards,
+              //     summons,
+              //     thisCard: card,
+              //     triggerContext: {
+              //       eventType: "REACTION",
+              //       reaction: {
+              //         name: "SWIRL",
+              //         resultingElement: "PYRO",
+              //       },
+              //     },
+              //   });
+              //   errorMessage && setErrorMessage(errorMessage);
+              //   myUpdatedCards && setMyCards(myUpdatedCards);
+              //   // effect && myCards && activateAttackEffect(effect);
+              // }}
             />
           ))}
       </div>

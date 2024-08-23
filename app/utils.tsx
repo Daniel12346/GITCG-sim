@@ -168,7 +168,8 @@ export const findEffectsThatTriggerOn = (
   cards: CardExt[]
 ) => {
   return cards.reduce((acc, card) => {
-    return ["ACTION", "EQUIPPED"].includes(card.location!)
+    //only looking at cards in action, equipped or summon locations
+    return ["ACTION", "EQUIPPED", "SUMMON"].includes(card.location!)
       ? acc.concat(
           card.effects.filter((effect) => {
             const effectLogic = findEffectLogic(effect);
@@ -310,6 +311,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
         errorMessage: "My cards or opponent cards are missing",
       };
     }
+
     const attackerCard = myCards.find((card) => card.id === attackerCardId);
     const targetCard = opponentCards.find((card) => card.id === targetCardId);
     //TODO: check attacker statuses for elemental infusion
@@ -346,6 +348,8 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
     let reactions: ElementalReaction[] = [];
     let opponentUpdatedCards = opponentCards;
     let myUpdatedCards = myCards;
+    //refers to the element that was swirled, possibly other uses, TODO: rename
+    let resultingElement: ElementName | null = null;
     //SHATTERED
     if (damageElement === "PHYSICAL") {
       if (
@@ -422,6 +426,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       const elementToSwirl = targetStatuses.find((status) =>
         ["PYRO", "HYDRO", "ELECTRO", "CRYO"].includes(status.name)
       );
+      resultingElement = elementToSwirl?.name;
       opponentUpdatedCards = opponentCards.map((card) => {
         if (card.id === targetCardId) {
           return clearCardStatuses(card, [elementToSwirl?.name]);
@@ -429,20 +434,26 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
         return card;
       });
       damageAfterReaction += 1;
+      reactions?.push("SWIRL");
       const swirlTargets = opponentCards.filter(
         (card) => card.location === "CHARACTER" && card.id !== targetCardId
       );
       swirlTargets.forEach((card) => {
-        const { reactions, opponentCardsAfterReaction, myCardsAfterReaction } =
-          calculateAttackElementalReaction({
-            damage: 1,
-            damageElement: elementToSwirl?.name,
-            attackerCardId,
-            targetCardId: card.id,
-            myCards: myUpdatedCards,
-            opponentCards: opponentUpdatedCards,
-          });
-        reactions && reactions.forEach((reaction) => reactions.push(reaction));
+        const {
+          reactions: extraReactions,
+          opponentCardsAfterReaction,
+          myCardsAfterReaction,
+        } = calculateAttackElementalReaction({
+          damage: 1,
+          damageElement: elementToSwirl?.name,
+          attackerCardId,
+          targetCardId: card.id,
+          myCards: myUpdatedCards,
+          opponentCards: opponentUpdatedCards,
+        });
+        //TODO: handle better
+        extraReactions &&
+          reactions.forEach((reaction) => reactions.push(reaction));
         if (opponentCardsAfterReaction) {
           opponentUpdatedCards = opponentCardsAfterReaction;
         }
@@ -468,16 +479,20 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
         (card) => card.location === "CHARACTER" && card.id !== targetCardId
       );
       piercingTargets.forEach((card) => {
-        const { reactions, opponentCardsAfterReaction, myCardsAfterReaction } =
-          calculateAttackElementalReaction({
-            damage: 1,
-            damageElement: "PIERCING",
-            attackerCardId,
-            targetCardId: card.id,
-            myCards: myUpdatedCards,
-            opponentCards: opponentUpdatedCards,
-          });
-        reactions && reactions.forEach((reaction) => reactions.push(reaction));
+        const {
+          reactions: extraReactions,
+          opponentCardsAfterReaction,
+          myCardsAfterReaction,
+        } = calculateAttackElementalReaction({
+          damage: 1,
+          damageElement: "PIERCING",
+          attackerCardId,
+          targetCardId: card.id,
+          myCards: myUpdatedCards,
+          opponentCards: opponentUpdatedCards,
+        });
+        extraReactions &&
+          extraReactions.forEach((reaction) => reactions.push(reaction));
         if (opponentCardsAfterReaction) {
           opponentUpdatedCards = opponentCardsAfterReaction;
         }
@@ -553,9 +568,55 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       }
       return card;
     });
+
+    const effectsThatTriggerOnReaction = findEffectsThatTriggerOn(
+      "REACTION",
+      //TODO: handle opponent's effects
+      [...myUpdatedCards]
+    );
+    console.log("effectsThatTriggerOnReaction", effectsThatTriggerOnReaction);
+    //TODO!: create an effectChain function
+    if (effectsThatTriggerOnReaction.length > 0) {
+      effectsThatTriggerOnReaction.forEach((effect) => {
+        const effectLogic = findEffectLogic(effect);
+        if (
+          effectLogic.execute &&
+          ((effectLogic?.checkIfCanBeExecuted &&
+            effectLogic.checkIfCanBeExecuted({ myCards, opponentCards })) ||
+            !effectLogic.checkIfCanBeExecuted)
+        ) {
+          const {
+            myUpdatedCards: myUpdatedCardsAfterEffects,
+            opponentUpdatedCards: opponentUpdatedCardsAfterEffects,
+          } = effectLogic.execute({
+            effect,
+            myCards: myUpdatedCards,
+            opponentCards: opponentUpdatedCards,
+            //TODO: add dice
+            myDice: {},
+            opponentDice: {},
+            triggerContext: {
+              eventType: "REACTION",
+              reaction: {
+                //TODO!: why is this undefined?
+                name: reactions[0],
+                resultingElement: resultingElement || undefined,
+              },
+            },
+          });
+          if (myUpdatedCardsAfterEffects) {
+            myUpdatedCards = myUpdatedCardsAfterEffects;
+          }
+          if (opponentUpdatedCardsAfterEffects) {
+            opponentUpdatedCards = opponentUpdatedCardsAfterEffects;
+          }
+        }
+      });
+    }
     return {
       opponentCardsAfterReaction: opponentUpdatedCards,
       myCardsAfterReaction: myUpdatedCards,
+      reactions,
     };
   };
 
