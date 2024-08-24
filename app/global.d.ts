@@ -14,9 +14,11 @@ interface EffectT extends Effect {
   description?: string;
   effect_basic_info_id?: string;
   effectType?: string;
+  // TODO:add effect element to db
 }
 type Card = DB["public"]["Tables"]["card"]["Row"];
 interface CardExtended extends Card {
+  element: ElementName | null;
   effects: EffectT[];
   shield?: number;
   cost?: Cost;
