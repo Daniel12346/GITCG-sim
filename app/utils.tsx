@@ -18,6 +18,7 @@ export const cardFromBasicInfo = (
   const cardID = uuid();
   return {
     ...cardBasicInfo,
+    element: (cardBasicInfo.element as ElementName) || null,
     //TODO: do not ts ignore
     //@ts-ignore
     quantity: cardBasicInfo.quantity || null,
@@ -257,12 +258,12 @@ type CalculateAttackElementalReaction = ({
   attackBaseEffectID,
 }: {
   damage: number;
-  damageElement: DamageElement;
   attackerCardId: string;
   targetCardId: string;
   myCards: CardExt[];
   opponentCards: CardExt[];
   attackBaseEffectID?: string;
+  damageElement?: DamageElement;
 }) => {
   errorMessage?: string;
   updatedDamage?: number;
@@ -321,9 +322,16 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       };
     }
 
-    //  if (damageElement === "PHYSICAL") {
-    //    return { updatedDamage: damage };
-    //  }
+    const infusionStatus = attackerCard.statuses?.find((status: CardStatus) =>
+      status.name.includes("INFUSION")
+    );
+    const infusionElement = infusionStatus?.name.split("_")[0] as ElementName;
+    //infusionElement overrides PHYSICAL damage
+    //TODO: multiple infusions?
+    if (infusionElement && damageElement === "PHYSICAL") {
+      damageElement = infusionElement;
+    }
+
     //  //TODO: check for shields
     //  if (damageElement === "PIERCING") {
     //    return { updatedDamage: damage };
@@ -364,7 +372,6 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
           return card;
         });
       }
-      return { damageAfterReaction };
     }
     //VAPORIZE
     if (
@@ -407,7 +414,6 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       damageAfterReaction += 1;
       reactions.push("FROZEN");
       opponentUpdatedCards = opponentUpdatedCards.map((card) => {
-        console.log("cardid", card.id, "targetCardId", targetCardId);
         if (card.id === targetCardId) {
           const cleared = clearCardStatuses(card, ["CRYO", "HYDRO"]);
           const updated = addStatusToCard(cleared, "FROZEN", 1);
@@ -564,7 +570,22 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
               ? currentEnergy + 1
               : currentEnergy
             : null;
-        return { ...card, effects: updatedCardEffects, energy: updatedEnergy };
+        //decrease infusion duration by 1, if duration is 0, remove the status
+        const updatedStatuses = card.statuses
+          ?.map((status) => {
+            if (status.name.includes("INFUSION")) {
+              const turnsLeft = status.turnsLeft - 1;
+              return turnsLeft > 0 ? { ...status, turnsLeft } : null;
+            }
+            return status;
+          })
+          .filter((status) => status !== null) as CardStatus[];
+        return {
+          ...card,
+          effects: updatedCardEffects,
+          energy: updatedEnergy,
+          statuses: updatedStatuses,
+        };
       }
       return card;
     });
