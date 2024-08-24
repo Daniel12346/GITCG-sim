@@ -62,6 +62,66 @@ type CheckIfEffectCanBeExecutedParams = {
 
 //TODO: add trigger
 //used to make the execute effect functions of 6 relics with their only difference being the element, all with the cost of 2 unaligned
+
+const executeAttack = ({
+  myCards,
+  effect,
+  opponentCards,
+  myDice,
+  opponentDice,
+  thisCard,
+  targetCards,
+  baseDamage,
+  damageElement,
+  attackBaseEffectID,
+}: ExecuteEffectParams & {
+  baseDamage: number;
+  damageElement?: DamageElement;
+  attackBaseEffectID?: string;
+}) => {
+  if (!thisCard) {
+    return { errorMessage: "No card passed to effect" };
+  }
+  if (!targetCards || targetCards.length < 1) {
+    return { errorMessage: "One target card is required" };
+  }
+  let myUpdatedCards = myCards;
+  let opponentUpdatedCards = opponentCards;
+  let damageBeforeElementalReactions = calculateDamageAfterModifiers({
+    baseDamage,
+    myCards,
+    opponentCards,
+    myDice,
+    opponentDice,
+    thisCard,
+    targetCards,
+  });
+
+  //TODO: multiple target cards
+  const targetCardId = targetCards[0].id;
+  const attackerCardId = thisCard.id;
+  const { opponentCardsAfterReaction, myCardsAfterReaction, reactions } =
+    calculateAttackElementalReaction({
+      damage: damageBeforeElementalReactions,
+      damageElement,
+      attackerCardId,
+      targetCardId,
+      myCards,
+      opponentCards,
+      attackBaseEffectID: "0f9f109f-3310-46df-a18a-3a659181c23e",
+    });
+  reactions?.forEach((reaction) => {
+    console.log("reaction", reaction);
+  });
+  if (myCardsAfterReaction) {
+    myUpdatedCards = myCardsAfterReaction;
+  }
+  if (opponentCardsAfterReaction) {
+    opponentUpdatedCards = opponentCardsAfterReaction;
+  }
+  return { myUpdatedCards, opponentUpdatedCards };
+};
+
 const makeExecuteFunctionOfElementalRelicWith2UnalignedCost = (
   element: CostElementName
 ): ExecuteEffect => {
@@ -112,7 +172,7 @@ const makeTriggerAndExecuteAndCheckIfCanBeExecutedFunctionsOfWeaponWithPlus1Dama
 
 //TODO: fix attack happening even when there's not enough dice
 const makeNormalAttackExecuteFunction = (
-  attackElement: ElementName,
+  attackElement: DamageElement,
   baseDamage: number,
   attackBaseEffectID?: string
 ): ExecuteEffect => {
@@ -137,37 +197,20 @@ const makeNormalAttackExecuteFunction = (
       return { errorMessage: "One target card is required" };
     }
     //TODO: only use modifiers that activate before the attack?
-    let damageBeforeElementalReactions = calculateDamageAfterModifiers({
-      baseDamage,
-      myCards,
-      opponentCards,
-      myDice,
-      opponentDice,
-      thisCard,
-      targetCards,
-    });
-    const targetCardId = targetCards[0].id;
-    const attackerCardId = thisCard.id;
-    const { opponentCardsAfterReaction, myCardsAfterReaction, reactions } =
-      calculateAttackElementalReaction({
-        damage: damageBeforeElementalReactions,
-        damageElement: attackElement,
-        attackerCardId,
-        //TODO: what if there are multiple target cards?
-        targetCardId,
+    const { myUpdatedCards, errorMessage, opponentUpdatedCards } =
+      executeAttack({
         myCards,
+        effect,
         opponentCards,
+        myDice,
+        opponentDice,
+        thisCard,
+        targetCards,
+        baseDamage,
+        damageElement: attackElement,
         attackBaseEffectID,
       });
-    reactions?.forEach((reaction) => {
-      console.log("reaction", reaction);
-    });
-
-    //TODO: increase attack counter on attacker card, trigger effects after attack or reaction
-    return {
-      myUpdatedCards: myCardsAfterReaction,
-      opponentUpdatedCards: opponentCardsAfterReaction,
-    };
+    return { myUpdatedCards, errorMessage, opponentUpdatedCards };
   };
   return execute;
 };
@@ -528,55 +571,31 @@ export const effects: {
     }: //TODO: triggerContext,
     // triggerContext,
     ExecuteEffectParams) => {
-      console.log("SUMMONS IN EFFECT", summons);
       if (!thisCard) {
         return { errorMessage: "No card passed to effect" };
       }
       if (!targetCards || targetCards.length < 1) {
         return { errorMessage: "One target card is required" };
       }
-
-      let myUpdatedCards = myCards;
-      let opponentUpdatedCards = opponentCards;
-      let damageBeforeElementalReactions = calculateDamageAfterModifiers({
-        baseDamage: 1,
+      let { myUpdatedCards, opponentUpdatedCards } = executeAttack({
         myCards,
         opponentCards,
         myDice,
         opponentDice,
         thisCard,
         targetCards,
+        baseDamage: 1,
+        damageElement: "ANEMO",
+        attackBaseEffectID: "0f9f109f-3310-46df-a18a-3a659181c23e",
       });
-      const targetCardId = targetCards[0].id;
-      const attackerCardId = thisCard.id;
-      const { opponentCardsAfterReaction, myCardsAfterReaction, reactions } =
-        calculateAttackElementalReaction({
-          damage: damageBeforeElementalReactions,
-          damageElement: "ANEMO",
-          attackerCardId,
-          //TODO: what if there are multiple target cards?
-          targetCardId,
-          myCards,
-          opponentCards,
-          attackBaseEffectID: "0fedcf14-f037-45a5-bfe7-81954da86c54",
-        });
-      reactions?.forEach((reaction) => {
-        console.log("reaction", reaction);
-      });
-      if (myCardsAfterReaction) {
-        myUpdatedCards = myCardsAfterReaction;
-      }
-      if (opponentCardsAfterReaction) {
-        opponentUpdatedCards = opponentCardsAfterReaction;
-      }
       if (!summons) {
         return { errorMessage: "No summons found" };
       }
-      //TODO: return opponentUpdatedCards
       const { myUpdatedCards: myUpdatedCardsAfterSummon } = createSummon({
         summonBasicInfoID: "c9835b98-7a88-4493-9023-62f9ea7e729a",
         summons,
-        myCards: myUpdatedCards,
+        //TODO: is this correct?
+        myCards: myUpdatedCards || myCards,
         usages: 3,
       });
       if (myUpdatedCardsAfterSummon) {
@@ -597,7 +616,62 @@ export const effects: {
   //Diluc's Normal Attack
   "d0054e26-1bcd-45bf-9dbe-eaeac45b9048": {
     requiredTargets: 1,
-    execute: makeNormalAttackExecuteFunction("PYRO", 2),
+    execute: makeNormalAttackExecuteFunction("PHYSICAL", 2),
+  },
+
+  //Diluc's Burst
+  "1b5317e6-59db-4e53-bdc5-3e6923433b70": {
+    requiredTargets: 1,
+    execute: ({
+      myCards,
+      opponentCards,
+      thisCard,
+      targetCards,
+      myDice,
+      opponentDice,
+    }: ExecuteEffectParams) => {
+      if (!thisCard) {
+        return { errorMessage: "No card passed to effect" };
+      }
+      if (!targetCards || targetCards.length < 1) {
+        return { errorMessage: "One target card is required" };
+      }
+      let { myUpdatedCards, opponentUpdatedCards } = executeAttack({
+        myCards,
+        opponentCards,
+        myDice,
+        opponentDice,
+        thisCard,
+        targetCards,
+        baseDamage: 8,
+        damageElement: "PYRO",
+        attackBaseEffectID: "0f9f109f-3310-46df-a18a-3a659181c23e",
+      });
+      //add status PYRO_INFUSION to Diluc
+      myUpdatedCards = (myUpdatedCards || myCards).map((card) => {
+        if (card.id === thisCard.id) {
+          return {
+            ...card,
+            statuses: card.statuses
+              ? [
+                  ...card.statuses,
+                  {
+                    name: "PYRO_INFUSION",
+                    turnsLeft: 2,
+                  },
+                ]
+              : ["PYRO_INFUSION"],
+          };
+        } else {
+          return card;
+        }
+      });
+
+      return {
+        myUpdatedCards,
+        opponentUpdatedCards,
+      };
+    },
   },
 
   //---------------SUMMONS----------------
@@ -616,44 +690,55 @@ export const effects: {
       );
       //TODO: move this to a function ---------
 
-      let myUpdatedCards = myCards;
-      let opponentUpdatedCards = opponentCards;
-      let damageBeforeElementalReactions = calculateDamageAfterModifiers({
-        baseDamage: 2,
+      // let myUpdatedCards = myCards;
+      // let opponentUpdatedCards = opponentCards;
+      // let damageBeforeElementalReactions = calculateDamageAfterModifiers({
+      //   baseDamage: 2,
+      //   myCards,
+      //   opponentCards,
+      //   myDice,
+      //   opponentDice,
+      //   thisCard,
+      //   targetCards,
+      // });
+      // const damageElement = thisCard.element || "ANEMO";
+      // //TODO: does this attack the active character?
+      // const targetCardId =
+      //   targetCards[0].id || opponentCards.find((c) => c.is_active)?.id;
+      // if (!targetCardId) {
+      //   return { errorMessage: "No target card found" };
+      // }
+      // const attackerCardId = thisCard.id;
+      // const { opponentCardsAfterReaction, myCardsAfterReaction, reactions } =
+      //   calculateAttackElementalReaction({
+      //     damage: damageBeforeElementalReactions,
+      //     damageElement,
+      //     attackerCardId,
+      //     //TODO: what if there are multiple target cards?
+      //     targetCardId,
+      //     myCards,
+      //     opponentCards,
+      //     attackBaseEffectID: "0f9f109f-3310-46df-a18a-3a659181c23e",
+      //   });
+      // reactions?.forEach((reaction) => {
+      //   console.log("reaction", reaction);
+      // });
+      // if (myCardsAfterReaction) {
+      //   myUpdatedCards = myCardsAfterReaction;
+      // }
+      // if (opponentCardsAfterReaction) {
+      //   opponentUpdatedCards = opponentCardsAfterReaction;
+      // }
+      let { myUpdatedCards, opponentUpdatedCards } = executeAttack({
         myCards,
         opponentCards,
         myDice,
         opponentDice,
         thisCard,
         targetCards,
+        baseDamage: 2,
+        damageElement: thisCard.element || "ANEMO",
       });
-      const damageElement = thisCard.element || "ANEMO";
-      //TODO: does this attack the active character?
-      const targetCardId = opponentCards.find((c) => c.is_active)?.id;
-      if (!targetCardId) {
-        return { errorMessage: "No target card found" };
-      }
-      const attackerCardId = thisCard.id;
-      const { opponentCardsAfterReaction, myCardsAfterReaction, reactions } =
-        calculateAttackElementalReaction({
-          damage: damageBeforeElementalReactions,
-          damageElement,
-          attackerCardId,
-          //TODO: what if there are multiple target cards?
-          targetCardId,
-          myCards,
-          opponentCards,
-          attackBaseEffectID: "0f9f109f-3310-46df-a18a-3a659181c23e",
-        });
-      reactions?.forEach((reaction) => {
-        console.log("reaction", reaction);
-      });
-      if (myCardsAfterReaction) {
-        myUpdatedCards = myCardsAfterReaction;
-      }
-      if (opponentCardsAfterReaction) {
-        opponentUpdatedCards = opponentCardsAfterReaction;
-      }
       // -------------------------------------
       const thisEffect = thisCard.effects.find(
         (effect) => effect.id === "0f9f109f-3310-46df-a18a-3a659181c23e"
@@ -663,7 +748,7 @@ export const effects: {
         thisEffectTotalUsages !== undefined &&
         thisEffectTotalUsages !== null
       ) {
-        if (thisEffectTotalUsages === thisCard.usages) {
+        if (myUpdatedCards && thisEffectTotalUsages === thisCard.usages) {
           //discard the summon
           myUpdatedCards = myUpdatedCards.map((card) => {
             if (card.id === thisCard.id) {
