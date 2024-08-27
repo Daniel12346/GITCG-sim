@@ -230,6 +230,7 @@ export type ExecuteEffect = (params: ExecuteEffectParams) => {
 };
 
 export type TriggerEvents = EventType[] | null;
+
 export type TriggerContext = {
   //will be used with cost reduction effects
   eventType: EventType;
@@ -242,6 +243,10 @@ export type TriggerContext = {
   reaction?: {
     name: ElementalReaction;
     resultingElement?: ElementName;
+  };
+  switched?: {
+    from: CardExt;
+    to: CardExt;
   };
 };
 
@@ -613,6 +618,58 @@ export const effects: {
     requiredTargets: 1,
     execute: makeNormalAttackExecuteFunction("CRYO", 2),
   },
+  //Kaeya's Burst
+  "f72c5197-0fea-451c-9756-76885ac144e1": {
+    requiredTargets: 1,
+    execute: ({
+      myCards,
+      summons,
+      opponentCards,
+      thisCard,
+      targetCards,
+      myDice,
+      opponentDice,
+    }: //TODO: triggerContext,
+    // triggerContext,
+    ExecuteEffectParams) => {
+      if (!thisCard) {
+        return { errorMessage: "No card passed to effect" };
+      }
+      if (!targetCards || targetCards.length < 1) {
+        return { errorMessage: "One target card is required" };
+      }
+      let { myUpdatedCards, opponentUpdatedCards } = executeAttack({
+        myCards,
+        opponentCards,
+        myDice,
+        opponentDice,
+        thisCard,
+        targetCards,
+        baseDamage: 1,
+        damageElement: "CRYO",
+        attackBaseEffectID: "f72c5197-0fea-451c-9756-76885ac144e1",
+      });
+      if (!summons) {
+        return { errorMessage: "No summons found" };
+      }
+      const { myUpdatedCards: myUpdatedCardsAfterSummon } = createSummon({
+        summonBasicInfoID: "529ec9d6-67ed-430a-acc2-22219f0880ef",
+        isCreation: true,
+        summons,
+        //TODO: is this correct?
+        myCards: myUpdatedCards || myCards,
+        usages: 3,
+      });
+      if (myUpdatedCardsAfterSummon) {
+        myUpdatedCards = myUpdatedCardsAfterSummon;
+      }
+
+      return {
+        myUpdatedCards,
+        opponentUpdatedCards,
+      };
+    },
+  },
   //Diluc's Normal Attack
   "d0054e26-1bcd-45bf-9dbe-eaeac45b9048": {
     requiredTargets: 1,
@@ -688,47 +745,7 @@ export const effects: {
       const targetCards = opponentCards.filter(
         (card) => card.location === "CHARACTER" && card.is_active
       );
-      //TODO: move this to a function ---------
 
-      // let myUpdatedCards = myCards;
-      // let opponentUpdatedCards = opponentCards;
-      // let damageBeforeElementalReactions = calculateDamageAfterModifiers({
-      //   baseDamage: 2,
-      //   myCards,
-      //   opponentCards,
-      //   myDice,
-      //   opponentDice,
-      //   thisCard,
-      //   targetCards,
-      // });
-      // const damageElement = thisCard.element || "ANEMO";
-      // //TODO: does this attack the active character?
-      // const targetCardId =
-      //   targetCards[0].id || opponentCards.find((c) => c.is_active)?.id;
-      // if (!targetCardId) {
-      //   return { errorMessage: "No target card found" };
-      // }
-      // const attackerCardId = thisCard.id;
-      // const { opponentCardsAfterReaction, myCardsAfterReaction, reactions } =
-      //   calculateAttackElementalReaction({
-      //     damage: damageBeforeElementalReactions,
-      //     damageElement,
-      //     attackerCardId,
-      //     //TODO: what if there are multiple target cards?
-      //     targetCardId,
-      //     myCards,
-      //     opponentCards,
-      //     attackBaseEffectID: "0f9f109f-3310-46df-a18a-3a659181c23e",
-      //   });
-      // reactions?.forEach((reaction) => {
-      //   console.log("reaction", reaction);
-      // });
-      // if (myCardsAfterReaction) {
-      //   myUpdatedCards = myCardsAfterReaction;
-      // }
-      // if (opponentCardsAfterReaction) {
-      //   opponentUpdatedCards = opponentCardsAfterReaction;
-      // }
       let { myUpdatedCards, opponentUpdatedCards } = executeAttack({
         myCards,
         opponentCards,
@@ -739,7 +756,7 @@ export const effects: {
         baseDamage: 2,
         damageElement: thisCard.element || "ANEMO",
       });
-      // -------------------------------------
+
       const thisEffect = thisCard.effects.find(
         (effect) => effect.id === "0f9f109f-3310-46df-a18a-3a659181c23e"
       );
@@ -813,6 +830,69 @@ export const effects: {
         }
       });
       return { myUpdatedCards };
+    },
+  },
+  //Icicle
+  "bd921199-ac91-4a61-b803-20879d8d5dc7": {
+    triggerOn: ["SWITCH"],
+    execute: ({
+      thisCard,
+      myCards,
+      opponentCards,
+      myDice,
+      opponentDice,
+      triggerContext,
+    }) => {
+      if (!thisCard) {
+        return { errorMessage: "No card passed to effect" };
+      }
+      const switchedToCard = triggerContext?.switched?.to;
+      if (!switchedToCard) {
+        return { errorMessage: "No switched card found" };
+      }
+      //effect only trigger if this creation's owner is the one switching
+      const didISwitch = myCards.find((card) => card.id === switchedToCard.id);
+      if (!didISwitch) {
+        return {};
+      }
+      const targetCards = opponentCards.filter(
+        (card) => card.location === "CHARACTER" && card.is_active
+      );
+
+      let { myUpdatedCards, opponentUpdatedCards } = executeAttack({
+        myCards,
+        opponentCards,
+        myDice,
+        opponentDice,
+        thisCard,
+        targetCards,
+        baseDamage: 2,
+        damageElement: "CRYO",
+      });
+
+      const thisEffect = thisCard.effects.find(
+        (effect) => effect.id === "bd921199-ac91-4a61-b803-20879d8d5dc7"
+      );
+      const thisEffectTotalUsages = thisEffect?.total_usages;
+      if (
+        thisEffectTotalUsages !== undefined &&
+        thisEffectTotalUsages !== null
+      ) {
+        if (myUpdatedCards && thisEffectTotalUsages === thisCard.usages) {
+          //remove the creation (does not go to the discard pile)
+          myUpdatedCards = myUpdatedCards.map((card) => {
+            if (card.id === thisCard.id) {
+              return { ...card, location: null };
+            } else {
+              return card;
+            }
+          });
+        }
+      }
+      return {
+        myUpdatedCards,
+        opponentUpdatedCards,
+      };
     },
   },
 };
