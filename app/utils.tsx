@@ -643,6 +643,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
 
 export const createSummon = ({
   summonBasicInfoID,
+  isCreation = false,
   myCards,
   summonerCard,
   myDice,
@@ -652,6 +653,8 @@ export const createSummon = ({
   opponentDice,
 }: {
   summonBasicInfoID: string;
+  //creations have effects and usages like summons but are not visible on the board as cards
+  isCreation?: boolean;
   summons: CardExt[];
   myCards: CardExt[];
   summonerCard?: CardExt;
@@ -675,7 +678,7 @@ export const createSummon = ({
   const summon: CardExt = {
     ...summonOriginal,
     id: summonId,
-    location: "SUMMON",
+    location: isCreation ? null : "SUMMON",
     usages,
     effects: summonOriginal.effects.map((effect) => ({
       ...effect,
