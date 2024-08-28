@@ -166,15 +166,26 @@ export const findDamageModifyingEffects = (
 
 export const findEffectsThatTriggerOn = (
   trigger: EventType,
-  cards: CardExt[]
+  cards: CardExt[],
+  {
+    includeCostModifiers = false,
+    includeDamageModifiers = false,
+  }: { includeCostModifiers?: boolean; includeDamageModifiers?: boolean } = {}
 ) => {
   return cards.reduce((acc, card) => {
-    //only looking at cards in action, equipped or summon locations
-    return ["ACTION", "EQUIPPED", "SUMMON"].includes(card.location!)
+    //only looking at cards in action, equipped or summon locations or null for creation cards
+    return ["ACTION", "EQUIPPED", "SUMMON", null].includes(card.location!)
       ? acc.concat(
           card.effects.filter((effect) => {
             const effectLogic = findEffectLogic(effect);
-            return effectLogic.triggerOn?.includes(trigger);
+            return (
+              //TODO: check
+              effectLogic.triggerOn?.includes(trigger) &&
+              ((includeCostModifiers &&
+                effect.effectType === "COST_MODIFIER") ||
+                (includeDamageModifiers &&
+                  effect.effectType === "DAMAGE_MODIFIER"))
+            );
           })
         )
       : acc;
@@ -648,7 +659,7 @@ export const createSummon = ({
   summonerCard,
   myDice,
   summons,
-  usages,
+  maxUsages,
   opponentCards,
   opponentDice,
 }: {
@@ -659,7 +670,7 @@ export const createSummon = ({
   myCards: CardExt[];
   summonerCard?: CardExt;
   myDice?: Dice;
-  usages: number;
+  maxUsages: number;
   opponentCards?: CardExt[];
   opponentDice?: Dice;
 }) => {
@@ -679,7 +690,8 @@ export const createSummon = ({
     ...summonOriginal,
     id: summonId,
     location: isCreation ? null : "SUMMON",
-    usages,
+    max_usages: maxUsages,
+    usages: 0,
     effects: summonOriginal.effects.map((effect) => ({
       ...effect,
       id: uuid(),
