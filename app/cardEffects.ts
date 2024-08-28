@@ -16,7 +16,7 @@ export type EventType =
   | "EQUIP_TALENT"
   | "EQUIP_ARTIFACT"
   | "EQUIP_WEAPON"
-  | "SWITCH"
+  | "SWITCH_CHARACTER"
   | "END_PHASE";
 
 type ExecuteEffectParams = {
@@ -245,8 +245,8 @@ export type TriggerContext = {
     resultingElement?: ElementName;
   };
   switched?: {
-    from: CardExt;
-    to: CardExt;
+    from?: CardExt;
+    to?: CardExt;
   };
 };
 
@@ -360,11 +360,14 @@ export const effects: {
       if (target.location !== "SUMMON") {
         return { errorMessage: "Target card is not a summon card" };
       }
+      if (target.usages === null) {
+        return { errorMessage: "Target card has usages" };
+      }
       const myUpdatedCards = myCards.map((card) => {
-        if (card.id === target.id) {
+        if (card.id === target.id && card.usages !== null) {
           return {
             ...card,
-            usages: card.usages ? card.usages + 1 : 1,
+            usages: card.usages - 1,
           };
         } else {
           return card;
@@ -601,7 +604,7 @@ export const effects: {
         summons,
         //TODO: is this correct?
         myCards: myUpdatedCards || myCards,
-        usages: 3,
+        maxUsages: 3,
       });
       if (myUpdatedCardsAfterSummon) {
         myUpdatedCards = myUpdatedCardsAfterSummon;
@@ -658,7 +661,7 @@ export const effects: {
         summons,
         //TODO: is this correct?
         myCards: myUpdatedCards || myCards,
-        usages: 3,
+        maxUsages: 3,
       });
       if (myUpdatedCardsAfterSummon) {
         myUpdatedCards = myUpdatedCardsAfterSummon;
@@ -760,20 +763,12 @@ export const effects: {
       const thisEffect = thisCard.effects.find(
         (effect) => effect.id === "0f9f109f-3310-46df-a18a-3a659181c23e"
       );
-      const thisEffectTotalUsages = thisEffect?.total_usages;
-      if (
-        thisEffectTotalUsages !== undefined &&
-        thisEffectTotalUsages !== null
-      ) {
-        if (myUpdatedCards && thisEffectTotalUsages === thisCard.usages) {
-          //discard the summon
-          myUpdatedCards = myUpdatedCards.map((card) => {
-            if (card.id === thisCard.id) {
-              return { ...card, location: "DISCARDED" };
-            } else {
-              return card;
-            }
-          });
+      if (thisCard.max_usages !== undefined && thisCard.max_usages !== null) {
+        if (myUpdatedCards && thisCard.usages === thisCard.max_usages) {
+          //removing the summon
+          myUpdatedCards = myUpdatedCards.filter(
+            (card) => card.id !== thisCard.id
+          );
         }
       }
       return {
@@ -794,8 +789,6 @@ export const effects: {
       thisCard,
       triggerContext,
     }) => {
-      console.log("REACTION", triggerContext);
-
       thisCard =
         thisCard ||
         (effect && myCards.find((card) => card.id === effect.card_id));
@@ -834,8 +827,9 @@ export const effects: {
   },
   //Icicle
   "bd921199-ac91-4a61-b803-20879d8d5dc7": {
-    triggerOn: ["SWITCH"],
+    triggerOn: ["SWITCH_CHARACTER"],
     execute: ({
+      effect,
       thisCard,
       myCards,
       opponentCards,
@@ -843,9 +837,13 @@ export const effects: {
       opponentDice,
       triggerContext,
     }) => {
+      thisCard =
+        thisCard ||
+        (effect && myCards.find((card) => card.id === effect.card_id));
       if (!thisCard) {
         return { errorMessage: "No card passed to effect" };
       }
+
       const switchedToCard = triggerContext?.switched?.to;
       if (!switchedToCard) {
         return { errorMessage: "No switched card found" };
@@ -855,37 +853,49 @@ export const effects: {
       if (!didISwitch) {
         return {};
       }
+
       const targetCards = opponentCards.filter(
         (card) => card.location === "CHARACTER" && card.is_active
       );
 
-      let { myUpdatedCards, opponentUpdatedCards } = executeAttack({
-        myCards,
-        opponentCards,
-        myDice,
-        opponentDice,
-        thisCard,
-        targetCards,
-        baseDamage: 2,
-        damageElement: "CRYO",
-      });
+      let { myUpdatedCards, opponentUpdatedCards, errorMessage } =
+        executeAttack({
+          myCards,
+          opponentCards,
+          myDice,
+          opponentDice,
+          thisCard,
+          targetCards,
+          baseDamage: 2,
+          damageElement: "CRYO",
+        });
 
-      const thisEffect = thisCard.effects.find(
-        (effect) => effect.id === "bd921199-ac91-4a61-b803-20879d8d5dc7"
+      if (errorMessage) {
+        return { errorMessage };
+      }
+      //TODO!: update summon usages in the attack execution
+      const thisCardAfterAttack = (myUpdatedCards || myCards).find(
+        (card) => card.id === thisCard.id
       );
-      const thisEffectTotalUsages = thisEffect?.total_usages;
+      const { usages, max_usages } = thisCardAfterAttack || {};
       if (
-        thisEffectTotalUsages !== undefined &&
-        thisEffectTotalUsages !== null
+        myUpdatedCards &&
+        usages !== undefined &&
+        max_usages !== undefined &&
+        usages !== null &&
+        max_usages !== null
       ) {
-        if (myUpdatedCards && thisEffectTotalUsages === thisCard.usages) {
-          //remove the creation (does not go to the discard pile)
+        if (usages + 1 === max_usages) {
+          myUpdatedCards = myUpdatedCards.filter(
+            (card) => card.id !== thisCard.id
+          );
+        } else {
           myUpdatedCards = myUpdatedCards.map((card) => {
+            console.log("usages", usages);
             if (card.id === thisCard.id) {
-              return { ...card, location: null };
-            } else {
-              return card;
+              return { ...card, usages: usages + 1 };
             }
+            return card;
           });
         }
       }
