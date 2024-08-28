@@ -32,6 +32,7 @@ interface CardExtended extends Card {
   wasActivatedThisTurn?: boolean;
   hasUsedFoodThisTurn?: boolean;
   statuses?: CardStatus[];
+  max_usages?: number;
 }
 type BoardT = {
   id: string;
