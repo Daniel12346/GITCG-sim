@@ -205,6 +205,9 @@ export const switchActiveCharacterCard = (
   if (character.health === 0)
     return { errorMessage: "Character has no health left" };
 
+  const previousActiveCharacterId = myCards.find(
+    (card) => card.location === "CHARACTER" && card.is_active
+  )?.id;
   const myUpdatedCards = myCards.map((card) => {
     if (card.id === character.id) {
       return { ...card, is_active: true };
@@ -218,5 +221,9 @@ export const switchActiveCharacterCard = (
     }
     return card;
   });
-  return { myUpdatedCards };
+  const switchedFrom = myUpdatedCards.find(
+    (card) => card.id === previousActiveCharacterId
+  );
+  const switchedTo = myUpdatedCards.find((card) => card.id === character.id);
+  return { myUpdatedCards, switchedFrom, switchedTo };
 };
