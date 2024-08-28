@@ -34,6 +34,7 @@ import DiceDisplay from "./DiceDisplay";
 import CardAttack from "./CardAttack";
 import ElementalTuning from "./ElementalTuning";
 import { findEffectLogic } from "@/app/cardEffects";
+import { getCreationDisplayComponentForCard } from "./CreationDisplay";
 
 //TODO: move to another file
 interface PlayerBoardProps {
@@ -77,10 +78,10 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     const supabase = createClientComponentClient<Database>();
     const ch = supabase
       .channel("game-cards:" + gameID)
-      .on("broadcast", { event: "effect_executed" }, ({ payload }) => {
+      //TODO: give this a more specific name
+      .on("broadcast", { event: "state_update" }, ({ payload }) => {
         const { effect, myCards, myDice, opponentCards, opponentDice } =
           payload;
-        //TODO: name this in a less confusing way
         myCards && setOpponentInGameCards(myCards);
         myDice && setOpponentDice(myDice);
         opponentCards && setMyCards(opponentCards);
@@ -103,6 +104,9 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     const hasActiveCharacter = myCards.find(
       (card) => card.location === "CHARACTER" && card.is_active
     );
+    //TODO: will myCards have the most recent state?
+    let myUpdatedCards = myCards;
+    let opponentUpdatedCards = opponentInGameCards;
     //if there is no active character, the card can be switched to active without a cost
     if (!hasActiveCharacter) {
       setMyCards(
@@ -119,33 +123,53 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         setErrorMessage("Incorrect number of dice");
         return;
       }
-      const { errorMessage, myUpdatedCards } = switchActiveCharacterCard(
-        myCards,
-        card
-      );
+      const {
+        errorMessage,
+        myUpdatedCards: myUpdatedCardsAfterSwitch,
+        switchedFrom,
+        switchedTo,
+      } = switchActiveCharacterCard(myCards, card);
 
       if (errorMessage) {
         setErrorMessage(errorMessage);
         return;
       }
+      if (myUpdatedCardsAfterSwitch) {
+        myUpdatedCards = myUpdatedCardsAfterSwitch;
+      }
 
-      const costModifyingEffects = findCostModifyingEffects(myCards);
-      costModifyingEffects.forEach((effect) => {
+      const effectsThatTriggerOnSwitch = findEffectsThatTriggerOn(
+        "SWITCH_CHARACTER",
+        myUpdatedCards,
+        {
+          includeCostModifiers: true,
+        }
+      );
+      console.log("effectsThatTriggerOnSwitch", effectsThatTriggerOnSwitch);
+      effectsThatTriggerOnSwitch.forEach((effect) => {
         const effectLogic = findEffectLogic(effect);
         if (!effectLogic?.execute) return;
-        if (!effectLogic.triggerOn?.includes("SWITCH")) return;
-        let { modifiedCost, errorMessage } = effectLogic.execute({
+        const {
+          myUpdatedCards: myUpdatedCardsAfterEffectsTriggeredOnSwitch,
+          opponentUpdatedCards:
+            opponentUpdatedCardsAfterEffectsTriggeredOnSwitch,
+          modifiedCost,
+          errorMessage,
+        } = effectLogic.execute({
           effect,
           playerID: myID,
-          myCards,
+          myCards: myUpdatedCards || myCards,
           myDice,
           opponentCards: opponentInGameCards,
           opponentDice: opponentDice,
           summons,
           triggerContext: {
-            //TODO: rename to SWITCH_CHARACTER because SWITCH_PLAYER will be used for changing turns
-            eventType: "SWITCH",
+            eventType: "SWITCH_CHARACTER",
             cost,
+            switched: {
+              from: switchedFrom,
+              to: switchedTo,
+            },
           },
         });
         if (errorMessage) {
@@ -154,6 +178,13 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         }
         if (modifiedCost) {
           cost = modifiedCost;
+        }
+        if (myUpdatedCardsAfterEffectsTriggeredOnSwitch) {
+          myUpdatedCards = myUpdatedCardsAfterEffectsTriggeredOnSwitch;
+        }
+        if (opponentUpdatedCardsAfterEffectsTriggeredOnSwitch) {
+          opponentUpdatedCards =
+            opponentUpdatedCardsAfterEffectsTriggeredOnSwitch;
         }
       });
       try {
@@ -165,6 +196,18 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         return;
       }
       myUpdatedCards && setMyCards(myUpdatedCards);
+      opponentUpdatedCards && setOpponentInGameCards(opponentUpdatedCards);
+      channel?.send({
+        type: "broadcast",
+        event: "state_update",
+        payload: {
+          playerID: myID,
+          myCards: myUpdatedCards,
+          myDice,
+          opponentCards: opponentUpdatedCards,
+          opponentDice,
+        },
+      });
     }
   };
   const switchCurrentPlayer = () => {
@@ -328,7 +371,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     setSelectedTargets([]);
     channel?.send({
       type: "broadcast",
-      event: "effect_executed",
+      event: "state_update",
       payload: {
         effect,
         playerID: myID,
@@ -469,7 +512,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     channel?.send({
       type: "broadcast",
       //TODO: use this event or delete it
-      event: "effect_executed",
+      event: "state_update",
       payload: {
         effect,
         playerID: myID,
@@ -687,11 +730,21 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             ?.filter((card) => card.card_type === "CHARACTER")
             .map((card) => {
               const equippedCards = findEquippedCards(card, playerCards);
+              const creations = myCards?.filter(
+                (summon) => summon.subtype === "CREATION"
+              );
+              const creationDisplayElements =
+                creations &&
+                getCreationDisplayComponentForCard({
+                  card,
+                  creations,
+                });
               return (
                 <Card
                   key={card.id}
                   card={card}
                   equippedCards={equippedCards}
+                  creationDisplayElements={creationDisplayElements}
                   handleClick={() => {
                     //TODO: only enable in certain phases
                     isMyBoard && handleSwitchCharacter(card);
@@ -705,43 +758,60 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         {/* SUMMONS */}
         {playerCards
           ?.filter((card) => card.location === "SUMMON")
-          .map((card) => (
-            <Card
-              key={card.id}
-              card={card}
-              //TODO: remove (just for testing)
-              // handleClick={() => {
-              //   if (!myCards) return;
-              //   const effect = card.effects.find((eff) => {
-              //     const effectLogic = findEffectLogic(eff);
-              //     return effectLogic.triggerOn?.includes("REACTION");
-              //   });
-              //   if (!effect) return;
-              //   const { myUpdatedCards, errorMessage } = activateEffect({
-              //     effect,
-              //     playerID: myID,
-              //     myCards,
-              //     myDice,
-              //     opponentCards: opponentInGameCards,
-              //     opponentDice: opponentDice,
-              //     targetCards: selectedTargetCards,
-              //     summons,
-              //     thisCard: card,
-              //     triggerContext: {
-              //       eventType: "REACTION",
-              //       reaction: {
-              //         name: "SWIRL",
-              //         resultingElement: "PYRO",
-              //       },
-              //     },
-              //   });
-              //   errorMessage && setErrorMessage(errorMessage);
-              //   myUpdatedCards && setMyCards(myUpdatedCards);
-              //   // effect && myCards && activateAttackEffect(effect);
-              // }}
-            />
-          ))}
+          .map((card) => {
+            return (
+              <Card
+                key={card.id}
+                card={card}
+
+                //TODO: remove (just for testing)
+                // handleClick={() => {
+                //   if (!myCards) return;
+                //   const effect = card.effects.find((eff) => {
+                //     const effectLogic = findEffectLogic(eff);
+                //     return effectLogic.triggerOn?.includes("REACTION");
+                //   });
+                //   if (!effect) return;
+                //   const { myUpdatedCards, errorMessage } = activateEffect({
+                //     effect,
+                //     playerID: myID,
+                //     myCards,
+                //     myDice,
+                //     opponentCards: opponentInGameCards,
+                //     opponentDice: opponentDice,
+                //     targetCards: selectedTargetCards,
+                //     summons,
+                //     thisCard: card,
+                //     triggerContext: {
+                //       eventType: "REACTION",
+                //       reaction: {
+                //         name: "SWIRL",
+                //         resultingElement: "PYRO",
+                //       },
+                //     },
+                //   });
+                //   errorMessage && setErrorMessage(errorMessage);
+                //   myUpdatedCards && setMyCards(myUpdatedCards);
+                //   // effect && myCards && activateAttackEffect(effect);
+                // }}
+              />
+            );
+          })}
       </div>
+      {/* //TODO: display on cards */}
+      {/* <div className="bg-yellow-50 h-full">
+        creations:{" "}
+        {playerCards
+          ?.filter((card) => card.subtype === "CREATION")
+          .map((creation) => {
+            return (
+              <div>
+                {creation.name}
+                usages: {creation.usages}
+              </div>
+            );
+          })}
+      </div> */}
       {/* //TODO: display dice */}
       <DiceDisplay dice={playerDice} isMyBoard={isMyBoard}></DiceDisplay>
       {isMyBoard && <ElementalTuning />}
