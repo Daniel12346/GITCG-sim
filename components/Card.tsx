@@ -19,12 +19,14 @@ interface Props {
   handleClick?: () => void;
   isInDeckDisplay?: boolean;
   equippedCards?: CardExt[];
+  creationDisplayElements?: (React.JSX.Element | null)[];
 }
 export default function Card({
   card,
   handleClick,
   isInDeckDisplay,
   equippedCards,
+  creationDisplayElements,
 }: Props) {
   const [selectedTargets, setSelectedTargets] =
     useRecoilState(mySelectedCardsState);
@@ -57,6 +59,9 @@ export default function Card({
           ${isFrozen && "opacity-60 bg-blue-500"}
           `}
       ></div>
+      <div className="z-10 flex justify-between w-full">
+        {creationDisplayElements?.map((element) => element)}
+      </div>
       {/* used for activating cards from hand */}
       {card.location === "HAND" && isMyCard && (
         <span
