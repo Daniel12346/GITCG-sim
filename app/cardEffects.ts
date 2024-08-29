@@ -24,10 +24,10 @@ type ExecuteEffectParams = {
   myCards: CardExt[];
   opponentCards: CardExt[];
   myDice: Dice;
+  effect: Effect;
   opponentDice: Dice;
   playerID?: string;
   triggerContext?: TriggerContext;
-  effect?: Effect;
   thisCard?: CardExt;
   //the card that is being targeted by the activated card
   targetCards?: CardExt[];
@@ -75,9 +75,10 @@ const executeAttack = ({
   damageElement,
   attackBaseEffectID,
 }: ExecuteEffectParams & {
+  attackBaseEffectID: string;
+
   baseDamage: number;
   damageElement?: DamageElement;
-  attackBaseEffectID?: string;
 }) => {
   if (!thisCard) {
     return { errorMessage: "No card passed to effect" };
@@ -108,7 +109,7 @@ const executeAttack = ({
       targetCardId,
       myCards,
       opponentCards,
-      attackBaseEffectID: "0f9f109f-3310-46df-a18a-3a659181c23e",
+      attackBaseEffectID,
     });
   reactions?.forEach((reaction) => {
     console.log("reaction", reaction);
@@ -174,7 +175,7 @@ const makeTriggerAndExecuteAndCheckIfCanBeExecutedFunctionsOfWeaponWithPlus1Dama
 const makeNormalAttackExecuteFunction = (
   attackElement: DamageElement,
   baseDamage: number,
-  attackBaseEffectID?: string
+  attackBaseEffectID: string
 ): ExecuteEffect => {
   const execute = ({
     effect,
@@ -563,7 +564,11 @@ export const effects: {
   //Sucrose's Normal Attack
   "b4a1b3f5-45a1-4db8-8d07-a21cb5e5be11": {
     requiredTargets: 1,
-    execute: makeNormalAttackExecuteFunction("ANEMO", 1),
+    execute: makeNormalAttackExecuteFunction(
+      "ANEMO",
+      1,
+      "b4a1b3f5-45a1-4db8-8d07-a21cb5e5be11"
+    ),
   },
   // Sucrose's Burst
   "0fedcf14-f037-45a5-bfe7-81954da86c54": {
@@ -576,6 +581,7 @@ export const effects: {
       targetCards,
       myDice,
       opponentDice,
+      effect,
     }: //TODO: triggerContext,
     // triggerContext,
     ExecuteEffectParams) => {
@@ -592,6 +598,7 @@ export const effects: {
         opponentDice,
         thisCard,
         targetCards,
+        effect,
         baseDamage: 1,
         damageElement: "ANEMO",
         attackBaseEffectID: "0f9f109f-3310-46df-a18a-3a659181c23e",
@@ -619,7 +626,11 @@ export const effects: {
   //Kaeya's Normal Attack
   "b17045ef-f632-4864-b72d-c0cd048eb4b3": {
     requiredTargets: 1,
-    execute: makeNormalAttackExecuteFunction("CRYO", 2),
+    execute: makeNormalAttackExecuteFunction(
+      "CRYO",
+      2,
+      "b17045ef-f632-4864-b72d-c0cd048eb4b3"
+    ),
   },
   //Kaeya's Burst
   "f72c5197-0fea-451c-9756-76885ac144e1": {
@@ -632,6 +643,7 @@ export const effects: {
       targetCards,
       myDice,
       opponentDice,
+      effect,
     }: //TODO: triggerContext,
     // triggerContext,
     ExecuteEffectParams) => {
@@ -645,6 +657,7 @@ export const effects: {
         myCards,
         opponentCards,
         myDice,
+        effect,
         opponentDice,
         thisCard,
         targetCards,
@@ -676,7 +689,55 @@ export const effects: {
   //Diluc's Normal Attack
   "d0054e26-1bcd-45bf-9dbe-eaeac45b9048": {
     requiredTargets: 1,
-    execute: makeNormalAttackExecuteFunction("PHYSICAL", 2),
+    execute: makeNormalAttackExecuteFunction(
+      "PHYSICAL",
+      2,
+      "d0054e26-1bcd-45bf-9dbe-eaeac45b9048"
+    ),
+  },
+
+  //Diluc's Skill
+  "9b20f340-e91f-4831-b768-7e7ee0ced987": {
+    requiredTargets: 1,
+    execute: ({
+      myCards,
+      opponentCards,
+      thisCard,
+      targetCards,
+      myDice,
+      opponentDice,
+      effect,
+    }: //TODO: triggerContext,
+    // triggerContext,
+    ExecuteEffectParams) => {
+      let baseDamage = 3;
+      if (!thisCard) {
+        return { errorMessage: "No card passed to effect" };
+      }
+      if (!targetCards || targetCards.length < 1) {
+        return { errorMessage: "One target card is required" };
+      }
+      if ((effect.usages_this_turn || 0) + 1 == 3) {
+        baseDamage = 5;
+      }
+      let { myUpdatedCards, opponentUpdatedCards } = executeAttack({
+        myCards,
+        opponentCards,
+        myDice,
+        opponentDice,
+        thisCard,
+        targetCards,
+        effect,
+        baseDamage,
+        damageElement: "PYRO",
+        attackBaseEffectID: "9b20f340-e91f-4831-b768-7e7ee0ced987",
+      });
+
+      return {
+        myUpdatedCards,
+        opponentUpdatedCards,
+      };
+    },
   },
 
   //Diluc's Burst
@@ -689,6 +750,7 @@ export const effects: {
       targetCards,
       myDice,
       opponentDice,
+      effect,
     }: ExecuteEffectParams) => {
       if (!thisCard) {
         return { errorMessage: "No card passed to effect" };
@@ -706,6 +768,7 @@ export const effects: {
         baseDamage: 8,
         damageElement: "PYRO",
         attackBaseEffectID: "0f9f109f-3310-46df-a18a-3a659181c23e",
+        effect,
       });
       //add status PYRO_INFUSION to Diluc
       myUpdatedCards = (myUpdatedCards || myCards).map((card) => {
@@ -738,7 +801,14 @@ export const effects: {
   //Large Wind Spirit - End Phase Effect
   "0f9f109f-3310-46df-a18a-3a659181c23e": {
     triggerOn: ["END_PHASE"],
-    execute: ({ thisCard, myCards, opponentCards, myDice, opponentDice }) => {
+    execute: ({
+      thisCard,
+      myCards,
+      opponentCards,
+      myDice,
+      opponentDice,
+      effect,
+    }) => {
       //TODO? check if it is the end phase
 
       if (!thisCard) {
@@ -756,8 +826,10 @@ export const effects: {
         opponentDice,
         thisCard,
         targetCards,
+        effect,
         baseDamage: 2,
         damageElement: thisCard.element || "ANEMO",
+        attackBaseEffectID: "0f9f109f-3310-46df-a18a-3a659181c23e",
       });
 
       const thisEffect = thisCard.effects.find(
@@ -868,6 +940,8 @@ export const effects: {
           targetCards,
           baseDamage: 2,
           damageElement: "CRYO",
+          effect,
+          attackBaseEffectID: "bd921199-ac91-4a61-b803-20879d8d5dc7",
         });
 
       if (errorMessage) {
