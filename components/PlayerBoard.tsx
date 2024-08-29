@@ -730,7 +730,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             ?.filter((card) => card.card_type === "CHARACTER")
             .map((card) => {
               const equippedCards = findEquippedCards(card, playerCards);
-              const creations = myCards?.filter(
+              const creations = playerCards?.filter(
                 (summon) => summon.subtype === "CREATION"
               );
               const creationDisplayElements =
