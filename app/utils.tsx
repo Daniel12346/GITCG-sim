@@ -178,14 +178,18 @@ export const findEffectsThatTriggerOn = (
       ? acc.concat(
           card.effects.filter((effect) => {
             const effectLogic = findEffectLogic(effect);
-            return (
-              //TODO: check
-              effectLogic.triggerOn?.includes(trigger) &&
-              ((includeCostModifiers &&
-                effect.effectType === "COST_MODIFIER") ||
-                (includeDamageModifiers &&
-                  effect.effectType === "DAMAGE_MODIFIER"))
-            );
+            const includesTrigger = effectLogic.triggerOn?.includes(trigger);
+            if (includesTrigger) {
+              if (effect.effectType === "COST_MODIFIER") {
+                return includeCostModifiers;
+              }
+              if (effect.effectType === "DAMAGE_MODIFIER") {
+                return includeDamageModifiers;
+              }
+              return true;
+            } else {
+              return false;
+            }
           })
         )
       : acc;
