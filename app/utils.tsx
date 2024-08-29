@@ -228,7 +228,7 @@ export const calculateDamageAfterModifiers = ({
         opponentCards,
         myDice,
         opponentDice,
-
+        effect,
         triggerContext: {
           eventType: "ATTACK",
           damage,
@@ -275,9 +275,9 @@ type CalculateAttackElementalReaction = ({
   damage: number;
   attackerCardId: string;
   targetCardId: string;
+  attackBaseEffectID: string;
   myCards: CardExt[];
   opponentCards: CardExt[];
-  attackBaseEffectID?: string;
   damageElement?: DamageElement;
 }) => {
   errorMessage?: string;
@@ -471,6 +471,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
           targetCardId: card.id,
           myCards: myUpdatedCards,
           opponentCards: opponentUpdatedCards,
+          attackBaseEffectID: "",
         });
         //TODO: handle better
         extraReactions &&
@@ -511,6 +512,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
           targetCardId: card.id,
           myCards: myUpdatedCards,
           opponentCards: opponentUpdatedCards,
+          attackBaseEffectID: "",
         });
         extraReactions &&
           extraReactions.forEach((reaction) => reactions.push(reaction));
@@ -567,12 +569,17 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
     myUpdatedCards = myCards.map((card) => {
       if (card.id === attackerCardId) {
         const updatedCardEffects = card.effects.map((effect) => {
-          if (attackBaseEffectID && effect.id === attackBaseEffectID) {
+          if (
+            attackBaseEffectID &&
+            effect.effect_basic_info_id === attackBaseEffectID
+          ) {
+            const usages_this_turn = effect.usages_this_turn || 0;
+            const total_usages = effect.total_usages || 0;
             return {
               ...effect,
               //TODO: reset usages this turn
-              usages_this_turn: effect.usages_this_turn || 0 + 1,
-              total_usages: effect.total_usages || 0 + 1,
+              usages_this_turn: usages_this_turn + 1,
+              total_usages: total_usages + 1,
             };
           }
           return effect;
