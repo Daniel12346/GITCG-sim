@@ -570,6 +570,79 @@ export const effects: {
       "b4a1b3f5-45a1-4db8-8d07-a21cb5e5be11"
     ),
   },
+  //Sucrose's Skill
+  "54bf4d1a-18bd-4b09-80d1-6573acfcd5cf": {
+    requiredTargets: 1,
+    execute: ({
+      myCards,
+      opponentCards,
+      thisCard,
+      targetCards,
+      myDice,
+      opponentDice,
+      effect,
+    }: ExecuteEffectParams) => {
+      let baseDamage = 3;
+      if (!thisCard) {
+        return { errorMessage: "No card passed to effect" };
+      }
+      if (!targetCards || targetCards.length < 1) {
+        return { errorMessage: "One target card is required" };
+      }
+
+      let { myUpdatedCards, opponentUpdatedCards } = executeAttack({
+        myCards,
+        opponentCards,
+        myDice,
+        opponentDice,
+        thisCard,
+        targetCards,
+        effect,
+        baseDamage,
+        damageElement: "ANEMO",
+        attackBaseEffectID: "54bf4d1a-18bd-4b09-80d1-6573acfcd5cf",
+      });
+      //set opponent's next character as active
+      let opponentCharacters = opponentCards.filter(
+        (card) => card.location === "CHARACTER"
+      );
+      let previousActiveCharacterIndex = opponentCharacters.findIndex(
+        (card) => card.is_active
+      );
+      if (previousActiveCharacterIndex === -1) {
+        //TODO: throw an error
+        previousActiveCharacterIndex = 0;
+      }
+      const nextActiveCharacterIndex =
+        previousActiveCharacterIndex === opponentCharacters.length - 1
+          ? 0
+          : previousActiveCharacterIndex + 1;
+      const previousActiveCharacter =
+        opponentCharacters[previousActiveCharacterIndex];
+      const nextActiveCharacter = opponentCharacters[nextActiveCharacterIndex];
+      opponentUpdatedCards = opponentUpdatedCards?.map((card) => {
+        if (card.location === "CHARACTER") {
+          if (card.id === previousActiveCharacter.id) {
+            return {
+              ...card,
+              is_active: false,
+            };
+          } else if (card.id === nextActiveCharacter.id) {
+            return {
+              ...card,
+              is_active: true,
+            };
+          }
+        }
+        return card;
+      });
+
+      return {
+        myUpdatedCards,
+        opponentUpdatedCards,
+      };
+    },
+  },
   // Sucrose's Burst
   "0fedcf14-f037-45a5-bfe7-81954da86c54": {
     requiredTargets: 1,
@@ -631,6 +704,43 @@ export const effects: {
       2,
       "b17045ef-f632-4864-b72d-c0cd048eb4b3"
     ),
+  },
+  "124e3616-dc1d-48de-b9c5-2fb05e65a498": {
+    requiredTargets: 1,
+    execute: ({
+      myCards,
+      opponentCards,
+      thisCard,
+      targetCards,
+      myDice,
+      opponentDice,
+      effect,
+    }: ExecuteEffectParams) => {
+      let baseDamage = 3;
+      if (!thisCard) {
+        return { errorMessage: "No card passed to effect" };
+      }
+      if (!targetCards || targetCards.length < 1) {
+        return { errorMessage: "One target card is required" };
+      }
+      let { myUpdatedCards, opponentUpdatedCards } = executeAttack({
+        myCards,
+        opponentCards,
+        myDice,
+        opponentDice,
+        thisCard,
+        targetCards,
+        effect,
+        baseDamage,
+        damageElement: "CRYO",
+        attackBaseEffectID: "124e3616-dc1d-48de-b9c5-2fb05e65a498",
+      });
+
+      return {
+        myUpdatedCards,
+        opponentUpdatedCards,
+      };
+    },
   },
   //Kaeya's Burst
   "f72c5197-0fea-451c-9756-76885ac144e1": {
