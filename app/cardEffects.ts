@@ -5,6 +5,7 @@ import {
   createSummon,
   findDamageModifyingEffects,
   findEquippedCards,
+  increaseEffectUsages,
 } from "./utils";
 
 //TODO: add missing events
@@ -88,7 +89,10 @@ const executeAttack = ({
   }
   let myUpdatedCards = myCards;
   let opponentUpdatedCards = opponentCards;
-  let damageBeforeElementalReactions = calculateDamageAfterModifiers({
+  let {
+    damage: damageBeforeElementalReactions,
+    myUpdatedCards: myUpdatedCardsAfterDamage,
+  } = calculateDamageAfterModifiers({
     baseDamage,
     myCards,
     opponentCards,
@@ -98,6 +102,9 @@ const executeAttack = ({
     targetCards,
   });
 
+  if (myUpdatedCardsAfterDamage) {
+    myUpdatedCards = myUpdatedCardsAfterDamage;
+  }
   //TODO: multiple target cards
   const targetCardId = targetCards[0].id;
   const attackerCardId = thisCard.id;
@@ -532,6 +539,60 @@ export const effects: {
   "176b463b-fa66-454b-94f6-b81a60ff5598": {
     triggerOn: ["ATTACK", "EQUIP_TALENT"],
     execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost("ANEMO"),
+  },
+  //TODO: add other elemental relics
+
+  //Changing Shifts
+  "fb9696af-6916-4079-b9db-17cbfd941156": {
+    triggerOn: ["SWITCH_CHARACTER"],
+    //TODO: make checkIfCanBeExecuted function
+    // checkIfCanBeExecuted: ({ effect }) => {
+    //   // if (!triggerContext?.switched) {
+    // },
+    execute: ({ triggerContext, thisCard, effect, myCards }) => {
+      thisCard =
+        thisCard ||
+        (effect && myCards.find((card) => card.id === effect.card_id));
+
+      //if this effect was already used this turn, return
+      if (effect.usages_this_turn === 1) {
+        console.log("Effect already used this turn");
+        return {};
+      }
+      let cost = triggerContext?.cost;
+      if (!triggerContext) {
+        return { errorMessage: "No trigger context" };
+      }
+      if (!["SWITCH_CHARACTER"].includes(triggerContext.eventType)) {
+        return {};
+      }
+      try {
+        //TODO: is this correct?
+        cost = subtractCost({ ...cost }, { UNALIGNED: 1 }) as Cost;
+      } catch (e) {
+        console.log(e);
+        //TODO: change error message
+        return { errorMessage: "could not subtract" };
+      } finally {
+        return {
+          modifiedCost: cost,
+          //update this effect's usage on the card
+          myUpdatedCards: myCards.map((card) => {
+            if (card.id === thisCard?.id) {
+              return {
+                ...card,
+                effects: increaseEffectUsages(
+                  card,
+                  effect.effect_basic_info_id!
+                ),
+              };
+            } else {
+              return card;
+            }
+          }),
+        };
+      }
+    },
   },
 
   //Traveler's Handy Sword
@@ -1094,5 +1155,6 @@ export const effects: {
 export const findEffectLogic = (effect: Effect) => {
   //TODO: does effect_basic_info_id really always exist?
   const basicInfoId = effect.effect_basic_info_id!;
+  console.log("basicInfoId", basicInfoId, effects, effects[basicInfoId]);
   return effects[basicInfoId];
 };

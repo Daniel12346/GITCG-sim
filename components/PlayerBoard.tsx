@@ -537,6 +537,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     let cost = card.cost;
     const thisCardEffectsThatTriggerOnActivation = card.effects.filter(
       (effect) => {
+        console.log("effect!", effect);
         const effectLogic = findEffectLogic(effect);
 
         return effectLogic.triggerOn?.includes("THIS_CARD_ACTIVATION");
