@@ -214,8 +214,9 @@ export const calculateDamageAfterModifiers = ({
   targetCards: CardExt[];
 }) => {
   let damage = baseDamage;
-  const damageModifiers = findDamageModifyingEffects(myCards);
-  damageModifiers.forEach((effect) => {
+  let myUpdatedCards = myCards;
+  const damageModifyingEffects = findDamageModifyingEffects(myCards);
+  damageModifyingEffects.forEach((effect) => {
     const effectLogic = findEffectLogic(effect);
     if (
       effectLogic.execute &&
@@ -223,25 +224,29 @@ export const calculateDamageAfterModifiers = ({
         effectLogic.checkIfCanBeExecuted({ myCards, opponentCards })) ||
         !effectLogic.checkIfCanBeExecuted)
     ) {
-      const { modifiedDamage } = effectLogic.execute({
-        myCards,
-        opponentCards,
-        myDice,
-        opponentDice,
-        effect,
-        triggerContext: {
-          eventType: "ATTACK",
-          damage,
-          attackerCard: thisCard,
-          targetCard: targetCards[0],
-        },
-      });
+      const { modifiedDamage, myUpdatedCards: myUpdatedCardsAfterEffect } =
+        effectLogic.execute({
+          myCards: myUpdatedCards,
+          opponentCards,
+          myDice,
+          opponentDice,
+          effect,
+          triggerContext: {
+            eventType: "ATTACK",
+            damage,
+            attackerCard: thisCard,
+            targetCard: targetCards[0],
+          },
+        });
       if (modifiedDamage) {
         damage = modifiedDamage;
       }
+      if (myUpdatedCardsAfterEffect) {
+        myUpdatedCards = myUpdatedCardsAfterEffect;
+      }
     }
   });
-  return damage;
+  return { damage, myUpdatedCards };
 };
 
 export const createRandomElementalDice = (amount: number) => {
@@ -625,7 +630,11 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
         if (
           effectLogic.execute &&
           ((effectLogic?.checkIfCanBeExecuted &&
-            effectLogic.checkIfCanBeExecuted({ myCards, opponentCards })) ||
+            effectLogic.checkIfCanBeExecuted({
+              effect,
+              myCards,
+              opponentCards,
+            })) ||
             !effectLogic.checkIfCanBeExecuted)
         ) {
           const {
@@ -662,6 +671,21 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       reactions,
     };
   };
+
+export const increaseEffectUsages = (card: CardExt, baseEffectID: string) => {
+  return card.effects.map((effect) => {
+    if (effect.effect_basic_info_id === baseEffectID) {
+      const usages_this_turn = effect.usages_this_turn || 0;
+      const total_usages = effect.total_usages || 0;
+      return {
+        ...effect,
+        usages_this_turn: usages_this_turn + 1,
+        total_usages: total_usages + 1,
+      };
+    }
+    return effect;
+  });
+};
 
 export const createSummon = ({
   summonBasicInfoID,
