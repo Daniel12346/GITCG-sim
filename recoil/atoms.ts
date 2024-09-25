@@ -269,8 +269,8 @@ export const opponentBoardState = atom<Board>({
 //   }
 // })
 
-export const currentTurnState = atom<number>({
-  key: "currentTurnState",
+export const currentRoundState = atom<number>({
+  key: "currentRoundState",
   default: 0,
 });
 

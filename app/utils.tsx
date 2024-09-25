@@ -204,6 +204,7 @@ export const calculateDamageAfterModifiers = ({
   opponentDice,
   thisCard,
   targetCards,
+  currentRound,
 }: {
   baseDamage: number;
   myCards: CardExt[];
@@ -212,6 +213,7 @@ export const calculateDamageAfterModifiers = ({
   opponentDice: Dice;
   thisCard: CardExt;
   targetCards: CardExt[];
+  currentRound: number;
 }) => {
   let damage = baseDamage;
   let myUpdatedCards = myCards;
@@ -237,6 +239,7 @@ export const calculateDamageAfterModifiers = ({
             attackerCard: thisCard,
             targetCard: targetCards[0],
           },
+          currentRound,
         });
       if (modifiedDamage) {
         damage = modifiedDamage;
@@ -276,6 +279,7 @@ type CalculateAttackElementalReaction = ({
   attackerCardId,
   targetCardId,
   attackBaseEffectID,
+  currentRound,
 }: {
   damage: number;
   attackerCardId: string;
@@ -284,6 +288,7 @@ type CalculateAttackElementalReaction = ({
   myCards: CardExt[];
   opponentCards: CardExt[];
   damageElement?: DamageElement;
+  currentRound: number;
 }) => {
   errorMessage?: string;
   updatedDamage?: number;
@@ -326,6 +331,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
     myCards,
     opponentCards,
     attackBaseEffectID,
+    currentRound,
   }) => {
     if (!myCards || !opponentCards) {
       return {
@@ -420,7 +426,9 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
           //doing 1 damage to all characters except the target
         } else if (card.location === "CHARACTER") {
           const updatedHealth = card.health && Math.max(0, card.health - 1);
-          return { ...card, health: updatedHealth };
+          const defeatedInTurn =
+            updatedHealth === 0 ? currentRound : card.defeatedInTurn;
+          return { ...card, defeatedInTurn, updatedHealth };
         } else {
           return card;
         }
@@ -477,6 +485,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
           myCards: myUpdatedCards,
           opponentCards: opponentUpdatedCards,
           attackBaseEffectID: "",
+          currentRound,
         });
         //TODO: handle better
         extraReactions &&
@@ -518,6 +527,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
           myCards: myUpdatedCards,
           opponentCards: opponentUpdatedCards,
           attackBaseEffectID: "",
+          currentRound,
         });
         extraReactions &&
           extraReactions.forEach((reaction) => reactions.push(reaction));
@@ -655,6 +665,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
                 resultingElement: resultingElement || undefined,
               },
             },
+            currentRound,
           });
           if (myUpdatedCardsAfterEffects) {
             myUpdatedCards = myUpdatedCardsAfterEffects;

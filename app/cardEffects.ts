@@ -33,6 +33,7 @@ type ExecuteEffectParams = {
   //the card that is being targeted by the activated card
   targetCards?: CardExt[];
   summons?: CardExt[];
+  currentRound: number;
 };
 
 type CheckIfEffectCanBeExecutedParams = {
@@ -75,6 +76,7 @@ const executeAttack = ({
   baseDamage,
   damageElement,
   attackBaseEffectID,
+  currentRound,
 }: ExecuteEffectParams & {
   attackBaseEffectID: string;
 
@@ -100,6 +102,7 @@ const executeAttack = ({
     opponentDice,
     thisCard,
     targetCards,
+    currentRound,
   });
 
   if (myUpdatedCardsAfterDamage) {
@@ -117,6 +120,7 @@ const executeAttack = ({
       myCards,
       opponentCards,
       attackBaseEffectID,
+      currentRound,
     });
   reactions?.forEach((reaction) => {
     console.log("reaction", reaction);
@@ -192,6 +196,7 @@ const makeNormalAttackExecuteFunction = (
     targetCards,
     myDice,
     opponentDice,
+    currentRound,
   }: //TODO: triggerContext,
   ExecuteEffectParams) => {
     thisCard =
@@ -217,6 +222,7 @@ const makeNormalAttackExecuteFunction = (
         baseDamage,
         damageElement: attackElement,
         attackBaseEffectID,
+        currentRound,
       });
     return { myUpdatedCards, errorMessage, opponentUpdatedCards };
   };
@@ -642,6 +648,7 @@ export const effects: {
       myDice,
       opponentDice,
       effect,
+      currentRound,
     }: ExecuteEffectParams) => {
       let baseDamage = 3;
       if (!thisCard) {
@@ -662,6 +669,7 @@ export const effects: {
         baseDamage,
         damageElement: "ANEMO",
         attackBaseEffectID: "54bf4d1a-18bd-4b09-80d1-6573acfcd5cf",
+        currentRound,
       });
       //set opponent's next character as active
       let opponentCharacters = opponentCards.filter(
@@ -716,6 +724,7 @@ export const effects: {
       myDice,
       opponentDice,
       effect,
+      currentRound,
     }: //TODO: triggerContext,
     // triggerContext,
     ExecuteEffectParams) => {
@@ -736,6 +745,7 @@ export const effects: {
         baseDamage: 1,
         damageElement: "ANEMO",
         attackBaseEffectID: "0f9f109f-3310-46df-a18a-3a659181c23e",
+        currentRound,
       });
       if (!summons) {
         return { errorMessage: "No summons found" };
@@ -776,6 +786,7 @@ export const effects: {
       myDice,
       opponentDice,
       effect,
+      currentRound,
     }: ExecuteEffectParams) => {
       let baseDamage = 3;
       if (!thisCard) {
@@ -795,6 +806,7 @@ export const effects: {
         baseDamage,
         damageElement: "CRYO",
         attackBaseEffectID: "124e3616-dc1d-48de-b9c5-2fb05e65a498",
+        currentRound,
       });
 
       return {
@@ -815,6 +827,7 @@ export const effects: {
       myDice,
       opponentDice,
       effect,
+      currentRound,
     }: //TODO: triggerContext,
     // triggerContext,
     ExecuteEffectParams) => {
@@ -835,6 +848,7 @@ export const effects: {
         baseDamage: 1,
         damageElement: "CRYO",
         attackBaseEffectID: "f72c5197-0fea-451c-9756-76885ac144e1",
+        currentRound,
       });
       if (!summons) {
         return { errorMessage: "No summons found" };
@@ -878,6 +892,7 @@ export const effects: {
       myDice,
       opponentDice,
       effect,
+      currentRound,
     }: //TODO: triggerContext,
     // triggerContext,
     ExecuteEffectParams) => {
@@ -902,6 +917,7 @@ export const effects: {
         baseDamage,
         damageElement: "PYRO",
         attackBaseEffectID: "9b20f340-e91f-4831-b768-7e7ee0ced987",
+        currentRound,
       });
 
       return {
@@ -922,6 +938,7 @@ export const effects: {
       myDice,
       opponentDice,
       effect,
+      currentRound,
     }: ExecuteEffectParams) => {
       if (!thisCard) {
         return { errorMessage: "No card passed to effect" };
@@ -940,6 +957,7 @@ export const effects: {
         damageElement: "PYRO",
         attackBaseEffectID: "0f9f109f-3310-46df-a18a-3a659181c23e",
         effect,
+        currentRound,
       });
       //add status PYRO_INFUSION to Diluc
       myUpdatedCards = (myUpdatedCards || myCards).map((card) => {
@@ -979,6 +997,7 @@ export const effects: {
       myDice,
       opponentDice,
       effect,
+      currentRound,
     }) => {
       //TODO? check if it is the end phase
 
@@ -1001,6 +1020,7 @@ export const effects: {
         baseDamage: 2,
         damageElement: thisCard.element || "ANEMO",
         attackBaseEffectID: "0f9f109f-3310-46df-a18a-3a659181c23e",
+        currentRound,
       });
 
       const thisEffect = thisCard.effects.find(
@@ -1079,6 +1099,7 @@ export const effects: {
       myDice,
       opponentDice,
       triggerContext,
+      currentRound,
     }) => {
       thisCard =
         thisCard ||
@@ -1113,6 +1134,7 @@ export const effects: {
           damageElement: "CRYO",
           effect,
           attackBaseEffectID: "bd921199-ac91-4a61-b803-20879d8d5dc7",
+          currentRound,
         });
 
       if (errorMessage) {

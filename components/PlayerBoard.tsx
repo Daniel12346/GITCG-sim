@@ -12,6 +12,7 @@ import {
   selectionPurposeState,
   mySelectedDiceState,
   summonsState,
+  currentRoundState,
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
@@ -67,6 +68,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   const summons = useRecoilValue(summonsState);
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const currentRound = useRecoilValue(currentRoundState);
 
   const isMyBoard = playerID === myID;
   const playerCards = isMyBoard ? myCards : opponentInGameCards;
@@ -171,6 +173,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
               to: switchedTo,
             },
           },
+          currentRound,
         });
         if (errorMessage) {
           setErrorMessage(errorMessage);
@@ -319,6 +322,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       opponentCards: opponentInGameCards,
       opponentDice: opponentDice,
       targetCards: selectedTargetCards,
+      currentRound,
     });
     if (errorMessage) {
       //if an error occurs, effect execution is stopped
@@ -440,6 +444,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             eventType: "ATTACK",
             cost: cost,
           },
+          currentRound,
         });
         if (errorMessage) {
           setErrorMessage(errorMessage);
@@ -485,6 +490,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       opponentCards: opponentInGameCards,
       opponentDice: opponentDice,
       targetCards: selectedTargetCards,
+      currentRound,
     });
     if (errorMessage) {
       setErrorMessage(errorMessage);
@@ -633,6 +639,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           myDice: myDiceAfterTriggeredEffects,
           opponentCards: opponentInGameCardsAfterTriggeredEffects,
           opponentDice: opponentDiceAfterTriggeredEffects,
+          currentRound,
         });
         if (errorMessage) {
           setErrorMessage(errorMessage);

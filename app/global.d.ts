@@ -31,6 +31,7 @@ interface CardExtended extends Card {
   //TODO: remove equipped_to_id from card table
   wasActivatedThisTurn?: boolean;
   hasUsedFoodThisTurn?: boolean;
+  defeatedInTurn?: number;
   statuses?: CardStatus[];
   max_usages?: number;
 }
