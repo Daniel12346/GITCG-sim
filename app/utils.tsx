@@ -236,7 +236,10 @@ export const calculateDamageAfterModifiers = ({
           triggerContext: {
             eventType: "ATTACK",
             damage,
-            attackerCard: thisCard,
+            attack: {
+              attackerCard: thisCard,
+              attackBaseEffectID: effect.effect_basic_info_id,
+            },
             targetCard: targetCards[0],
           },
           currentRound,
