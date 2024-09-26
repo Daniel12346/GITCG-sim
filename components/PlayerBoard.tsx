@@ -386,17 +386,17 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       },
     });
   };
-  const activateAttackEffect = (effect: Effect) => {
+  const activateAttackEffect = (attackEffect: Effect) => {
     if (!myCards) return;
-    const effectCard = myCards.find((c) => c.id === effect.card_id);
-    console.log(effectCard);
+    const attackerCard = myCards.find((c) => c.id === attackEffect.card_id);
+    console.log(attackerCard);
 
-    if (effect.effectType === "ELEMENTAL_BURST") {
-      if (!effectCard) {
+    if (attackEffect.effectType === "ELEMENTAL_BURST") {
+      if (!attackerCard) {
         setErrorMessage("No effect card");
         return;
       }
-      if (effectCard.location !== "CHARACTER") {
+      if (attackerCard.location !== "CHARACTER") {
         setErrorMessage("Effect card not a character");
         return;
       }
@@ -407,7 +407,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       // }
     }
 
-    const effectLogic = findEffectLogic(effect);
+    const effectLogic = findEffectLogic(attackEffect);
     if (effectLogic.requiredTargets) {
       if (!selectedTargetCards) {
         setErrorMessage("No target selected");
@@ -419,11 +419,14 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       }
     }
     //attack effects have a cost
-    //TODO: remove energy from cost
+    //removing energy from cost
+    //TODO: remove energy from cost in db
     let cost =
-      effect.cost &&
+      attackEffect.cost &&
       Object.fromEntries(
-        Object.entries(effect.cost).filter(([key, value]) => key != "ENERGY")
+        Object.entries(attackEffect.cost).filter(
+          ([key, value]) => key != "ENERGY"
+        )
       );
     let myDiceAfterCost = myDice;
     if (cost) {
@@ -434,7 +437,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         let { modifiedCost, errorMessage } = effectLogic.execute({
           summons,
           effect,
-          thisCard: effectCard,
+          thisCard: attackerCard,
           playerID: myID,
           myCards,
           myDice,
@@ -443,9 +446,14 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           triggerContext: {
             eventType: "ATTACK",
             cost: cost,
+            attack: {
+              attackerCard,
+              attackBaseEffectID: attackEffect.effect_basic_info_id,
+            },
           },
           currentRound,
         });
+        console.log("COST MOD", cost, effectLogic, modifiedCost, errorMessage);
         if (errorMessage) {
           setErrorMessage(errorMessage);
           return;
@@ -483,7 +491,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       errorMessage,
     } = activateEffect({
       playerID: myID,
-      effect,
+      effect: attackEffect,
       myCards: myCards,
       summons,
       myDice: myDiceAfterCost,
@@ -496,11 +504,11 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       setErrorMessage(errorMessage);
       return;
     }
-    if (effect.effectType === "ELEMENTAL_BURST") {
+    if (attackEffect.effectType === "ELEMENTAL_BURST") {
       if (myUpdatedCards) {
         //setting the energy of the character to 0 after using the burst
         myUpdatedCards = myUpdatedCards.map((c) => {
-          if (c.id === effectCard!.id) {
+          if (c.id === attackerCard!.id) {
             return {
               ...c,
               energy: 0,
@@ -520,7 +528,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       //TODO: use this event or delete it
       event: "state_update",
       payload: {
-        effect,
+        effect: attackEffect,
         playerID: myID,
         myCards: myUpdatedCards,
         myDice: myUpdatedDice,
@@ -683,7 +691,11 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                 key={card.id}
                 card={card}
                 handleClick={() => {
-                  if (card.subtype?.includes("EQUIPMENT")) {
+                  if (
+                    card.subtype?.includes("EQUIPMENT") ||
+                    //TODO: should food be equipable?
+                    card.subtype === "EVENT_FOOD"
+                  ) {
                     handleEquipCard(card);
                   } else {
                     activateCard(card);
