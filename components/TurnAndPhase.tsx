@@ -9,7 +9,7 @@ import {
   currentGameIDState,
   currentPhaseState,
   currentPlayerIDState,
-  currentTurnState,
+  currentRoundState,
   isOpponentReadyForNextPhaseState,
   myInGameCardsState,
   myIDState,
@@ -34,7 +34,7 @@ export default ({}) => {
     amIReadyForNextPhaseState
   );
   const [currentPhase, setCurrentPhase] = useRecoilState(currentPhaseState);
-  const [currentTurn, setCurrentTurn] = useRecoilState(currentTurnState);
+  const [currentRound, setCurrentRound] = useRecoilState(currentRoundState);
   const [turnPlayerID, setTurnPlayerID] = useRecoilState(currentPlayerIDState);
   const [opponentCards, setOpponentCards] = useRecoilState(
     opponentInGameCardsState
@@ -95,7 +95,7 @@ export default ({}) => {
             break;
         }
         if (payload.currentPhase == "END") {
-          setCurrentTurn((prev) => prev + 1);
+          setCurrentRound((prev) => prev + 1);
         }
         setCurrentPhase(nextPhase);
       })
@@ -192,7 +192,7 @@ export default ({}) => {
 
   return (
     <div className="text-slate-100 flex gap-4">
-      <span>Turn {currentTurn}</span>
+      <span>Turn {currentRound}</span>
       <button
         onClick={() => {
           channel?.send({
