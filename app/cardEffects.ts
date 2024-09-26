@@ -252,8 +252,8 @@ export type TriggerContext = {
   targetCard?: CardExt;
   cost?: Cost;
   attack?: {
-    attackBaseEffectID: string;
-    attackerCard: CardExt;
+    attackBaseEffectID?: string;
+    attackerCard?: CardExt;
   };
   damage?: number;
   reaction?: {
