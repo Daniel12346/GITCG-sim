@@ -248,11 +248,13 @@ export type TriggerEvents = EventType[] | null;
 export type TriggerContext = {
   //will be used with cost reduction effects
   eventType: EventType;
-  attackerCard?: CardExt;
   //can be used both for attacks and equips
   targetCard?: CardExt;
-  attackID?: string;
   cost?: Cost;
+  attack?: {
+    attackBaseEffectID: string;
+    attackerCard: CardExt;
+  };
   damage?: number;
   reaction?: {
     name: ElementalReaction;
@@ -381,6 +383,7 @@ export const effects: {
         if (card.id === target.id && card.usages !== null) {
           return {
             ...card,
+            //TODO: is it + or -?
             usages: card.usages - 1,
           };
         } else {
@@ -391,7 +394,7 @@ export const effects: {
     },
   },
 
-  // //Blessing of the Divine Relic's Installation
+  //Blessing of the Divine Relic's Installation
   "ce166d08-1be9-4937-a601-b34835c97dd2": {
     triggerOn: ["THIS_CARD_ACTIVATION"],
     execute: ({ targetCards, myCards }) => {
@@ -469,9 +472,17 @@ export const effects: {
       const weaponToShift: CardExt = weaponsEquippedToShiftFromTarget[0];
       const myUpdatedCards = myCards.map((card) => {
         if (card.id === weaponToShift.id) {
+          //reset the weapon's effects' usages
+          const updatedEffects = weaponToShift.effects.map((effect) => {
+            return {
+              ...effect,
+              usages_this_turn: 0,
+            };
+          });
           return {
             ...card,
             equippedTo: shiftToTarget.id,
+            effects: updatedEffects,
           };
         } else {
           return card;
@@ -534,6 +545,101 @@ export const effects: {
     execute: ({ myCards }) => {
       const myUpdatedCards = drawCards(myCards, 2);
       return { myUpdatedCards };
+    },
+  },
+  //I Haven't Lost Yet!
+  "a5d2e3db-ae67-4f1e-bf7c-80419e715d8e": {
+    triggerOn: ["THIS_CARD_ACTIVATION"],
+    execute: ({
+      myCards,
+      thisCard,
+      currentRound,
+      myDice,
+    }: ExecuteEffectParams) => {
+      const myCharacters = myCards.filter(
+        (card) => card.location === "CHARACTER"
+      );
+      const wasCharacterDefatedThisTurn = myCharacters.some(
+        (card) => card.defeatedInTurn === currentRound
+      );
+      if (!wasCharacterDefatedThisTurn) {
+        return { errorMessage: "No character was defeated this turn" };
+      }
+      const myUpdatedDice = addDice(myDice, { OMNI: 1 });
+      // add 1 energy to the active character
+      const myUpdatedCards = myCards.map((card) => {
+        if (card.location === "CHARACTER" && card.is_active) {
+          return {
+            ...card,
+            energy: (card.energy ?? 0) + 1,
+          };
+        } else {
+          return card;
+        }
+      });
+      return { myUpdatedCards, myUpdatedDice };
+    },
+  },
+  //Starsigns
+  "d26da3e3-25b7-4434-983d-0d617fcd012f": {
+    triggerOn: ["THIS_CARD_ACTIVATION"],
+    execute: ({ myCards, thisCard }: ExecuteEffectParams) => {
+      // add 1 energy to the active character
+      const myUpdatedCards = myCards.map((card) => {
+        if (card.location === "CHARACTER" && card.is_active) {
+          return {
+            ...card,
+            energy: (card.energy ?? 0) + 1,
+          };
+        } else {
+          return card;
+        }
+      });
+      return { myUpdatedCards };
+    },
+  },
+  //Calx's Arts
+  "1acc972c-4549-4533-926c-dc18af73eb0b": {
+    triggerOn: ["THIS_CARD_ACTIVATION"],
+    execute: ({
+      myCards,
+      thisCard,
+      myDice,
+      opponentDice,
+      effect,
+      currentRound,
+      targetCards,
+    }: ExecuteEffectParams) => {
+      if (!targetCards || targetCards.length < 1 || targetCards.length > 2) {
+        return { errorMessage: "One or two target cards are required" };
+      }
+      //shift 1 energy from each target to the active character or 2 energy from one target to the active character
+      const myUpdatedCards = myCards.map((card) => {
+        if (card.location !== "CHARACTER") {
+          return card;
+        }
+        if (card.is_active) {
+          return {
+            ...card,
+            energy: (card.energy ?? 0) + 2,
+          };
+        } else {
+          if (targetCards.some((target) => target.id === card.id)) {
+            if (targetCards.length === 1) {
+              return {
+                ...card,
+                energy: (card.energy ?? 0) - 2,
+              };
+            } else {
+              return {
+                ...card,
+                energy: (card.energy ?? 0) - 1,
+              };
+            }
+          }
+        }
+      });
+      return { myUpdatedCards: myUpdatedCards as CardExt[] };
     },
   },
   //Mask of Solitude Basalt
@@ -626,6 +732,75 @@ export const effects: {
     makeTriggerAndExecuteAndCheckIfCanBeExecutedFunctionsOfWeaponWithPlus1Damage(
       "BOW"
     ),
+  //---------------FOODS--------
+  //TODO: set hasUsedFood to true on the character after using food
+
+  //Minty Meat Rolls
+  "e1d9653d-4c9f-4e8c-803e-31d57fe5f7f7": {
+    triggerOn: ["ATTACK"],
+    execute: ({
+      myCards,
+      thisCard,
+      myDice,
+      effect,
+      currentRound,
+      triggerContext,
+    }: ExecuteEffectParams) => {
+      thisCard =
+        thisCard ||
+        (effect && myCards.find((card) => card.id === effect.card_id));
+      if (!thisCard) {
+        return { errorMessage: "No card passed to effect" };
+      }
+      if (!triggerContext) {
+        return { errorMessage: "No trigger context" };
+      }
+      const { attack, cost } = triggerContext;
+      if (!attack) {
+        return { errorMessage: "No attack found" };
+      }
+      if (!cost) {
+        return { errorMessage: "No cost found" };
+      }
+      const { attackerCard, attackBaseEffectID } = attack;
+      if (!attackerCard) {
+        return { errorMessage: "No attacker card found" };
+      }
+      const attackEffect = attackerCard.effects.find(
+        (effect) => effect.effect_basic_info_id === attackBaseEffectID
+      );
+      if (attackEffect?.effectType === "NORMAL_ATTACK") {
+        if (effect.usages_this_turn != null && effect.usages_this_turn > 3) {
+          return {};
+        }
+        //reduce cost of the attack by 1 unaligned
+        try {
+          const modifiedCostCost = subtractCost(cost, { UNALIGNED: 1 });
+          //increase the usage of this effect by 1
+          const myUpdatedCards = myCards.map((card) => {
+            if (card.id === thisCard.id) {
+              return {
+                ...card,
+                effects: increaseEffectUsages(
+                  card,
+                  "e1d9653d-4c9f-4e8c-803e-31d57fe5f7f7"
+                ),
+              };
+            } else {
+              return card;
+            }
+          });
+          return { modifiedCost: modifiedCostCost, myUpdatedCards };
+        } catch (e) {
+          return { errorMessage: "could not subtract cost" };
+        }
+      } else {
+        return {};
+      }
+      // const usedAttacke= myCards.find((card) => card.id === attackID);
+    },
+  },
+
   //--------------ATTACKS------------------
 
   //Sucrose's Normal Attack
