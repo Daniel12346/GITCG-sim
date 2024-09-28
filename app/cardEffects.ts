@@ -18,6 +18,7 @@ export type EventType =
   | "EQUIP_ARTIFACT"
   | "EQUIP_WEAPON"
   | "SWITCH_CHARACTER"
+  | "ACTION_PHASE"
   | "END_PHASE";
 
 type ExecuteEffectParams = {
@@ -50,17 +51,8 @@ type CheckIfEffectCanBeExecutedParams = {
   //TODO: add more params
 };
 
-//TODO: update only cards that have changed
-//type myUpdatedCards = {[id: string]: CardExt}
-
-// export type ExecuteEffect = (params: Params) => {
-//   //return all cards, including the ones that haven't changed
-//   myUpdatedCards?: CardExt[];
-//   myUpdatedDice?: Dice;
-//   opponentUpdatedCards?: CardExt[];
-//   opponentUpdatedDice?: Dice;
-//   errorMessage?: string;
-// };
+//TODO:
+//const withEffectUsageUpdate = ()=>
 
 //TODO: add trigger
 //used to make the execute effect functions of 6 relics with their only difference being the element, all with the cost of 2 unaligned
@@ -707,6 +699,27 @@ export const effects: {
     },
   },
 
+  //Paimon
+  "a54cd0e1-1d29-4404-8c20-768a0ce1d2f1": {
+    triggerOn: ["ACTION_PHASE"],
+    execute: ({ myCards, myDice }) => {
+      const myUpdatedDice = addDice(myDice, { OMNI: 2 });
+      //update this effect's usage
+      const myUpdatedCards = myCards.map((card) => {
+        return {
+          ...card,
+          effects: increaseEffectUsages(
+            card,
+            "a54cd0e1-1d29-4404-8c20-768a0ce1d2f1"
+          ),
+        };
+      });
+      return { myUpdatedDice, myUpdatedCards };
+    },
+  },
+
+  //-----------------WEAPONS-------------------
+
   //Traveler's Handy Sword
   "e565dda8-5269-4d15-a31c-694835065dc3":
     makeTriggerAndExecuteAndCheckIfCanBeExecutedFunctionsOfWeaponWithPlus1Damage(
@@ -732,8 +745,103 @@ export const effects: {
     makeTriggerAndExecuteAndCheckIfCanBeExecutedFunctionsOfWeaponWithPlus1Damage(
       "BOW"
     ),
-  //---------------FOODS--------
-  //TODO: set hasUsedFood to true on the character after using food
+
+  //-----------LOCATIONS----------------
+
+  //Dawn Winery
+  "540e9a74-9c09-4afe-b536-295e56dacc23": {
+    triggerOn: ["SWITCH_CHARACTER"],
+    execute: ({ triggerContext, thisCard, effect, myCards }) => {
+      thisCard =
+        thisCard ||
+        (effect && myCards.find((card) => card.id === effect.card_id));
+
+      //can be used twice per turn
+      if (effect.usages_this_turn === 2) {
+        console.log("Effect already used this turn");
+        return {};
+      }
+      let cost = triggerContext?.cost;
+      if (!triggerContext) {
+        return { errorMessage: "No trigger context" };
+      }
+      if (!["SWITCH_CHARACTER"].includes(triggerContext.eventType)) {
+        return {};
+      }
+      try {
+        //TODO: is this correct?
+        cost = subtractCost({ ...cost }, { UNALIGNED: 1 }) as Cost;
+      } catch (e) {
+        console.log(e);
+        return { errorMessage: "could not subtract" };
+      } finally {
+        return {
+          modifiedCost: cost,
+          //update this effect's usage on the card
+          myUpdatedCards: myCards.map((card) => {
+            if (card.id === thisCard?.id) {
+              return {
+                ...card,
+                effects: increaseEffectUsages(
+                  card,
+                  effect.effect_basic_info_id!
+                ),
+              };
+            } else {
+              return card;
+            }
+          }),
+        };
+      }
+    },
+  },
+
+  //Favonius Cathedral
+  "8e420462-0c36-42f7-aeef-520ca2129ce5": {
+    triggerOn: ["END_PHASE"],
+    execute: ({ myCards, thisCard, effect }) => {
+      //heal active character by 1
+      thisCard =
+        thisCard ||
+        (effect && myCards.find((card) => card.id === effect.card_id));
+      if (!thisCard) {
+        return { errorMessage: "No card passed to effect" };
+      }
+      let hasHealed = false;
+      let myUpdatedCards = myCards.map((card) => {
+        if (card.location === "CHARACTER" && card.is_active) {
+          if (card.health === card.base_health) {
+            return card;
+          } else {
+            hasHealed = true;
+            return {
+              ...card,
+              health: (card.health ?? 0) + 1,
+            };
+          }
+        }
+        return card;
+      });
+      // if the active character was already at full health this effect's usage is not increased
+      if (hasHealed) {
+        myUpdatedCards = myUpdatedCards.map((card) => {
+          if (card.id === thisCard.id) {
+            return {
+              ...card,
+              effects: increaseEffectUsages(
+                card,
+                "8e420462-0c36-42f7-aeef-520ca2129ce5"
+              ),
+            };
+          }
+          return card;
+        });
+      }
+      return { myUpdatedCards };
+    },
+  },
+
+  //---------------FOOD--------
 
   //Minty Meat Rolls
   "e1d9653d-4c9f-4e8c-803e-31d57fe5f7f7": {
@@ -786,6 +894,9 @@ export const effects: {
                   "e1d9653d-4c9f-4e8c-803e-31d57fe5f7f7"
                 ),
               };
+            } else if (card.id === attackerCard.id) {
+              //TODO: replace with satiated status?
+              return { ...card, hasUsedFoodThisTurn: true };
             } else {
               return card;
             }
@@ -797,7 +908,51 @@ export const effects: {
       } else {
         return {};
       }
-      // const usedAttacke= myCards.find((card) => card.id === attackID);
+    },
+  },
+
+  //Sweet Madame
+  "ba297d06-89ee-4ae3-8c3e-460d71d0ba7a": {
+    triggerOn: ["THIS_CARD_ACTIVATION"],
+    execute: ({
+      myCards,
+      thisCard,
+      effect,
+      targetCards,
+    }: ExecuteEffectParams) => {
+      thisCard =
+        thisCard ||
+        (effect && myCards.find((card) => card.id === effect.card_id));
+      if (!thisCard) {
+        return { errorMessage: "No card passed to effect" };
+      }
+      if (!targetCards || targetCards.length !== 1) {
+        return { errorMessage: "One target card is required" };
+      }
+      if (targetCards[0].location !== "CHARACTER") {
+        return { errorMessage: "Target card is not a character card" };
+      }
+      const myUpdatedCards = myCards.map((card) => {
+        if (card.id === targetCards[0].id) {
+          return {
+            ...card,
+            health: (card.health ?? 0) + 1,
+            hasUsedFoodThisTurn: true,
+          };
+        }
+        if (card.id === thisCard.id) {
+          return {
+            ...card,
+            effects: increaseEffectUsages(
+              card,
+              "ba297d06-89ee-4ae3-8c3e-460d71d0ba7a"
+            ),
+          };
+        } else {
+          return card;
+        }
+      });
+      return { myUpdatedCards };
     },
   },
 
@@ -1139,15 +1294,13 @@ export const effects: {
         if (card.id === thisCard.id) {
           return {
             ...card,
-            statuses: card.statuses
-              ? [
-                  ...card.statuses,
-                  {
-                    name: "PYRO_INFUSION",
-                    turnsLeft: 2,
-                  },
-                ]
-              : ["PYRO_INFUSION"],
+            statuses: [
+              ...(card.statuses || []),
+              {
+                name: "PYRO_INFUSION",
+                turnsLeft: 2,
+              },
+            ],
           };
         } else {
           return card;
