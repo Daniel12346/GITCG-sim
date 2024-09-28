@@ -770,7 +770,7 @@ export const effects: {
         (effect) => effect.effect_basic_info_id === attackBaseEffectID
       );
       if (attackEffect?.effectType === "NORMAL_ATTACK") {
-        if (effect.usages_this_turn != null && effect.usages_this_turn > 3) {
+        if (effect.usages_this_turn != null && effect.usages_this_turn >= 3) {
           return {};
         }
         //reduce cost of the attack by 1 unaligned
