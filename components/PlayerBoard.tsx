@@ -429,17 +429,21 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         )
       );
     let myDiceAfterCost = myDice;
+    let myUpdatedCards = myCards;
     if (cost) {
       const costModifyingEffects = findCostModifyingEffects(myCards);
       costModifyingEffects.forEach((effect) => {
         const effectLogic = findEffectLogic(effect);
         if (!effectLogic?.execute) return;
-        let { modifiedCost, errorMessage } = effectLogic.execute({
+        let {
+          modifiedCost,
+          errorMessage,
+          myUpdatedCards: myUpdatedCardsAfterCostModifyingEffect,
+        } = effectLogic.execute({
           summons,
           effect,
-          thisCard: attackerCard,
           playerID: myID,
-          myCards,
+          myCards: myUpdatedCards,
           myDice,
           opponentCards: opponentInGameCards,
           opponentDice: opponentDice,
@@ -453,10 +457,20 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           },
           currentRound,
         });
-        console.log("COST MOD", cost, effectLogic, modifiedCost, errorMessage);
+        console.log(
+          "COST MOD",
+          cost,
+          effectLogic,
+          modifiedCost,
+          errorMessage,
+          myUpdatedCardsAfterCostModifyingEffect
+        );
         if (errorMessage) {
           setErrorMessage(errorMessage);
           return;
+        }
+        if (myUpdatedCardsAfterCostModifyingEffect) {
+          myUpdatedCards = myUpdatedCardsAfterCostModifyingEffect;
         }
         if (modifiedCost) {
           cost = modifiedCost;
@@ -484,7 +498,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
 
     // const effectCard = activateCard(card);
     let {
-      myUpdatedCards,
+      myUpdatedCards: myUpdatedCardsAfterEffects,
       myUpdatedDice,
       opponentUpdatedCards,
       opponentUpdatedDice,
@@ -492,7 +506,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     } = activateEffect({
       playerID: myID,
       effect: attackEffect,
-      myCards: myCards,
+      myCards: myUpdatedCards,
       summons,
       myDice: myDiceAfterCost,
       opponentCards: opponentInGameCards,
@@ -500,6 +514,9 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       targetCards: selectedTargetCards,
       currentRound,
     });
+    if (myUpdatedCardsAfterEffects) {
+      myUpdatedCards = myUpdatedCardsAfterEffects;
+    }
     if (errorMessage) {
       setErrorMessage(errorMessage);
       return;
