@@ -432,6 +432,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     let myUpdatedCards = myCards;
     if (cost) {
       const costModifyingEffects = findCostModifyingEffects(myCards);
+      //execute all cost modifying effects
       costModifyingEffects.forEach((effect) => {
         const effectLogic = findEffectLogic(effect);
         if (!effectLogic?.execute) return;
@@ -449,7 +450,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           opponentDice: opponentDice,
           triggerContext: {
             eventType: "ATTACK",
-            cost: cost,
+            cost,
             attack: {
               attackerCard,
               attackBaseEffectID: attackEffect.effect_basic_info_id,
@@ -457,14 +458,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           },
           currentRound,
         });
-        console.log(
-          "COST MOD",
-          cost,
-          effectLogic,
-          modifiedCost,
-          errorMessage,
-          myUpdatedCardsAfterCostModifyingEffect
-        );
+
         if (errorMessage) {
           setErrorMessage(errorMessage);
           return;
@@ -496,9 +490,9 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       }
     }
 
-    // const effectCard = activateCard(card);
+    //execute the attack effect
     let {
-      myUpdatedCards: myUpdatedCardsAfterEffects,
+      myUpdatedCards: myUpdatedCardsAfterAttackEffect,
       myUpdatedDice,
       opponentUpdatedCards,
       opponentUpdatedDice,
@@ -514,8 +508,8 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       targetCards: selectedTargetCards,
       currentRound,
     });
-    if (myUpdatedCardsAfterEffects) {
-      myUpdatedCards = myUpdatedCardsAfterEffects;
+    if (myUpdatedCardsAfterAttackEffect) {
+      myUpdatedCards = myUpdatedCardsAfterAttackEffect;
     }
     if (errorMessage) {
       setErrorMessage(errorMessage);
