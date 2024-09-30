@@ -288,14 +288,8 @@ export const isGameOverState = atom<boolean>({
   default: false,
 });
 //TODO: restrict strings to only valid phase names
-export const amIPlayer1State = selector<boolean>({
+export const amIPlayer1State = atom<boolean>({
   key: "amIPlayer1State",
-  get: ({ get }) => {
-    const myProfile = get(myProfileState);
-    const game = get(gameState);
-    //TODO fix typo in player1I_board_id in db
-    return myProfile?.id === game.player1_id;
-  },
 });
 export const currentPhaseState = atom<
   "PREPARATION" | "ROLL" | "ACTION" | "END" | null
