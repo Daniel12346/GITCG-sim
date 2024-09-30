@@ -21,35 +21,45 @@ export default function GameChannel() {
   useEffect(() => {
     const supabase = createClientComponentClient<Database>();
     const channel = supabase.channel("game:" + gameID, {
-      config: { presence: { key: myID }, broadcast: { self: true } },
+      config: { presence: { key: myID } },
     });
-    // setcurrentPlayer(Math.random() > 0.5 ? myID : opponentID);
     channel
-      .on("presence", { event: "join" }, () => {
-        if (!opponentCards || !opponentCards.length) {
+      .on("presence", { event: "join" }, ({ key }) => {
+        console.log("presence join", key, myID);
+        //the player that joined first will send the deck to the opponent when the opponent joins
+        if (
+          key !== myID &&
+          channel.presenceState.length < 2 &&
+          (!opponentCards || !opponentCards.length)
+        ) {
           channel.send({
             type: "broadcast",
             event: "share_deck",
-            payload: { cards: myCards, playerID: myID },
+            payload: { cards: myCards, isFirstShare: true },
           });
         }
       })
       .on("presence", { event: "sync" }, () => {
-        if (!opponentCards || !opponentCards.length) {
+        // //TODO: is this necessary in sync event?
+        // if (!opponentCards || !opponentCards.length) {
+        //   channel.send({
+        //     type: "broadcast",
+        //     event: "share_deck",
+        //     payload: { cards: myCards },
+        //   });
+        // }
+      })
+      .on("broadcast", { event: "share_deck" }, ({ payload }) => {
+        if (payload?.cards && payload?.cards.length > 0) {
+          setOpponentInGameCards(payload?.cards);
+        }
+        //used only once to initialize the deck
+        if (payload.isFirstShare) {
           channel.send({
             type: "broadcast",
             event: "share_deck",
-            payload: { cards: myCards, playerID: myID },
+            payload: { cards: myCards, isFirstShare: false },
           });
-        }
-      })
-      .on("broadcast", { event: "share_deck" }, ({ payload }) => {
-        if (
-          payload?.cards &&
-          payload?.cards.length > 0 &&
-          payload.playerID !== myID
-        ) {
-          setOpponentInGameCards(payload?.cards);
         }
       })
       .subscribe(async (status) => {
@@ -59,11 +69,11 @@ export default function GameChannel() {
             cards: myCards,
           });
           // TODO: when exactly should I send the deck?
-          channel.send({
-            type: "broadcast",
-            event: "share_deck",
-            payload: { cards: myCards, playerID: myID },
-          });
+          // channel.send({
+          //   type: "broadcast",
+          //   event: "share_deck",
+          //   payload: { cards: myCards, playerID: myID },
+          // });
         }
       });
     setChannel(channel);
