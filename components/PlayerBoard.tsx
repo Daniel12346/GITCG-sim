@@ -147,7 +147,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           includeCostModifiers: true,
         }
       );
-      console.log("effectsThatTriggerOnSwitch", effectsThatTriggerOnSwitch);
       effectsThatTriggerOnSwitch.forEach((effect) => {
         const effectLogic = findEffectLogic(effect);
         if (!effectLogic?.execute) return;
@@ -389,8 +388,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   const activateAttackEffect = (attackEffect: Effect) => {
     if (!myCards) return;
     const attackerCard = myCards.find((c) => c.id === attackEffect.card_id);
-    console.log(attackerCard);
-
     if (attackEffect.effectType === "ELEMENTAL_BURST") {
       if (!attackerCard) {
         setErrorMessage("No effect card");
@@ -619,7 +616,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       let myDiceAfterTriggeredEffects = updatedDice || {};
       let opponentInGameCardsAfterTriggeredEffects = opponentInGameCards;
       let opponentDiceAfterTriggeredEffects = opponentDice;
-      console.log("found effects", thisCardEffectsThatTriggerOnActivation);
       [
         ...thisCardEffectsThatTriggerOnActivation,
         ...otherCardEffectsThatTriggerOnActivation,
