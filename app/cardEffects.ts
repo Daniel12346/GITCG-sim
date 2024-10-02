@@ -18,10 +18,11 @@ export type EventType =
   | "EQUIP_ARTIFACT"
   | "EQUIP_WEAPON"
   | "SWITCH_CHARACTER"
+  | "ROLL_PHASE"
   | "ACTION_PHASE"
   | "END_PHASE";
 
-type ExecuteEffectParams = {
+export type ExecuteEffectParams = {
   //TODO: move some params to the trigger context
   myCards: CardExt[];
   opponentCards: CardExt[];
@@ -37,19 +38,20 @@ type ExecuteEffectParams = {
   currentRound: number;
 };
 
-type CheckIfEffectCanBeExecutedParams = {
-  myCards?: CardExt[];
-  opponentCards?: CardExt[];
-  triggerContext?: TriggerContext;
-  effect?: Effect;
-  thisCard?: CardExt;
-  opponentDice?: Dice;
-  playerID?: string;
-  myDice?: Dice;
-  //the card that is being targeted by the activated card
-  targetCards?: CardExt[];
-  //TODO: add more params
-};
+export type CheckIfEffectCanBeExecutedParams = ExecuteEffectParams;
+//  {
+//   myCards?: CardExt[];
+//   opponentCards?: CardExt[];
+//   triggerContext?: TriggerContext;
+//   effect?: Effect;
+//   thisCard?: CardExt;
+//   opponentDice?: Dice;
+//   playerID?: string;
+//   myDice?: Dice;
+//   //the card that is being targeted by the activated card
+//   targetCards?: CardExt[];
+//   //TODO: add more params
+// };
 
 //TODO:
 //const withEffectUsageUpdate = ()=>
@@ -167,6 +169,10 @@ const makeTriggerAndExecuteAndCheckIfCanBeExecutedFunctionsOfWeaponWithPlus1Dama
         return {};
       },
       execute: ({ triggerContext }) => {
+        if (triggerContext?.targetCard?.weapon_type === weapon_type)
+          return {
+            errorMessage: "Wrong weapon type",
+          };
         return triggerContext?.damage
           ? { modifiedDamage: triggerContext.damage + 1 }
           : { errorMessage: "No damage found" };
