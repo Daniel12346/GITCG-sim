@@ -5,6 +5,7 @@ import {
   EventType,
   ExecuteEffect,
   TriggerEvents,
+  ExecuteEffectParams,
 } from "./cardEffects";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { DieElementNameT } from "./global";
@@ -223,7 +224,14 @@ export const calculateDamageAfterModifiers = ({
     if (
       effectLogic.execute &&
       ((effectLogic?.checkIfCanBeExecuted &&
-        effectLogic.checkIfCanBeExecuted({ myCards, opponentCards })) ||
+        effectLogic.checkIfCanBeExecuted({
+          myCards,
+          opponentCards,
+          effect,
+          opponentDice,
+          currentRound,
+          myDice,
+        })) ||
         !effectLogic.checkIfCanBeExecuted)
     ) {
       const { modifiedDamage, myUpdatedCards: myUpdatedCardsAfterEffect } =
@@ -647,6 +655,10 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
               effect,
               myCards,
               opponentCards,
+              //TODO: add dice
+              myDice: {},
+              opponentDice: {},
+              currentRound,
             })) ||
             !effectLogic.checkIfCanBeExecuted)
         ) {
@@ -753,4 +765,172 @@ export const createSummon = ({
   const myUpdatedCards = [...myCards, summon];
   //TODO: effects that trigger on summon
   return { myUpdatedCards };
+};
+
+type ExecuteEffectsSequentiallyParams = {
+  effects: Effect[];
+  executeArgs: Omit<ExecuteEffectParams, "effect">;
+};
+export const executeEffectsSequentially = ({
+  effects,
+  executeArgs,
+}: ExecuteEffectsSequentiallyParams) => {
+  let myUpdatedCards = executeArgs.myCards;
+  let myUpdatedDice = executeArgs.myDice;
+  let opponentUpdatedCards = executeArgs.opponentCards;
+  let opponentUpdatedDice = executeArgs.opponentDice;
+  let errorMessage: string | null = null;
+  effects.forEach((effect) => {
+    if (errorMessage) return;
+    const effectLogic = findEffectLogic(effect);
+
+    if (!effectLogic.execute) return;
+    // if (effectLogic.checkIfCanBeExecuted) {
+    //   //TODO: is this necessary?
+    //   const { errorMessage } = effectLogic.checkIfCanBeExecuted({
+    //     playerID: myID,
+    //     myCards: myCardsAfterTriggeredEffects,
+    //     myDice: myDiceAfterTriggeredEffects,
+    //     opponentCards: opponentInGameCardsAfterTriggeredEffects,
+    //     opponentDice: opponentDiceAfterTriggeredEffects,
+    //     triggerContext: {
+    //       eventType: "CARD_ACTIVATION",
+    //     },
+    //   });
+    //   if (errorMessage) {
+    //     setErrorMessage(errorMessage);
+    //     return;
+    //   }
+    // }
+    const {
+      myUpdatedCards: myUpdatedCardsAfterEffects,
+      myUpdatedDice: myUpdatedDiceAfterEffects,
+      opponentUpdatedCards: opponentUpdatedCardsAfterEffects,
+      opponentUpdatedDice: opponentUpdatedDiceAfterEffects,
+      errorMessage: errorMessageAfterEffects,
+    } = effectLogic.execute({
+      ...executeArgs,
+      myCards: myUpdatedCards,
+      myDice: myUpdatedDice,
+      opponentCards: opponentUpdatedCards,
+      opponentDice: opponentUpdatedDice,
+      effect,
+    });
+    if (errorMessageAfterEffects) {
+      errorMessage = errorMessageAfterEffects;
+    }
+    if (myUpdatedCardsAfterEffects) {
+      myUpdatedCards = myUpdatedCardsAfterEffects;
+    }
+    if (myUpdatedDiceAfterEffects) {
+      myUpdatedDice = myUpdatedDiceAfterEffects;
+    }
+    if (opponentUpdatedCardsAfterEffects) {
+      opponentUpdatedCards = opponentUpdatedCardsAfterEffects;
+    }
+    if (opponentUpdatedDiceAfterEffects) {
+      opponentUpdatedDice = opponentUpdatedDiceAfterEffects;
+    }
+  });
+  return {
+    errorMessage,
+    myUpdatedCards,
+    myUpdatedDice,
+    opponentUpdatedCards,
+    opponentUpdatedDice,
+  };
+};
+type PhaseName = "ROLL_PHASE" | "ACTION_PHASE" | "END_PHASE";
+type ExecutePhaseEffectsParams = {
+  // amIPlayer1: boolean;
+  phaseName: PhaseName;
+  executeArgs: Omit<ExecuteEffectParams, "effect">;
+};
+const executePhaseEffectsForOnePlayer = ({
+  phaseName,
+  executeArgs,
+}: ExecutePhaseEffectsParams) => {
+  let myUpdatedCards = executeArgs.myCards;
+  let myUpdatedDice = executeArgs.myDice;
+  let opponentUpdatedCards = executeArgs.opponentCards;
+  let opponentUpdatedDice = executeArgs.opponentDice;
+  console.log("myUpdatedCards in execute phase effects", myUpdatedCards);
+  const myEffectsThatTriggeOnPhase = findEffectsThatTriggerOn(
+    phaseName,
+    myUpdatedCards
+  );
+  console.log(phaseName, myEffectsThatTriggeOnPhase);
+  //TODO: handle opponent's effects
+  const {
+    myUpdatedCards: myCardsAfterTriggeredEffects,
+    myUpdatedDice: myDiceAfterTriggeredEffects,
+    opponentUpdatedCards: opponentInGameCardsAfterTriggeredEffects,
+    opponentUpdatedDice: opponentDiceAfterTriggeredEffects,
+    errorMessage,
+  } = executeEffectsSequentially({
+    effects: myEffectsThatTriggeOnPhase,
+    executeArgs: {
+      ...executeArgs,
+      myCards: myUpdatedCards,
+      myDice: myUpdatedDice,
+      opponentCards: opponentUpdatedCards,
+      opponentDice: opponentUpdatedDice,
+      //TODO: is this necessary?
+      triggerContext: {
+        eventType: phaseName,
+      },
+    },
+  });
+  if (errorMessage) {
+    return { errorMessage };
+  }
+  return {
+    myUpdatedCards: myCardsAfterTriggeredEffects,
+    myUpdatedDice: myDiceAfterTriggeredEffects,
+    opponentUpdatedCards: opponentInGameCardsAfterTriggeredEffects,
+    opponentUpdatedDice: opponentDiceAfterTriggeredEffects,
+  };
+};
+
+export const executePhaseEffectsForBothPlayers = ({
+  phaseName,
+  executeArgs,
+}: ExecutePhaseEffectsParams) => {
+  //executing phase effects for player 1
+  const {
+    myUpdatedCards: myUpdatedCardsAfterPhaseEffectsMySide,
+    myUpdatedDice: myUpdatedDiceAfterPhaseEffectsMySide,
+    opponentUpdatedCards: opponentUpdatedCardsAfterPhaseEffectsMySide,
+    opponentUpdatedDice: opponentUpdatedDiceAfterPhaseEffectsMySide,
+    errorMessage,
+  } = executePhaseEffectsForOnePlayer({ phaseName, executeArgs });
+  if (errorMessage) {
+    return { errorMessage };
+  }
+  //executing phase effects for player 2, reversing the arguments because the effects are executed from the perspective of the player
+  const {
+    myUpdatedCards: opponentUpdatedCardsAfterPhaseEffectsOpponentSide,
+    myUpdatedDice: opponentUpdatedDiceAfterPhaseEffectsOpponentSide,
+    opponentUpdatedCards: myUpdatedCardsAfterPhaseEffectsOpponentSide,
+    opponentUpdatedDice: myUpdatedDiceAfterPhaseEffectsOpponentSide,
+    errorMessage: errorMessageOpponent,
+  } = executePhaseEffectsForOnePlayer({
+    phaseName,
+    executeArgs: {
+      ...executeArgs,
+      myCards: opponentUpdatedCardsAfterPhaseEffectsMySide,
+      myDice: opponentUpdatedDiceAfterPhaseEffectsMySide,
+      opponentCards: myUpdatedCardsAfterPhaseEffectsMySide,
+      opponentDice: myUpdatedDiceAfterPhaseEffectsMySide,
+    },
+  });
+  if (errorMessageOpponent) {
+    return { errorMessage: errorMessageOpponent };
+  }
+  return {
+    myUpdatedCards: myUpdatedCardsAfterPhaseEffectsOpponentSide,
+    myUpdatedDice: myUpdatedDiceAfterPhaseEffectsOpponentSide,
+    opponentUpdatedCards: opponentUpdatedCardsAfterPhaseEffectsOpponentSide,
+    opponentUpdatedDice: opponentUpdatedDiceAfterPhaseEffectsOpponentSide,
+  };
 };
