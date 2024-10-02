@@ -283,21 +283,21 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     //TODO: effect selection
     //TODO: do I need to check if effect can be executed or just return an error message when executing effect?
     const effectLogic = findEffectLogic(effect);
-    if (effectLogic.checkIfCanBeExecuted) {
-      const { errorMessage: executionErrorMessage } =
-        effectLogic.checkIfCanBeExecuted({
-          playerID: myID,
-          myCards,
-          myDice,
-          opponentCards: opponentInGameCards,
-          opponentDice: opponentDice,
-          targetCards: selectedTargetCards,
-        });
-      if (executionErrorMessage) {
-        setErrorMessage(executionErrorMessage);
-        return;
-      }
-    }
+    // if (effectLogic.checkIfCanBeExecuted) {
+    //   const { errorMessage: executionErrorMessage } =
+    //     effectLogic.checkIfCanBeExecuted({
+    //       playerID: myID,
+    //       myCards,
+    //       myDice,
+    //       opponentCards: opponentInGameCards,
+    //       opponentDice: opponentDice,
+    //       targetCards: selectedTargetCards,
+    //     });
+    //   if (executionErrorMessage) {
+    //     setErrorMessage(executionErrorMessage);
+    //     return;
+    //   }
+    // }
 
     // if (effect.requiredTargets && !amSelectingTargets) {
     //   setRequiredTargets(effect.requiredTargets);
@@ -623,23 +623,24 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         const effectLogic = findEffectLogic(effect);
 
         if (!effectLogic.execute) return;
-        if (effectLogic.checkIfCanBeExecuted) {
-          //TODO: is this necessary?
-          const { errorMessage } = effectLogic.checkIfCanBeExecuted({
-            playerID: myID,
-            myCards: myCardsAfterTriggeredEffects,
-            myDice: myDiceAfterTriggeredEffects,
-            opponentCards: opponentInGameCardsAfterTriggeredEffects,
-            opponentDice: opponentDiceAfterTriggeredEffects,
-            triggerContext: {
-              eventType: "CARD_ACTIVATION",
-            },
-          });
-          if (errorMessage) {
-            setErrorMessage(errorMessage);
-            return;
-          }
-        }
+
+        // if (effectLogic.checkIfCanBeExecuted) {
+        //   //TODO: is this necessary?
+        //   const { errorMessage } = effectLogic.checkIfCanBeExecuted({
+        //     playerID: myID,
+        //     myCards: myCardsAfterTriggeredEffects,
+        //     myDice: myDiceAfterTriggeredEffects,
+        //     opponentCards: opponentInGameCardsAfterTriggeredEffects,
+        //     opponentDice: opponentDiceAfterTriggeredEffects,
+        //     triggerContext: {
+        //       eventType: "CARD_ACTIVATION",
+        //     },
+        //   });
+        //   if (errorMessage) {
+        //     setErrorMessage(errorMessage);
+        //     return;
+        //   }
+        // }
         const {
           myUpdatedCards,
           myUpdatedDice,
