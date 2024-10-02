@@ -5,6 +5,11 @@ import {
 } from "@/app/actions";
 import { CardExtended } from "@/app/global";
 import {
+  executeEffectsSequentially,
+  executePhaseEffectsForBothPlayers,
+  findEffectsThatTriggerOn,
+} from "@/app/utils";
+import {
   amIReadyForNextPhaseState,
   currentGameIDState,
   currentPhaseState,
@@ -18,6 +23,7 @@ import {
   myDiceState,
   opponentDiceState,
   opponentInGameCardsState,
+  amIPlayer1State,
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -43,6 +49,7 @@ export default ({}) => {
   const [myCards, setMyCards] = useRecoilState(myInGameCardsState);
   const [myDice, setMyDice] = useRecoilState(myDiceState);
   const [opponentDice, setOpponentDice] = useRecoilState(opponentDiceState);
+  const [amIPlayer1, setamIPlayer1] = useRecoilState(amIPlayer1State);
   //TODO: move to recoil atom ?
   const [areDecksInitialized, setareDecksInitialized] = useState(false);
 
@@ -76,6 +83,7 @@ export default ({}) => {
         setAmIReadyForNextPhase((_) => false);
         setIsOpponentReadyForNextPhase((_) => false);
         let nextPhase: "PREPARATION" | "ROLL" | "ACTION" | "END";
+        console.log("start_next_phase", payload.currentPhase);
         switch (payload.currentPhase) {
           //the preparation phase only happens once at the beginning of the game
           case "PREPARATION":
@@ -148,6 +156,46 @@ export default ({}) => {
         //TODO: are cards drawn in the first turn?
         setMyCards((prev) => prev && drawCards(prev, 2));
         break;
+      case "ACTION":
+        if (
+          !amIPlayer1 ||
+          !myCards?.length ||
+          !myDice ||
+          !opponentCards?.length ||
+          !opponentDice
+        )
+          return;
+        alert("action phase");
+        const {
+          myUpdatedCards: myCardsAfterPhaseEffects,
+          myUpdatedDice: myDiceAfterPhaseEffects,
+          opponentUpdatedCards: opponentCardsAfterPhaseEffects,
+          opponentUpdatedDice: opponentDiceAfterPhaseEffects,
+          errorMessage,
+        } = executePhaseEffectsForBothPlayers({
+          phaseName: "ACTION_PHASE",
+          executeArgs: {
+            currentRound,
+            myCards,
+            myDice,
+            opponentCards,
+            opponentDice,
+          },
+        });
+        if (errorMessage) {
+          console.error(errorMessage);
+          break;
+        }
+        console.log(
+          "myCardsAfterPhaseEffects",
+          myCardsAfterPhaseEffects,
+          "myDiceAfterPhaseEffects",
+          myDiceAfterPhaseEffects
+        );
+        setMyCards(myCardsAfterPhaseEffects);
+        setMyDice(myDiceAfterPhaseEffects);
+        setOpponentCards(opponentCardsAfterPhaseEffects);
+        setOpponentDice(opponentDiceAfterPhaseEffects);
     }
   }, [currentPhase]);
 
