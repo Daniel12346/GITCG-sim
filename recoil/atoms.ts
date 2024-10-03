@@ -7,7 +7,7 @@ import { atom, selector, selectorFamily, waitForAll } from "recoil";
 import { recoilPersist } from "recoil-persist";
 import { RealtimeChannel } from "@supabase/supabase-js";
 
-import { cardFromBasicInfo } from "@/app/utils";
+import { cardFromBasicInfo, PhaseName } from "@/app/utils";
 const { persistAtom } = recoilPersist();
 // const supabase = createClientComponentClient();
 type Profile = Database["public"]["Tables"]["profile"]["Row"];
@@ -291,11 +291,9 @@ export const isGameOverState = atom<boolean>({
 export const amIPlayer1State = atom<boolean>({
   key: "amIPlayer1State",
 });
-export const currentPhaseState = atom<
-  "PREPARATION" | "ROLL" | "ACTION" | "END" | null
->({
+export const currentPhaseState = atom<PhaseName>({
   key: "currentPhaseState",
-  default: null,
+  default: "PREPARATION_PHASE",
 });
 export const amIReadyForNextPhaseState = atom<boolean>({
   key: "amIReadyForNextPhaseState",
@@ -316,6 +314,14 @@ export const opponentDiceState = atom<Dice>({
 export const currentPlayerIDState = atom<string>({
   key: "currentPlayerIDState",
   default: "",
+});
+export const isMyTurnState = selector<boolean>({
+  key: "isMyTurnState",
+  get: ({ get }) => {
+    const currentPlayerID = get(currentPlayerIDState);
+    const myID = get(myIDState);
+    return currentPlayerID === myID;
+  },
 });
 
 export const mySelectedCardsState = atom<CardExt[]>({
