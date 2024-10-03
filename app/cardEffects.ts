@@ -18,6 +18,7 @@ export type EventType =
   | "EQUIP_ARTIFACT"
   | "EQUIP_WEAPON"
   | "SWITCH_CHARACTER"
+  | "PREPARATION_PHASE"
   | "ROLL_PHASE"
   | "ACTION_PHASE"
   | "END_PHASE";
