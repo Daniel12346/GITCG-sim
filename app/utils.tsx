@@ -840,7 +840,11 @@ export const executeEffectsSequentially = ({
     opponentUpdatedDice,
   };
 };
-type PhaseName = "ROLL_PHASE" | "ACTION_PHASE" | "END_PHASE";
+export type PhaseName =
+  | "PREPARATION_PHASE"
+  | "ROLL_PHASE"
+  | "ACTION_PHASE"
+  | "END_PHASE";
 type ExecutePhaseEffectsParams = {
   // amIPlayer1: boolean;
   phaseName: PhaseName;
