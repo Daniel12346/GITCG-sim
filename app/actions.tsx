@@ -151,7 +151,7 @@ export const getRandomElement = (): DieElementName => {
 };
 export const createRandomDice = (amount: number) => {
   //just for testing, //TODO: remove
-  const result: Dice = { OMNI: 20 };
+  const result: Dice = { OMNI: amount };
 
   for (let i = 0; i < amount; i++) {
     const randomElement = getRandomElement();
