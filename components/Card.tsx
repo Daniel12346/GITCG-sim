@@ -5,7 +5,7 @@ import {
   myCurrentDeckIDState,
   mySelectedCardsState,
   myIDState,
-  isMyTurnState,
+  // isMyTurnState,
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import {
@@ -43,7 +43,7 @@ export default function Card({
   const isFaceDown = card.location === "HAND" && !isMyCard;
   const isFrozen = card.statuses?.find((status) => status.name === "FROZEN");
   const isSummon = card.location === "SUMMON";
-  const isMyTurn = useRecoilValue(isMyTurnState);
+  // const isMyTurn = useRecoilValue(isMyTurnState);
   return (
     <div
       className={`group bg-blue-200 flex flex-col items-center relative h-24 w-16 border-4
@@ -64,45 +64,45 @@ export default function Card({
       <div className="z-10 flex justify-between w-full">
         {creationDisplayElements?.map((element) => element)}
       </div>
-      {isMyTurn && (
-        <>
-          {/* used for activating cards from hand */}
-          {card.location === "HAND" && isMyCard && (
-            <span
-              className="z-30 cursor-pointer hidden group-hover:block absolute top-1 left-1 bg-green-200 text-green-800 p-1"
-              onClick={handleClick}
-            >
-              activate
-            </span>
-          )}
-
-          {/* used for switching active character */}
-          {card.location === "CHARACTER" && isMyCard && !card.is_active && (
-            <span
-              className="z-30 cursor-pointer hidden group-hover:block absolute top-1 left-1 bg-green-200 text-green-800 p-1"
-              onClick={handleClick}
-            >
-              switch
-            </span>
-          )}
-          {/* used for selecting cards */}
-
+      {/* used for activating cards from hand */}
+      {/* {isMyTurn && ( */}
+      <>
+        {card.location === "HAND" && isMyCard && (
           <span
-            className="z-30 cursor-pointer hidden group-hover:block absolute top-10 left-1 bg-slate-200 text-blue-800 p-1"
-            onClick={() => {
-              setSelectedTargets((prev) => {
-                if (prev.find((target) => target.id === card.id)) {
-                  return prev.filter((target) => target.id !== card.id);
-                } else {
-                  return [...prev, card];
-                }
-              });
-            }}
+            className="z-30 cursor-pointer hidden group-hover:block absolute top-1 left-1 bg-green-200 text-green-800 p-1"
+            onClick={handleClick}
           >
-            {isSelected ? "deselect" : "select"}
+            activate
           </span>
-        </>
-      )}
+        )}
+
+        {/* used for switching active character */}
+        {card.location === "CHARACTER" && isMyCard && !card.is_active && (
+          <span
+            className="z-30 cursor-pointer hidden group-hover:block absolute top-1 left-1 bg-green-200 text-green-800 p-1"
+            onClick={handleClick}
+          >
+            switch
+          </span>
+        )}
+        {/* used for selecting cards */}
+
+        <span
+          className="z-30 cursor-pointer hidden group-hover:block absolute top-10 left-1 bg-slate-200 text-blue-800 p-1"
+          onClick={() => {
+            setSelectedTargets((prev) => {
+              if (prev.find((target) => target.id === card.id)) {
+                return prev.filter((target) => target.id !== card.id);
+              } else {
+                return [...prev, card];
+              }
+            });
+          }}
+        >
+          {isSelected ? "deselect" : "select"}
+        </span>
+      </>
+      {/* )} */}
       {/* health */}
       {isSummon && (
         <div className="z-10 flex justify-between w-full">
