@@ -888,7 +888,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       </div> */}
       {/* //TODO: display dice */}
       <DiceDisplay dice={playerDice} isMyBoard={isMyBoard}></DiceDisplay>
-      {isMyBoard && <ElementalTuning />}
+      {isMyBoard && <ElementalTuning channel={channel} />}
     </div>
   );
 }
