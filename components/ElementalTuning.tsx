@@ -6,8 +6,13 @@ import {
   mySelectedCardsState,
   mySelectedDiceState,
 } from "@/recoil/atoms";
+import { RealtimeChannel } from "@supabase/supabase-js";
 import { useRecoilState, useRecoilValue } from "recoil";
-export default function ElementalTuning({}) {
+export default function ElementalTuning({
+  channel,
+}: {
+  channel: RealtimeChannel | null;
+}) {
   const [myCards, setMyCards] = useRecoilState(myInGameCardsState);
   const [myDice, setMyDice] = useRecoilState(myDiceState);
   const [selectedCards, setSelectedCards] =
@@ -29,12 +34,12 @@ export default function ElementalTuning({}) {
     }
     try {
       console.log("TUNING", myDice, selectedDice, cardToDiscard);
-      let updatedDice = subtractCost(myDice, selectedDice);
-      updatedDice = {
-        ...updatedDice,
-        OMNI: updatedDice.OMNI ? updatedDice.OMNI + 1 : 1,
+      let myUpdatedDice = subtractCost(myDice, selectedDice);
+      myUpdatedDice = {
+        ...myUpdatedDice,
+        OMNI: myUpdatedDice.OMNI ? myUpdatedDice.OMNI + 1 : 1,
       };
-      const updatedCards = myCards.map((card) => {
+      const myUpdatedCards = myCards.map((card) => {
         if (card.id === cardToDiscard.id) {
           return {
             ...card,
@@ -43,8 +48,13 @@ export default function ElementalTuning({}) {
         }
         return card;
       });
-      setMyCards(updatedCards as CardExtended[]);
-      setMyDice(updatedDice);
+      channel?.send({
+        type: "broadcast",
+        event: "updated_cards_and_dice",
+        payload: { myCards: myUpdatedCards, dice: myUpdatedDice },
+      });
+      setMyCards(myUpdatedCards as CardExtended[]);
+      setMyDice(myUpdatedDice);
       setSelectedDice({});
       setSelectedCards([]);
     } catch (e) {
