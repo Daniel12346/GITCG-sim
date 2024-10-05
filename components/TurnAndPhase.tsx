@@ -4,11 +4,7 @@ import {
   drawCards,
 } from "@/app/actions";
 import { CardExtended } from "@/app/global";
-import {
-  executeEffectsSequentially,
-  executePhaseEffectsForBothPlayers,
-  findEffectsThatTriggerOn,
-} from "@/app/utils";
+import { executePhaseEffectsForBothPlayers, PhaseName } from "@/app/utils";
 import {
   amIReadyForNextPhaseState,
   currentGameIDState,
@@ -18,8 +14,6 @@ import {
   isOpponentReadyForNextPhaseState,
   myInGameCardsState,
   myIDState,
-  opponentIDState,
-  opponentCardsState,
   myDiceState,
   opponentDiceState,
   opponentInGameCardsState,
@@ -45,78 +39,68 @@ export default ({}) => {
   const [opponentCards, setOpponentCards] = useRecoilState(
     opponentInGameCardsState
   );
-  const opponentID = useRecoilValue(opponentIDState);
   const [myCards, setMyCards] = useRecoilState(myInGameCardsState);
   const [myDice, setMyDice] = useRecoilState(myDiceState);
   const [opponentDice, setOpponentDice] = useRecoilState(opponentDiceState);
   const [amIPlayer1, setamIPlayer1] = useRecoilState(amIPlayer1State);
   //TODO: move to recoil atom ?
-  const [areDecksInitialized, setareDecksInitialized] = useState(false);
 
   useEffect(() => {
     const supabase = createClientComponentClient<Database>();
     const channel = supabase.channel("game:" + gameID, {
-      config: { presence: { key: myID }, broadcast: { self: true } },
+      config: { presence: { key: myID } },
     });
     channel
+      .on("presence", { event: "join" }, ({ key }) => {
+        //TODO:
+      })
+      .on("broadcast", { event: "initialize_board" }, ({ payload }) => {
+        setMyCards(payload.opponentCards);
+        setOpponentCards(payload.myCards);
+        setMyDice(payload.opponentDice);
+        setOpponentDice(payload.myDice);
+      })
       .on("broadcast", { event: "ready_for_next_phase" }, ({ payload }) => {
-        if (payload.playerID !== myID) {
-          setIsOpponentReadyForNextPhase(payload.isReadyForNextPhase);
-        } else {
-          setAmIReadyForNextPhase(payload.isReadyForNextPhase);
-        }
+        setIsOpponentReadyForNextPhase(payload.isReadyForNextPhase);
       })
       .on("broadcast", { event: "updated_cards" }, ({ payload }) => {
+        const { myUpdatedCards, opponentUpdatedCards } = payload;
         console.log(
-          "updated_cards",
-          payload.newCardsState.filter(
+          "received_cards",
+          payload,
+          myUpdatedCards?.filter((card: CardExt) => card.location === "HAND"),
+          opponentUpdatedCards?.filter(
             (card: CardExt) => card.location === "HAND"
           )
         );
-
-        //TODO: break into multiple events if possible
-        if (payload.playerID !== myID) {
-          setOpponentCards(payload.newCardsState);
-        }
-      })
-      .on("broadcast", { event: "start_next_phase" }, ({ payload }) => {
-        setAmIReadyForNextPhase((_) => false);
-        setIsOpponentReadyForNextPhase((_) => false);
-        let nextPhase: "PREPARATION" | "ROLL" | "ACTION" | "END";
-        console.log("start_next_phase", payload.currentPhase);
-        switch (payload.currentPhase) {
-          //the preparation phase only happens once at the beginning of the game
-          case "PREPARATION":
-            nextPhase = "ROLL";
-            break;
-          case "ROLL":
-            nextPhase = "ACTION";
-            break;
-          case "ACTION":
-            nextPhase = "END";
-            break;
-          case "END":
-            nextPhase = "ROLL";
-            break;
-          default:
-            nextPhase = "ROLL";
-            break;
-        }
-        if (payload.currentPhase == "END") {
-          setCurrentRound((prev) => prev + 1);
-        }
-        setCurrentPhase(nextPhase);
+        myUpdatedCards?.length && setOpponentCards(payload.myUpdatedCards);
+        opponentUpdatedCards?.length &&
+          setMyCards(payload.opponentUpdatedCards);
       })
       .on("broadcast", { event: "updated_dice" }, ({ payload }) => {
-        if (payload.playerID !== myID) {
-          setOpponentDice(payload.newDiceState);
-        }
+        console.log("updated_dice", payload, myID);
+        const { myUpdatedDice, opponentUpdatedDice } = payload;
+        myUpdatedDice && setOpponentDice(myUpdatedDice);
+        opponentUpdatedDice && setMyDice(opponentUpdatedDice);
+      })
+      .on("broadcast", { event: "updated_cards_and_dice" }, ({ payload }) => {
+        const { myCards, opponentCards, myDice, opponentDice } = payload;
+        myCards && setOpponentCards(myCards);
+        opponentCards && setMyCards(opponentCards);
+        myDice && setOpponentDice(myDice);
+        opponentDice && setMyDice(opponentDice);
       })
       .on("broadcast", { event: "switch_player" }, ({ payload }) => {
         setTurnPlayerID(payload.playerID);
       })
       .subscribe(async (status) => {
-        console.log("status", status);
+        if (status === "SUBSCRIBED") {
+          const presenceTrackStatus = await channel.track({
+            online_at: new Date().toISOString(),
+            cards: myCards,
+          });
+          console.log("turn and phase", presenceTrackStatus);
+        }
       });
     setChannel(channel);
     return () => {
@@ -126,131 +110,162 @@ export default ({}) => {
     };
   }, []);
   //making a separate effect to broadcast "start_next_phase" because the channel does not receive update recoil state
+  // useEffect(() => {
+  //   if (!channel) return;
+  //   if (amIReadyForNextPhase && isOpponentReadyForNextPhase) {
+  //     channel.send({
+  //       type: "broadcast",
+  //       event: "start_next_phase",
+  //       payload: { currentPhase, turnPlayerID },
+  //     });
+  //   }
+  // }, [amIReadyForNextPhase, isOpponentReadyForNextPhase]);
   useEffect(() => {
-    if (!channel) return;
-    if (amIReadyForNextPhase && isOpponentReadyForNextPhase) {
-      channel.send({
-        type: "broadcast",
-        event: "start_next_phase",
-        payload: { currentPhase, turnPlayerID },
-      });
-    }
-  }, [amIReadyForNextPhase, isOpponentReadyForNextPhase]);
-  useEffect(() => {
-    if (!channel) return;
+    console.log("currentPhase", currentPhase);
+
+    if (!channel || !currentPhase) return;
+    let myUpdatedCards = myCards;
+    let myUpdatedDice = myDice;
+    let opponentUpdatedCards = opponentCards;
+    let opponentUpdatedDice = opponentDice;
     switch (currentPhase) {
-      case "PREPARATION":
-        const randomDice = createRandomDice(8);
-        //TODO: display and reroll dice
-        channel.send({
-          type: "broadcast",
-          event: "dice_change",
-          payload: { dice: randomDice, playerID: myID },
-        });
-        setMyDice(randomDice);
-        setMyCards((prev) => prev && drawCards(prev, 5));
-        //TODO: switch cards
+      case "PREPARATION_PHASE":
         break;
-      case "ROLL":
+      case "ROLL_PHASE":
         //TODO: reroll dice
-        //TODO: are cards drawn in the first turn?
-        setMyCards((prev) => prev && drawCards(prev, 2));
+        myUpdatedCards = drawCards(myUpdatedCards, 2);
+        opponentUpdatedCards = drawCards(opponentUpdatedCards, 2);
         break;
-      case "ACTION":
-        if (
-          !amIPlayer1 ||
-          !myCards?.length ||
-          !myDice ||
-          !opponentCards?.length ||
-          !opponentDice
-        )
-          return;
-        alert("action phase");
-        const {
-          myUpdatedCards: myCardsAfterPhaseEffects,
-          myUpdatedDice: myDiceAfterPhaseEffects,
-          opponentUpdatedCards: opponentCardsAfterPhaseEffects,
-          opponentUpdatedDice: opponentDiceAfterPhaseEffects,
-          errorMessage,
-        } = executePhaseEffectsForBothPlayers({
-          phaseName: "ACTION_PHASE",
-          executeArgs: {
-            currentRound,
-            myCards,
-            myDice,
-            opponentCards,
-            opponentDice,
+      case "ACTION_PHASE":
+        break;
+    }
+    if (
+      !(
+        amIPlayer1 &&
+        myCards?.length &&
+        myDice &&
+        opponentCards?.length &&
+        opponentDice
+      )
+    )
+      return;
+    const {
+      myUpdatedCards: myCardsAfterPhaseEffects,
+      myUpdatedDice: myDiceAfterPhaseEffects,
+      opponentUpdatedCards: opponentCardsAfterPhaseEffects,
+      opponentUpdatedDice: opponentDiceAfterPhaseEffects,
+      errorMessage,
+    } = executePhaseEffectsForBothPlayers({
+      phaseName: currentPhase,
+      executeArgs: {
+        currentRound,
+        myCards: myUpdatedCards,
+        myDice: myUpdatedDice,
+        opponentCards: opponentUpdatedCards,
+        opponentDice: opponentUpdatedDice,
+      },
+    });
+    if (errorMessage) {
+      console.error(errorMessage);
+      return;
+    }
+    myUpdatedCards = myCardsAfterPhaseEffects;
+    myUpdatedDice = myDiceAfterPhaseEffects;
+    opponentUpdatedCards = opponentCardsAfterPhaseEffects;
+    opponentUpdatedDice = opponentDiceAfterPhaseEffects;
+    if (currentPhase === "END_PHASE") {
+      //reset usages on all cards and effects
+      const resetStatusesAndEffects = (cards: CardExtended[]) => {
+        return cards.map((card) => ({
+          ...card,
+          usages_this_turn: 0,
+          effects: card.effects.map((effect) => ({
+            ...effect,
+            usages_this_turn: 0,
+          })),
+          //reduce duration of all effects by 1
+          statuses: card.statuses?.map((status) => ({
+            ...status,
+            duration: status.duration - 1,
+          })),
+          hasUsedFoodThisTurn: false,
+        }));
+      };
+      myUpdatedCards = resetStatusesAndEffects(myUpdatedCards);
+      opponentUpdatedCards = resetStatusesAndEffects(opponentUpdatedCards);
+    }
+    console.log(
+      "cards in hand",
+      myUpdatedCards.filter((card) => card.location === "HAND"),
+      opponentUpdatedCards.filter((card) => card.location === "HAND")
+    );
+    setTimeout(() => {
+      channel
+        .send({
+          type: "broadcast",
+          event: "updated_cards_and_dice",
+          payload: {
+            myCards: myUpdatedCards,
+            myDice: myUpdatedDice,
+            opponentCards: opponentUpdatedCards,
+            opponentDice: opponentUpdatedDice,
           },
+        })
+        .then((res) => {
+          console.log("sent updated cards", res);
         });
-        if (errorMessage) {
-          console.error(errorMessage);
-          break;
-        }
-        console.log(
-          "myCardsAfterPhaseEffects",
-          myCardsAfterPhaseEffects,
-          "myDiceAfterPhaseEffects",
-          myDiceAfterPhaseEffects
-        );
-        setMyCards(myCardsAfterPhaseEffects);
-        setMyDice(myDiceAfterPhaseEffects);
-        setOpponentCards(opponentCardsAfterPhaseEffects);
-        setOpponentDice(opponentDiceAfterPhaseEffects);
-    }
-  }, [currentPhase]);
+    }, 300);
 
-  useEffect(() => {
-    if (!areDecksInitialized && myCards?.length && opponentCards?.length) {
-      setareDecksInitialized(true);
-    }
-  }, [myCards, opponentCards]);
+    setMyCards(myUpdatedCards);
+    setMyDice(myUpdatedDice);
+    setOpponentCards(opponentUpdatedCards);
+    setOpponentDice(opponentUpdatedDice);
+  }, [channel, currentPhase]);
 
-  //broadcast changes to cards
-  useEffect(() => {
-    setTimeout(() => {
-      myCards &&
-        myCards.length &&
-        channel
-          ?.send({
-            type: "broadcast",
-            event: "updated_cards",
-            payload: { playerID: myID, newCardsState: myCards },
-          })
-          .then((res) => console.log("updated_cards !:", res));
-    }, Math.random() * 1000);
-  }, [channel, myCards]);
 
-  useEffect(() => {
-    setTimeout(() => {
-      myDice &&
-        channel
-          ?.send({
-            type: "broadcast",
-            event: "updated_dice",
-            payload: { playerID: myID, newDiceState: myDice },
-          })
-          .then((res) => console.log("updated_dice", res));
-    }, 100 + Math.random() * 1000);
-  }, [channel, myCards]);
+
 
   //only happens once at the beginning of the game
   useEffect(() => {
-    areDecksInitialized && setCurrentPhase("PREPARATION");
-  }, [areDecksInitialized]);
+    !currentPhase &&
+      myCards &&
+      opponentCards &&
+      setCurrentPhase("PREPARATION_PHASE");
+  }, [myCards, opponentCards, currentPhase]);
+
+  useEffect(() => {
+    if (amIReadyForNextPhase && isOpponentReadyForNextPhase) {
+      if (currentPhase === "END_PHASE") {
+        setCurrentRound((prev) => prev + 1);
+      }
+      setCurrentPhase((prev) => {
+        if (!prev) return "PREPARATION_PHASE";
+        if (prev === "END_PHASE") {
+          return "ROLL_PHASE";
+        }
+        const phases: PhaseName[] = ["ROLL_PHASE", "ACTION_PHASE", "END_PHASE"];
+        const currentIndex = phases.indexOf(prev);
+        return phases[currentIndex + 1];
+      });
+      setAmIReadyForNextPhase(false);
+      setIsOpponentReadyForNextPhase(false);
+    }
+  }, [amIReadyForNextPhase, isOpponentReadyForNextPhase]);
 
   return (
     <div className="text-slate-100 flex gap-4">
-      <span>Turn {currentRound}</span>
+      <span>Round {currentRound}</span>
       <button
-        onClick={() => {
-          channel?.send({
+        onClick={async () => {
+          //TODO: fix
+          await channel?.send({
             type: "broadcast",
             event: "ready_for_next_phase",
             payload: {
-              playerID: myID,
               isReadyForNextPhase: !amIReadyForNextPhase,
             },
           });
+          setAmIReadyForNextPhase((prev) => !prev);
         }}
       >
         Move to next phase:
@@ -262,6 +277,12 @@ export default ({}) => {
         className="bg-blue-500"
         onClick={() => {
           if (!myCards?.length) return;
+          const updatedCards = drawCards(myCards, 2);
+          channel?.send({
+            type: "broadcast",
+            event: "updated_cards",
+            payload: { myUpdatedCards: updatedCards },
+          });
           setMyCards((prev) => prev && drawCards(prev, 2));
         }}
       >
@@ -275,20 +296,27 @@ export default ({}) => {
           const card = prompt("card name");
           if (!card) return;
           const newState = addOneCardFromDeckByName(myCards, card);
+          channel?.send({
+            type: "broadcast",
+            event: "updated_cards",
+            payload: { myUpdatedCards: newState },
+          });
           setMyCards(newState);
         }}
       >
         add card
       </button>
-      <button
+      {/* <button
         className="bg-pink-500"
         onClick={() => setMyDice({ ANEMO: 4, CRYO: 4 })}
       >
         create dice
-      </button>
+      </button> */}
 
       {/* ------------------- */}
-      <span>{currentPhase} PHASE</span>
+      <span>
+        {currentPhase} {amIPlayer1 ? "player1" : "player2"}
+      </span>
     </div>
   );
 };
