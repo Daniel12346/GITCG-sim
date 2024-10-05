@@ -1,13 +1,9 @@
 "use client";
 import Card from "@/components/Card";
 import CardDisplay from "@/components/CardDisplay";
-import DeckDisplay from "@/components/DeckDisplay";
-import DeckInfo from "@/components/DeckInfo";
-import { myCurrentDeckState, myCurrentDeckIDState } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import dynamic from "next/dynamic";
 import { Suspense, useEffect, useState } from "react";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { cardFromBasicInfo } from "../utils";
 const DeckDisplayNoSSR = dynamic(() => import("@/components/DeckDisplay"), {
   ssr: false,
@@ -26,7 +22,6 @@ export default function DeckBuilder() {
         .from("card_basic_info")
         .select("*, effect_basic_info(*)")
         .ilike("name", `%${searchKey}%`);
-      console.log(result);
       result.error && console.log(result.error);
       const cardsBasicInfo = result.data;
       const cards = cardsBasicInfo?.map((cardBasicInfo) => {
