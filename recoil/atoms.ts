@@ -94,7 +94,12 @@ export const myCurrentDeckIDState = atom<string>({
   default: "",
   effects_UNSTABLE: [persistAtom],
 });
-export const myCurrentDeckState = selector({
+type DeckCardsBasicInfo =
+  Database["public"]["Tables"]["deck_card_basic_info"]["Row"][];
+type Deck = Database["public"]["Tables"]["deck"]["Row"] & {
+  deck_card_basic_info: DeckCardsBasicInfo;
+};
+export const myCurrentDeckState = selector<Deck | null>({
   key: "myCurrentDeckState",
   get: async ({ get }) => {
     const supabase = createClientComponentClient<Database>();
@@ -111,7 +116,15 @@ export const myCurrentDeckState = selector({
 });
 
 //gets the basic info of all the cards in the deck along with their quantities in deck
-export const myCurrentDeckCardsBasicInfoState = selector({
+type CardBasicInfo = Database["public"]["Tables"]["card_basic_info"]["Row"];
+type EffectbasicInfo = Database["public"]["Tables"]["effect_basic_info"]["Row"];
+type CardWithQuantity = CardBasicInfo & {
+  quantity: number;
+  effect_basic_info: EffectbasicInfo[];
+};
+export const myCurrentDeckCardsBasicInfoState = selector<
+  CardWithQuantity[] | null
+>({
   key: "myCurrentDeckCardsBasicInfoState",
   get: async ({ get }) => {
     const supabase = createClientComponentClient<Database>();
@@ -151,30 +164,30 @@ export const opponentInGameCardsState = atom<CardExt[]>({
   default: [],
 });
 
-export const myInGameCardsInitialState = selector({
-  key: "myInGameCardsInitialState",
-  get: async ({ get }) => {
-    // const currentGameID = get(currentGameIDState);
-    const myCurrentDeckCardsBasicInfo = get(myCurrentDeckCardsBasicInfoState);
-    const myID = get(myIDState);
-    if (!myCurrentDeckCardsBasicInfo) return null;
-    let myDeckCardsInGame: CardExt[] = [];
-    console.log("myCurrentDeckCardsBasicInfo", myCurrentDeckCardsBasicInfo);
+// export const myInGameCardsInitialState = selector<CardExt[] | null>({
+//   key: "myInGameCardsInitialState",
+//   get: async ({ get }) => {
+//     // const currentGameID = get(currentGameIDState);
+//     const myCurrentDeckCardsBasicInfo = get(myCurrentDeckCardsBasicInfoState);
+//     const myID = get(myIDState);
+//     if (!myCurrentDeckCardsBasicInfo) return null;
+//     let myDeckCardsInGame: CardExt[] = [];
+//     console.log("myCurrentDeckCardsBasicInfo", myCurrentDeckCardsBasicInfo);
 
-    myCurrentDeckCardsBasicInfo.forEach((cardBasicInfo) => {
-      const quantity = cardBasicInfo.quantity || 1;
-      for (let i = 0; i < quantity; i++) {
-        const card = cardFromBasicInfo(cardBasicInfo, myID);
-        myDeckCardsInGame.push(card);
-      }
-    });
-    console.log("myDeckCardsInGame", myDeckCardsInGame);
-    return myDeckCardsInGame;
-  },
-});
-export const myInGameCardsState = atom({
+//     myCurrentDeckCardsBasicInfo.forEach((cardBasicInfo) => {
+//       const quantity = cardBasicInfo.quantity || 1;
+//       for (let i = 0; i < quantity; i++) {
+//         const card = cardFromBasicInfo(cardBasicInfo, myID);
+//         myDeckCardsInGame.push(card);
+//       }
+//     });
+//     console.log("myDeckCardsInGame", myDeckCardsInGame);
+//     return myDeckCardsInGame;
+//   },
+// });
+export const myInGameCardsState = atom<CardExt[]>({
   key: "myInGameCardsState",
-  default: myInGameCardsInitialState,
+  default: [],
 });
 
 export const currentActiveCharacterState = selector<CardExt | null>({
@@ -291,9 +304,9 @@ export const isGameOverState = atom<boolean>({
 export const amIPlayer1State = atom<boolean>({
   key: "amIPlayer1State",
 });
-export const currentPhaseState = atom<PhaseName>({
+export const currentPhaseState = atom<PhaseName | null>({
   key: "currentPhaseState",
-  default: "PREPARATION_PHASE",
+  default: null,
 });
 export const amIReadyForNextPhaseState = atom<boolean>({
   key: "amIReadyForNextPhaseState",
@@ -315,14 +328,14 @@ export const currentPlayerIDState = atom<string>({
   key: "currentPlayerIDState",
   default: "",
 });
-export const isMyTurnState = selector<boolean>({
-  key: "isMyTurnState",
-  get: ({ get }) => {
-    const currentPlayerID = get(currentPlayerIDState);
-    const myID = get(myIDState);
-    return currentPlayerID === myID;
-  },
-});
+// export const isMyTurnState = selector<boolean>({
+//   key: "isMyTurnState",
+//   get: ({ get }) => {
+//     const currentPlayerID = get(currentPlayerIDState);
+//     const myID = get(myIDState);
+//     return currentPlayerID === myID;
+//   },
+// });
 
 export const mySelectedCardsState = atom<CardExt[]>({
   key: "mySelectedCardsState",
