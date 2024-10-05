@@ -42,9 +42,9 @@ interface PlayerBoardProps {
   playerID?: string;
 }
 export default function PlayerBoard({ playerID }: PlayerBoardProps) {
-  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
   const gameID = useRecoilValue(currentGameIDState);
   const myID = useRecoilValue(myIDState);
+  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
 
   const [currentPlayerID, setCurrentPlayerID] =
     useRecoilState(currentPlayerIDState);
@@ -76,31 +76,38 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   const attacks = useRecoilValue(currentActiveCharacterAttacksState);
 
   useEffect(() => {
-    if (!gameID || !myID) return;
     const supabase = createClientComponentClient<Database>();
-    const ch = supabase
-      .channel("game-cards:" + gameID)
-      //TODO: give this a more specific name
-      .on("broadcast", { event: "state_update" }, ({ payload }) => {
-        const { effect, myCards, myDice, opponentCards, opponentDice } =
-          payload;
+    const channel = supabase.channel("game-updates:" + gameID, {
+      config: { presence: { key: myID } },
+    });
+    channel
+      .on("presence", { event: "join" }, ({ key }) => {
+        //TODO:
+      })
+      .on("broadcast", { event: "updated_cards_and_dice" }, ({ payload }) => {
+        const { myCards, opponentCards, myDice, opponentDice } = payload;
         myCards && setOpponentInGameCards(myCards);
-        myDice && setOpponentDice(myDice);
         opponentCards && setMyCards(opponentCards);
+        myDice && setOpponentDice(myDice);
         opponentDice && setMyDice(opponentDice);
       })
       .subscribe(async (status) => {
-        console.log("subscribed to activate_card", status);
+        if (status === "SUBSCRIBED") {
+          const presenceTrackStatus = await channel.track({
+            online_at: new Date().toISOString(),
+            cards: myCards,
+          });
+          console.log("player boards", presenceTrackStatus);
+        }
       });
-    setChannel(ch);
+    setChannel(channel);
     return () => {
-      console.log("unsubscribing in activate_card ");
-      channel && supabase.removeChannel(channel);
+      console.log("unsubscribing in turn and phase");
       setChannel(null);
+      supabase.removeChannel(channel);
     };
-  }, [gameID, myID]);
-
-  const handleSwitchCharacter = (card: CardExt) => {
+  }, []);
+  const handleSwitchCharacter = async (card: CardExt) => {
     if (!myCards) return;
 
     const hasActiveCharacter = myCards.find(
@@ -111,6 +118,21 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     let opponentUpdatedCards = opponentInGameCards;
     //if there is no active character, the card can be switched to active without a cost
     if (!hasActiveCharacter) {
+      myUpdatedCards = myCards.map((c) => {
+        if (c.id === card.id) {
+          return { ...c, is_active: true };
+        }
+        return c;
+      }) as CardExtended[];
+      console.log("channel", channel);
+      const res = await channel?.send({
+        type: "broadcast",
+        event: "updated_cards_and_dice",
+        payload: {
+          myCards: myUpdatedCards,
+        },
+      });
+      console.log("res", res);
       setMyCards(
         myCards.map((c) => {
           if (c.id === card.id) {
@@ -189,8 +211,9 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             opponentUpdatedCardsAfterEffectsTriggeredOnSwitch;
         }
       });
+      let diceAfterCost;
       try {
-        const diceAfterCost = subtractCost(myDice, cost);
+        diceAfterCost = subtractCost(myDice, cost);
         setMyDice(diceAfterCost);
         setMySelectedDice({});
       } catch (e) {
@@ -201,28 +224,26 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       opponentUpdatedCards && setOpponentInGameCards(opponentUpdatedCards);
       channel?.send({
         type: "broadcast",
-        event: "state_update",
+        event: "updated_cards_and_dice",
         payload: {
-          playerID: myID,
           myCards: myUpdatedCards,
-          myDice,
+          myDice: diceAfterCost,
           opponentCards: opponentUpdatedCards,
-          opponentDice,
         },
       });
     }
   };
-  const switchCurrentPlayer = () => {
-    const nextPlayerID = currentPlayerID === myID ? opponentID : myID;
-    setCurrentPlayerID(nextPlayerID);
-    channel?.send({
-      type: "broadcast",
-      event: "switch_player",
-      payload: {
-        playerID: nextPlayerID,
-      },
-    });
-  };
+  // const switchCurrentPlayer = () => {
+  //   const nextPlayerID = currentPlayerID === myID ? opponentID : myID;
+  //   setCurrentPlayerID(nextPlayerID);
+  //   channel?.send({
+  //     type: "broadcast",
+  //     event: "switch_player",
+  //     payload: {
+  //       playerID: nextPlayerID,
+  //     },
+  //   });
+  // };
 
   const handleEquipCard = (cardToEquip: CardExt) => {
     // setCurrentlyBeingEquipped(cardToEquip);
@@ -236,9 +257,10 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       return;
     }
     const targetCard = selectedTargetCards[0];
+    let updatedDice = null;
+
     //TODO: compare selectedDice to cardToEquip.cost
     if (cardToEquip.cost) {
-      let updatedDice = null;
       try {
         //TODO: fix this
         const difference = subtractCost(mySelectedDice, cardToEquip.cost);
@@ -266,6 +288,14 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         };
       }
       return card;
+    });
+    channel?.send({
+      type: "broadcast",
+      event: "updated_cards_and_dice",
+      payload: {
+        myCards: updatedCards,
+        myDice: updatedDice,
+      },
     });
     setMyCards(updatedCards as CardExtended[]);
     setSelectionPurpose(null);
@@ -374,10 +404,8 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     setSelectedTargets([]);
     channel?.send({
       type: "broadcast",
-      event: "state_update",
+      event: "updated_cards_and_dice",
       payload: {
-        effect,
-        playerID: myID,
         myCards: myCurrentCardsWithUpdatedEffectCard,
         myDice: myUpdatedDice,
         opponentCards: opponentUpdatedCards,
@@ -534,10 +562,9 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     channel?.send({
       type: "broadcast",
       //TODO: use this event or delete it
-      event: "state_update",
+      event: "updated_cards_and_dice",
       payload: {
-        effect: attackEffect,
-        playerID: myID,
+        // effect: attackEffect,
         myCards: myUpdatedCards,
         myDice: myUpdatedDice,
         opponentCards: opponentUpdatedCards,
@@ -609,6 +636,14 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     ) {
       setMyCards(updatedCards as CardExtended[]);
       setMyDice(updatedDice || myDice);
+      channel?.send({
+        type: "broadcast",
+        event: "updated_cards_and_dice",
+        payload: {
+          myCards: updatedCards,
+          myDice: updatedDice,
+        },
+      });
       return;
     } else {
       //TODO: check if this works
@@ -668,6 +703,17 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           (opponentInGameCardsAfterTriggeredEffects = opponentUpdatedCards);
         opponentUpdatedDice &&
           (opponentDiceAfterTriggeredEffects = opponentUpdatedDice);
+      });
+      console.log("player board channel", channel);
+      channel?.send({
+        type: "broadcast",
+        event: "updated_cards_and_dice",
+        payload: {
+          myCards: myCardsAfterTriggeredEffects,
+          myDice: myDiceAfterTriggeredEffects,
+          opponentCards: opponentInGameCardsAfterTriggeredEffects,
+          opponentDice: opponentDiceAfterTriggeredEffects,
+        },
       });
       setMyCards(myCardsAfterTriggeredEffects);
       setMyDice(myDiceAfterTriggeredEffects);
