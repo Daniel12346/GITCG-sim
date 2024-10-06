@@ -158,13 +158,6 @@ export default function LobbyChannel() {
       .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
         console.log("leave", key, leftPresences);
       })
-      // .on("broadcast", { event: "found_game" }, ({ payload }) => {
-      //   const { player1ID, player2ID, gameID } = payload as FoundGamePayload;
-      //   !isCancelled && setOpponentID(player1ID);
-      //   setCurrentGameID(gameID);
-      //   setAmIPlayer1(false);
-      //   router.push("/game/" + gameID);
-      // })
       .on("broadcast", { event: "game_data" }, ({ payload }) => {
         if (!isCancelled) {
           const {
