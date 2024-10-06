@@ -5,6 +5,7 @@ import {
   myCurrentDeckIDState,
   mySelectedCardsState,
   myIDState,
+  currentGameIDState,
   // isMyTurnState,
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
@@ -43,6 +44,8 @@ export default function Card({
   const isFaceDown = card.location === "HAND" && !isMyCard;
   const isFrozen = card.statuses?.find((status) => status.name === "FROZEN");
   const isSummon = card.location === "SUMMON";
+  const gameID = useRecoilValue(currentGameIDState);
+  const isInGame = !!gameID;
   // const isMyTurn = useRecoilValue(isMyTurnState);
   return (
     <div
@@ -86,21 +89,22 @@ export default function Card({
           </span>
         )}
         {/* used for selecting cards */}
-
-        <span
-          className="z-30 cursor-pointer hidden group-hover:block absolute top-10 left-1 bg-slate-200 text-blue-800 p-1"
-          onClick={() => {
-            setSelectedTargets((prev) => {
-              if (prev.find((target) => target.id === card.id)) {
-                return prev.filter((target) => target.id !== card.id);
-              } else {
-                return [...prev, card];
-              }
-            });
-          }}
-        >
-          {isSelected ? "deselect" : "select"}
-        </span>
+        {isInGame && (
+          <span
+            className="z-30 cursor-pointer hidden group-hover:block absolute top-10 left-1 bg-slate-200 text-blue-800 p-1"
+            onClick={() => {
+              setSelectedTargets((prev) => {
+                if (prev.find((target) => target.id === card.id)) {
+                  return prev.filter((target) => target.id !== card.id);
+                } else {
+                  return [...prev, card];
+                }
+              });
+            }}
+          >
+            {isSelected ? "deselect" : "select"}
+          </span>
+        )}
       </>
       {/* )} */}
       {/* health */}
