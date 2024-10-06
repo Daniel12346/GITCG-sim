@@ -566,7 +566,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       payload: {
         // effect: attackEffect,
         myCards: myUpdatedCards,
-        myDice: myUpdatedDice,
+        myDice: myUpdatedDice || myDiceAfterCost,
         opponentCards: opponentUpdatedCards,
         opponentDice: opponentUpdatedDice,
       },
