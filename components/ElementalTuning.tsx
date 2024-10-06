@@ -51,7 +51,7 @@ export default function ElementalTuning({
       channel?.send({
         type: "broadcast",
         event: "updated_cards_and_dice",
-        payload: { myCards: myUpdatedCards, dice: myUpdatedDice },
+        payload: { myCards: myUpdatedCards, myDice: myUpdatedDice },
       });
       setMyCards(myUpdatedCards as CardExtended[]);
       setMyDice(myUpdatedDice);
