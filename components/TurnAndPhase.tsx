@@ -214,16 +214,13 @@ export default ({}) => {
         .then((res) => {
           console.log("sent updated cards", res);
         });
-    }, 300);
+    }, 400);
 
     setMyCards(myUpdatedCards);
     setMyDice(myUpdatedDice);
     setOpponentCards(opponentUpdatedCards);
     setOpponentDice(opponentUpdatedDice);
   }, [channel, currentPhase]);
-
-
-
 
   //only happens once at the beginning of the game
   useEffect(() => {
