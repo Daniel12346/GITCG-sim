@@ -235,12 +235,6 @@ export const currentViewedCardState = atom<CardExt | null>({
   key: "currentViewedCardState",
   default: null,
 });
-
-export const gameChannelState = atom<RealtimeChannel | null>({
-  key: "gameChannel",
-  default: null,
-});
-
 //TODO: use this
 export const gameState = atom<Database["public"]["Tables"]["game"]["Row"]>({
   key: "gameState",
@@ -328,14 +322,14 @@ export const currentPlayerIDState = atom<string>({
   key: "currentPlayerIDState",
   default: "",
 });
-// export const isMyTurnState = selector<boolean>({
-//   key: "isMyTurnState",
-//   get: ({ get }) => {
-//     const currentPlayerID = get(currentPlayerIDState);
-//     const myID = get(myIDState);
-//     return currentPlayerID === myID;
-//   },
-// });
+export const isMyTurnState = selector<boolean>({
+  key: "isMyTurnState",
+  get: ({ get }) => {
+    const currentPlayerID = get(currentPlayerIDState);
+    const myID = get(myIDState);
+    return currentPlayerID === myID;
+  },
+});
 
 export const mySelectedCardsState = atom<CardExt[]>({
   key: "mySelectedCardsState",
