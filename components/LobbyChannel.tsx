@@ -9,6 +9,7 @@ import {
   opponentInGameCardsState,
   myDiceState,
   opponentDiceState,
+  currentPlayerIDState,
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -33,6 +34,7 @@ export default function LobbyChannel() {
   const setOpponentCards = useSetRecoilState(opponentInGameCardsState);
   const setMyDice = useSetRecoilState(myDiceState);
   const setOpponentDice = useSetRecoilState(opponentDiceState);
+  const setCurrentPlayerID = useSetRecoilState(currentPlayerIDState);
   //TDO: use or remove
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
   const router = useRouter();
@@ -140,6 +142,7 @@ export default function LobbyChannel() {
           setCurrentGameID(data[0].id);
           setOpponentID(data[0].player2_id);
           setAmIPlayer1(true);
+          setCurrentPlayerID(data[0].player1_id);
           myCards && setMyCards(myCards as CardExt[]);
           opponentCards && setOpponentCards(opponentCards);
           setMyDice(myDice);
