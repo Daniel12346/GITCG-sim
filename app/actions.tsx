@@ -150,8 +150,7 @@ export const getRandomElement = (): DieElementName => {
   return elements[Math.floor(Math.random() * elements.length)];
 };
 export const createRandomDice = (amount: number) => {
-  //just for testing, //TODO: remove
-  const result: Dice = { OMNI: amount };
+  const result: Dice = {};
 
   for (let i = 0; i < amount; i++) {
     const randomElement = getRandomElement();
