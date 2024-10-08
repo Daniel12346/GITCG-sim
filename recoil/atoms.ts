@@ -290,9 +290,16 @@ export const isGameStartedState = atom<boolean>({
   key: "hasGameStartedState",
   default: false,
 });
-export const isGameOverState = atom<boolean>({
+export const gameWinnerIDState = atom<string>({
+  key: "gameWinnerIDState",
+  default: "",
+});
+export const isGameOverState = selector<boolean>({
   key: "isGameOverState",
-  default: false,
+  get: ({ get }) => {
+    const gameWinnerID = get(gameWinnerIDState);
+    return !!gameWinnerID;
+  },
 });
 //TODO: restrict strings to only valid phase names
 export const amIPlayer1State = atom<boolean>({
@@ -329,6 +336,11 @@ export const isMyTurnState = selector<boolean>({
     const myID = get(myIDState);
     return currentPlayerID === myID;
   },
+});
+
+export const amIRerollingState = atom<boolean>({
+  key: "amIRerollingState",
+  default: false,
 });
 
 export const mySelectedCardsState = atom<CardExt[]>({
