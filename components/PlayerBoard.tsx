@@ -26,6 +26,7 @@ import {
 } from "@/app/actions";
 import { CardExtended } from "@/app/global";
 import {
+  broadcastSwitchPlayer,
   calculateTotalDice,
   findCostModifyingEffects,
   findEffectsThatTriggerOn,
@@ -36,6 +37,7 @@ import CardAttack from "./CardAttack";
 import ElementalTuning from "./ElementalTuning";
 import { findEffectLogic } from "@/app/cardEffects";
 import { getCreationDisplayComponentForCard } from "./CreationDisplay";
+import DiceReroll from "./DiceReroll";
 
 //TODO: move to another file
 interface PlayerBoardProps {
@@ -84,6 +86,10 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       .on("presence", { event: "join" }, ({ key }) => {
         //TODO:
       })
+      .on("broadcast", { event: "switch_player" }, ({ payload }) => {
+        const { playerID } = payload;
+        setCurrentPlayerID(playerID);
+      })
       .on("broadcast", { event: "updated_cards_and_dice" }, ({ payload }) => {
         const { myCards, opponentCards, myDice, opponentDice } = payload;
         myCards && setOpponentInGameCards(myCards);
@@ -109,7 +115,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   }, []);
   const handleSwitchCharacter = async (card: CardExt) => {
     if (!myCards) return;
-
     const hasActiveCharacter = myCards.find(
       (card) => card.location === "CHARACTER" && card.is_active
     );
@@ -169,6 +174,12 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           includeCostModifiers: true,
         }
       );
+      //switching character is not a fast action by default
+      let isSwitchFastAction = false;
+      if (switchedFrom?.health === 0) {
+        //switching from a defeated character is a fast action
+        isSwitchFastAction = true;
+      }
       effectsThatTriggerOnSwitch.forEach((effect) => {
         const effectLogic = findEffectLogic(effect);
         if (!effectLogic?.execute) return;
@@ -178,6 +189,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             opponentUpdatedCardsAfterEffectsTriggeredOnSwitch,
           modifiedCost,
           errorMessage,
+          isFastAction,
         } = effectLogic.execute({
           effect,
           playerID: myID,
@@ -210,6 +222,9 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           opponentUpdatedCards =
             opponentUpdatedCardsAfterEffectsTriggeredOnSwitch;
         }
+        if (isFastAction !== undefined) {
+          isSwitchFastAction = isFastAction;
+        }
       });
       let diceAfterCost;
       try {
@@ -222,15 +237,36 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       }
       myUpdatedCards && setMyCards(myUpdatedCards);
       opponentUpdatedCards && setOpponentInGameCards(opponentUpdatedCards);
-      channel?.send({
-        type: "broadcast",
-        event: "updated_cards_and_dice",
-        payload: {
-          myCards: myUpdatedCards,
-          myDice: diceAfterCost,
-          opponentCards: opponentUpdatedCards,
-        },
-      });
+      channel
+        ?.send({
+          type: "broadcast",
+          event: "updated_cards_and_dice",
+          payload: {
+            myCards: myUpdatedCards,
+            myDice: diceAfterCost,
+            opponentCards: opponentUpdatedCards,
+          },
+        })
+        //TODO: combine into one broadcast
+        .then(() => {
+          //passing the turn to the opponent if the switch was not a fast action
+          if (!isSwitchFastAction) {
+            setCurrentPlayerID(opponentID);
+            setTimeout(() => {
+              channel
+                ?.send({
+                  type: "broadcast",
+                  event: "switch_player",
+                  payload: {
+                    playerID: opponentID,
+                  },
+                })
+                .then((res) => {
+                  console.log("switched player", res);
+                });
+            }, 400);
+          }
+        });
     }
   };
   // const switchCurrentPlayer = () => {
@@ -769,6 +805,9 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                   attack={attack}
                   handleAttack={() => {
                     activateAttackEffect(attack);
+                    channel &&
+                      broadcastSwitchPlayer({ channel, playerID: opponentID });
+                    setCurrentPlayerID(opponentID);
                     setMySelectedDice({});
                   }}
                 />
@@ -889,6 +928,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       {/* //TODO: display dice */}
       <DiceDisplay dice={playerDice} isMyBoard={isMyBoard}></DiceDisplay>
       {isMyBoard && <ElementalTuning channel={channel} />}
+      {isMyBoard && <DiceReroll channel={channel} />}
     </div>
   );
 }
