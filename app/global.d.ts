@@ -34,6 +34,7 @@ interface CardExtended extends Card {
   defeatedInTurn?: number;
   statuses?: CardStatus[];
   max_usages?: number;
+  isCombatAction?: boolean;
 }
 type BoardT = {
   id: string;
