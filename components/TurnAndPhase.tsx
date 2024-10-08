@@ -18,21 +18,26 @@ import {
   opponentDiceState,
   opponentInGameCardsState,
   amIPlayer1State,
+  isMyTurnState,
+  gameWinnerIDState,
+  opponentIDState,
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { RealtimeChannel } from "@supabase/supabase-js";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 
 export default ({}) => {
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
   const gameID = useRecoilValue(currentGameIDState);
   const myID = useRecoilValue(myIDState);
+  const opponentID = useRecoilValue(opponentIDState);
   const [isOpponentReadyForNextPhase, setIsOpponentReadyForNextPhase] =
     useRecoilState(isOpponentReadyForNextPhaseState);
   const [amIReadyForNextPhase, setAmIReadyForNextPhase] = useRecoilState(
     amIReadyForNextPhaseState
   );
+  const [gameWinnerID, setGameWinnerID] = useRecoilState(gameWinnerIDState);
   const [currentPhase, setCurrentPhase] = useRecoilState(currentPhaseState);
   const [currentRound, setCurrentRound] = useRecoilState(currentRoundState);
   const [turnPlayerID, setTurnPlayerID] = useRecoilState(currentPlayerIDState);
@@ -43,7 +48,7 @@ export default ({}) => {
   const [myDice, setMyDice] = useRecoilState(myDiceState);
   const [opponentDice, setOpponentDice] = useRecoilState(opponentDiceState);
   const [amIPlayer1, setamIPlayer1] = useRecoilState(amIPlayer1State);
-  //TODO: move to recoil atom ?
+  const isMyTurn = useRecoilValue(isMyTurnState);
 
   useEffect(() => {
     const supabase = createClientComponentClient<Database>();
@@ -65,20 +70,11 @@ export default ({}) => {
       })
       .on("broadcast", { event: "updated_cards" }, ({ payload }) => {
         const { myUpdatedCards, opponentUpdatedCards } = payload;
-        console.log(
-          "received_cards",
-          payload,
-          myUpdatedCards?.filter((card: CardExt) => card.location === "HAND"),
-          opponentUpdatedCards?.filter(
-            (card: CardExt) => card.location === "HAND"
-          )
-        );
         myUpdatedCards?.length && setOpponentCards(payload.myUpdatedCards);
         opponentUpdatedCards?.length &&
           setMyCards(payload.opponentUpdatedCards);
       })
       .on("broadcast", { event: "updated_dice" }, ({ payload }) => {
-        console.log("updated_dice", payload, myID);
         const { myUpdatedDice, opponentUpdatedDice } = payload;
         myUpdatedDice && setOpponentDice(myUpdatedDice);
         opponentUpdatedDice && setMyDice(opponentUpdatedDice);
@@ -91,7 +87,11 @@ export default ({}) => {
         opponentDice && setMyDice(opponentDice);
       })
       .on("broadcast", { event: "switch_player" }, ({ payload }) => {
-        setTurnPlayerID(payload.playerID);
+        const { playerID } = payload;
+        playerID && setTurnPlayerID(playerID);
+      })
+      .on("broadcast", { event: "game_over" }, ({ payload }) => {
+        setGameWinnerID(payload.gameWinnerID);
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
@@ -109,20 +109,7 @@ export default ({}) => {
       supabase.removeChannel(channel);
     };
   }, []);
-  //making a separate effect to broadcast "start_next_phase" because the channel does not receive update recoil state
-  // useEffect(() => {
-  //   if (!channel) return;
-  //   if (amIReadyForNextPhase && isOpponentReadyForNextPhase) {
-  //     channel.send({
-  //       type: "broadcast",
-  //       event: "start_next_phase",
-  //       payload: { currentPhase, turnPlayerID },
-  //     });
-  //   }
-  // }, [amIReadyForNextPhase, isOpponentReadyForNextPhase]);
   useEffect(() => {
-    console.log("currentPhase", currentPhase);
-
     if (!channel || !currentPhase) return;
     let myUpdatedCards = myCards;
     let myUpdatedDice = myDice;
@@ -194,11 +181,6 @@ export default ({}) => {
       myUpdatedCards = resetStatusesAndEffects(myUpdatedCards);
       opponentUpdatedCards = resetStatusesAndEffects(opponentUpdatedCards);
     }
-    console.log(
-      "cards in hand",
-      myUpdatedCards.filter((card) => card.location === "HAND"),
-      opponentUpdatedCards.filter((card) => card.location === "HAND")
-    );
     setTimeout(() => {
       channel
         .send({
@@ -229,6 +211,46 @@ export default ({}) => {
       opponentCards &&
       setCurrentPhase("PREPARATION_PHASE");
   }, [myCards, opponentCards, currentPhase]);
+
+  useEffect(() => {
+    if (!amIPlayer1 || !myCards?.length || !opponentCards?.length) return;
+    const allCharactersHaveBeenDefeated = (cards: CardExtended[]) => {
+      return (
+        cards.filter(
+          (card) => card.location === "CHARACTER" && card.health === 0
+        ).length === 3
+      );
+    };
+    if (allCharactersHaveBeenDefeated(myCards)) {
+      setTimeout(() => {
+        channel?.send({
+          type: "broadcast",
+          event: "game_over",
+          payload: { gameWinnerID: opponentID },
+        });
+      }, 400);
+      setGameWinnerID(opponentID);
+    } else if (allCharactersHaveBeenDefeated(opponentCards)) {
+      setTimeout(() => {
+        channel?.send({
+          type: "broadcast",
+          event: "game_over",
+          payload: { gameWinnerID: myID },
+        });
+      }, 400);
+      setGameWinnerID(myID);
+    }
+  }, [myCards, opponentCards]);
+
+  useEffect(() => {
+    //TODO: redirect to home
+    if (!gameWinnerID) return;
+    if (gameWinnerID === myID) {
+      alert("You won!");
+    } else {
+      alert("You lost");
+    }
+  }, [gameWinnerID]);
 
   useEffect(() => {
     if (amIReadyForNextPhase && isOpponentReadyForNextPhase) {
@@ -312,6 +334,7 @@ export default ({}) => {
 
       {/* ------------------- */}
       <span>
+        {isMyTurn && "My turn"}
         {currentPhase} {amIPlayer1 ? "player1" : "player2"}
       </span>
     </div>
