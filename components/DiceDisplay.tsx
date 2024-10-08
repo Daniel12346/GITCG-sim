@@ -50,7 +50,7 @@ const Die = ({
     <div
       key={element + isMyBoard}
       onClick={handleSelectDie}
-      className={`text-sm w-4 h-4 ${bgColors[element]} ${
+      className={`text-sm w-4 h-4 rotate-45 ${bgColors[element]} ${
         isMyBoard && isSelected && "ring-2 ring-gray-700"
       }`}
     ></div>
@@ -78,7 +78,7 @@ const DiceOfElement = ({
 
 export default function DiceDisplay({ dice, isMyBoard }: DiceDisplayProps) {
   return (
-    <ul className="bg-yellow-50 flex gap-1 flex-wrap">
+    <ul className="bg-yellow-50 flex gap-2 p-3 flex-wrap">
       {Object.entries(dice)
         .sort()
         .map(([element, amount]) => (
