@@ -43,6 +43,7 @@ export default function Card({
   const isSelected = selectedTargets.find((target) => target.id === card.id);
   const isFaceDown = card.location === "HAND" && !isMyCard;
   const isFrozen = card.statuses?.find((status) => status.name === "FROZEN");
+  const isDefeated = card.location === "CHARACTER" && card.health === 0;
   const isSummon = card.location === "SUMMON";
   const gameID = useRecoilValue(currentGameIDState);
   const isInGame = !!gameID;
@@ -50,7 +51,9 @@ export default function Card({
   return (
     <div
       className={`group bg-blue-200 flex flex-col items-center relative h-24 w-16 border-4
-         border-orange-300 rounded-md transition-transform duration-300 ease-in-out
+         border-orange-300 
+         ${isDefeated && "border-gray-400"}
+         rounded-md transition-transform duration-300 ease-in-out
         ${isSelected && "ring-4 ring-blue-600"}
         ${card && card.is_active && "scale-125"}
         `}
@@ -62,6 +65,7 @@ export default function Card({
       <div
         className={`absolute top-0 left-0 w-full h-full z-10 bg-blue-200 opacity-0
           ${isFrozen && "opacity-60 bg-blue-500"}
+          ${isDefeated && "opacity-80 bg-gray-500"}
           `}
       ></div>
       <div className="z-10 flex justify-between w-full">
