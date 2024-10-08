@@ -1,13 +1,6 @@
 import { uuid } from "uuidv4";
-import {
-  effects,
-  findEffectLogic,
-  EventType,
-  ExecuteEffect,
-  TriggerEvents,
-  ExecuteEffectParams,
-} from "./cardEffects";
-import { SupabaseClient } from "@supabase/supabase-js";
+import { findEffectLogic, EventType, ExecuteEffectParams } from "./cardEffects";
+import { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { DieElementNameT } from "./global";
 
 type CardBasicInfo = Database["public"]["Tables"]["card_basic_info"]["Row"];
@@ -45,6 +38,7 @@ export const cardFromBasicInfo = (
     equipped_to_id: null,
     equippedTo: null,
     wasActivatedThisTurn: false,
+    isCombatAction: cardBasicInfo.is_combat_action || false,
 
     //@ts-ignore
     effects: cardBasicInfo.effect_basic_info.map(
@@ -321,10 +315,19 @@ const addStatusToCard = (
   duration?: number,
   amount?: number
 ) => {
-  const statuses = [
-    ...(card.statuses || []),
-    { name: status, turnsLeft: duration || 1, amount },
-  ];
+  const alreadyHasStatus = card.statuses?.find((s) => s.name === status);
+  const statuses = alreadyHasStatus
+    ? [
+        ...(card.statuses || []),
+        { name: status, turnsLeft: duration || 1, amount },
+      ]
+    : card.statuses?.map((s) => {
+        if (s.name === status) {
+          //TODO: how much to increase duration by?
+          return { ...s, turnsLeft: s.turnsLeft + (duration || 1), amount };
+        }
+        return s;
+      });
   return {
     ...card,
     statuses,
@@ -937,4 +940,45 @@ export const executePhaseEffectsForBothPlayers = ({
     opponentUpdatedCards: opponentUpdatedCardsAfterPhaseEffectsOpponentSide,
     opponentUpdatedDice: opponentUpdatedDiceAfterPhaseEffectsOpponentSide,
   };
+};
+
+export const broadcastSwitchPlayer = ({
+  channel,
+  playerID,
+}: {
+  channel: RealtimeChannel;
+  playerID: string;
+}) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      channel
+        ?.send({
+          type: "broadcast",
+          event: "switch_player",
+          payload: { playerID },
+        })
+        .then(resolve)
+        .catch(reject);
+    }, 400);
+  });
+};
+
+export const broadcastUpdatedCardsAndDice = ({
+  channel,
+  myCards,
+  myDice,
+  opponentCards,
+  opponentDice,
+}: {
+  channel: RealtimeChannel;
+  myCards?: CardExt[];
+  myDice?: Dice;
+  opponentCards?: CardExt[];
+  opponentDice?: Dice;
+}) => {
+  return channel?.send({
+    type: "broadcast",
+    event: "updated_cards_and_dice",
+    payload: { myCards, myDice },
+  });
 };
