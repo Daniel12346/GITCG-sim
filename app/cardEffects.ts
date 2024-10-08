@@ -240,6 +240,7 @@ export type ExecuteEffect = (params: ExecuteEffectParams) => {
   errorMessage?: string;
   modifiedCost?: Cost;
   modifiedDamage?: number;
+  isFastAction?: boolean;
 };
 
 export type TriggerEvents = EventType[] | null;
@@ -725,6 +726,14 @@ export const effects: {
     },
   },
 
+  //Leave It To Me!
+  "11d9e029-7d7e-4239-904e-d3b6600f1c84": {
+    triggerOn: ["SWITCH_CHARACTER"],
+    execute: ({ triggerContext, myCards, thisCard, effect }) => {
+      //TODO: check...
+      return { isFastAction: true };
+    },
+  },
   //-----------------WEAPONS-------------------
 
   //Traveler's Handy Sword
