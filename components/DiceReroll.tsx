@@ -40,6 +40,7 @@ export default function DiceReroll({
       channel && broadcastUpdatedCardsAndDice({ channel, myDice: updatedDice });
       setMyDice(updatedDice);
       setSelectedDice({});
+      setAmIRerolling(false);
     } catch (e) {
       console.log("Error rerolling dice", e);
     }
