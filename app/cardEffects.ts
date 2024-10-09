@@ -130,21 +130,43 @@ const executeAttack = ({
 };
 
 const makeExecuteFunctionOfElementalRelicWith2UnalignedCost = (
-  element: CostElementName
+  element: CostElementName,
+  baseEffectID: string
 ): ExecuteEffect => {
-  return ({ triggerContext }) => {
+  return ({ triggerContext, myCards, thisCard, effect }) => {
+    thisCard =
+      thisCard ||
+      (effect && myCards.find((card) => card.id === effect.card_id));
     //TODO: check if this card is equipped
     let cost = triggerContext?.cost;
     if (!triggerContext) {
       return { errorMessage: "No trigger context" };
+    }
+    const thisEffect = thisCard?.effects.find(
+      (eff) => eff.effect_basic_info_id === baseEffectID
+    );
+    //returning {} means this effect won't affect the cost of the event or the state of the cards but it will still be executed
+    if (thisEffect?.usages_this_turn && thisEffect.usages_this_turn >= 1) {
+      return {};
     }
     if (!["ATTACK", "EQUIP_TALENT"].includes(triggerContext.eventType)) {
       return {};
     }
     try {
       cost = subtractCost({ ...cost }, { [element]: 1 }) as Cost;
+      //even if the cost is not reduced, the effect should still be executed
     } finally {
-      return { modifiedCost: cost };
+      const myCardsWithUpdatedEffects = myCards.map((card) => {
+        if (card.id === thisCard?.id) {
+          return {
+            ...card,
+            effects: increaseEffectUsages(card, baseEffectID),
+          };
+        } else {
+          return card;
+        }
+      });
+      return { modifiedCost: cost, myUpdatedCards: myCardsWithUpdatedEffects };
     }
   };
 };
@@ -645,12 +667,18 @@ export const effects: {
   //Mask of Solitude Basalt
   "85247510-9f6b-4d6e-8da0-55264aba3c8b": {
     triggerOn: ["ATTACK", "EQUIP_TALENT"],
-    execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost("GEO"),
+    execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost(
+      "GEO",
+      "85247510-9f6b-4d6e-8da0-55264aba3c8b"
+    ),
   },
   //Viridescent Venerer's Diadem
   "176b463b-fa66-454b-94f6-b81a60ff5598": {
     triggerOn: ["ATTACK", "EQUIP_TALENT"],
-    execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost("ANEMO"),
+    execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost(
+      "ANEMO",
+      "176b463b-fa66-454b-94f6-b81a60ff5598"
+    ),
   },
   //TODO: add other elemental relics
 
