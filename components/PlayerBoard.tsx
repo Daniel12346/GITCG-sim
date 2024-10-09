@@ -118,7 +118,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     const hasActiveCharacter = myCards.find(
       (card) => card.location === "CHARACTER" && card.is_active
     );
-    //TODO: will myCards have the most recent state?
     let myUpdatedCards = myCards;
     let opponentUpdatedCards = opponentInGameCards;
     //if there is no active character, the card can be switched to active without a cost
@@ -137,7 +136,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           myCards: myUpdatedCards,
         },
       });
-      console.log("res", res);
       setMyCards(
         myCards.map((c) => {
           if (c.id === card.id) {
@@ -148,10 +146,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       );
     } else {
       let cost = mySelectedDice;
-      if (calculateTotalDice(mySelectedDice) !== 1) {
-        setErrorMessage("Incorrect number of dice");
-        return;
-      }
       const {
         errorMessage,
         myUpdatedCards: myUpdatedCardsAfterSwitch,
@@ -226,6 +220,10 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           isSwitchFastAction = isFastAction;
         }
       });
+      if (calculateTotalDice(mySelectedDice) !== calculateTotalDice(cost)) {
+        setErrorMessage("Incorrect number of dice");
+        return;
+      }
       let diceAfterCost;
       try {
         diceAfterCost = subtractCost(myDice, cost);
@@ -319,8 +317,11 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       if (card.id === cardToEquip.id) {
         return {
           ...card,
-          location: "EQUIPPED",
+          location: card.subtype?.includes("EQUIPMENT")
+            ? "EQUIPPED"
+            : "DISCARDED",
           equippedTo: targetCard.id,
+          wasActivatedThisTurn: true,
         };
       }
       return card;
@@ -454,12 +455,10 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     const attackerCard = myCards.find((c) => c.id === attackEffect.card_id);
     if (attackEffect.effectType === "ELEMENTAL_BURST") {
       if (!attackerCard) {
-        setErrorMessage("No effect card");
-        return;
+        return { errorMessage: "No attacker card found" };
       }
       if (attackerCard.location !== "CHARACTER") {
-        setErrorMessage("Effect card not a character");
-        return;
+        return { errorMessage: "Effect card not a character" };
       }
       //TODO: uncomment this
       // if (effectCard.energy !== effectCard.max_energy) {
@@ -471,12 +470,10 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     const effectLogic = findEffectLogic(attackEffect);
     if (effectLogic.requiredTargets) {
       if (!selectedTargetCards) {
-        setErrorMessage("No target selected");
-        return;
+        return { errorMessage: "No target selected" };
       }
       if (selectedTargetCards.length !== effectLogic.requiredTargets) {
-        setErrorMessage("Incorrect number of targets");
-        return;
+        return { errorMessage: "Incorrect number of targets" };
       }
     }
     //attack effects have a cost
@@ -521,8 +518,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         });
 
         if (errorMessage) {
-          setErrorMessage(errorMessage);
-          return;
+          return { errorMessage };
         }
         if (myUpdatedCardsAfterCostModifyingEffect) {
           myUpdatedCards = myUpdatedCardsAfterCostModifyingEffect;
@@ -534,20 +530,18 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       try {
         //checking if there are enough dice among the selected dice
         if (calculateTotalDice(mySelectedDice) !== calculateTotalDice(cost)) {
-          throw new Error("Incorrect dice amount");
+          return { errorMessage: "Incorrect number of dice" };
         }
         //subtracting the cost from the selected dice to check if the dice are correct
         subtractCost(mySelectedDice, cost);
       } catch (e) {
-        setErrorMessage("Incorrect dice amount");
-        return;
+        return { errorMessage: "Incorrect dice" };
       }
       //if there are enough dice, subtract the selected dice from the total dice
       try {
         myDiceAfterCost = subtractCost(myDice, mySelectedDice);
       } catch (e) {
-        setErrorMessage("Not enough total dice");
-        return;
+        return { errorMessage: "Not enough total dice" };
       }
     }
 
@@ -573,8 +567,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       myUpdatedCards = myUpdatedCardsAfterAttackEffect;
     }
     if (errorMessage) {
-      setErrorMessage(errorMessage);
-      return;
+      return { errorMessage };
     }
     if (attackEffect.effectType === "ELEMENTAL_BURST") {
       if (myUpdatedCards) {
@@ -590,41 +583,28 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         }) as CardExtended[];
       }
     }
-    myUpdatedCards && setMyCards(myUpdatedCards);
-    setMyDice(myUpdatedDice || myDiceAfterCost);
-    opponentUpdatedCards && setOpponentInGameCards(opponentUpdatedCards);
-    opponentUpdatedDice && setOpponentDice(opponentUpdatedDice);
-    setSelectedTargets([]);
-    channel?.send({
-      type: "broadcast",
-      //TODO: use this event or delete it
-      event: "updated_cards_and_dice",
-      payload: {
-        // effect: attackEffect,
-        myCards: myUpdatedCards,
-        myDice: myUpdatedDice || myDiceAfterCost,
-        opponentCards: opponentUpdatedCards,
-        opponentDice: opponentUpdatedDice,
-      },
-    });
+    return {
+      myUpdatedCards,
+      myUpdatedDice: myUpdatedDice || myDiceAfterCost,
+      opponentUpdatedCards,
+      opponentUpdatedDice,
+      errorMessage,
+    };
   };
   //TODO: make equipping work with this
   const activateCard = (card: CardExt) => {
-    // if (card.subtype?.includes("EQUIPMENT")) {
-    //   setCurrentlyBeingEquipped(card);
-    //   setRequiredTargets(1);
-    //   setSelectionPurpose("EQUIP");
-    //   setAmSelectingTargets(true);
-    //   return;
-    // }
+    const isEquipment = card.subtype?.includes("EQUIPMENT");
+    const isFood = card.subtype === "EVENT_FOOD";
+    if ((isEquipment || isFood) && selectedTargetCards.length !== 1) {
+      setErrorMessage("Incorrect number of targets");
+      return;
+    }
     if (!myCards) return;
     let updatedDice = null;
     let cost = card.cost;
     const thisCardEffectsThatTriggerOnActivation = card.effects.filter(
       (effect) => {
-        console.log("effect!", effect);
         const effectLogic = findEffectLogic(effect);
-
         return effectLogic.triggerOn?.includes("THIS_CARD_ACTIVATION");
       }
     );
@@ -655,8 +635,16 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     }
     let updatedCards = myCards.map((c) => {
       if (c.id === card.id) {
+        const location: CardExt["location"] = isEquipment
+          ? "EQUIPPED"
+          : isFood
+          ? //TODO: other types that should be discarded
+            "DISCARDED"
+          : "ACTION";
+        const equippedTo =
+          isEquipment || isFood ? selectedTargetCards[0].id : null;
         // TODO: set wasActivatedThisTurn to false at the end of the turn
-        return { ...c, location: "ACTION", wasActivatedThisTurn: true };
+        return { ...c, location, wasActivatedThisTurn: true, equippedTo };
       }
       return c;
     });
@@ -694,9 +682,8 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         const effectLogic = findEffectLogic(effect);
 
         if (!effectLogic.execute) return;
-
-        // if (effectLogic.checkIfCanBeExecuted) {
         //   //TODO: is this necessary?
+        // if (effectLogic.checkIfCanBeExecuted) {
         //   const { errorMessage } = effectLogic.checkIfCanBeExecuted({
         //     playerID: myID,
         //     myCards: myCardsAfterTriggeredEffects,
@@ -727,6 +714,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           opponentCards: opponentInGameCardsAfterTriggeredEffects,
           opponentDice: opponentDiceAfterTriggeredEffects,
           currentRound,
+          //TODO: add trigger context
         });
         if (errorMessage) {
           setErrorMessage(errorMessage);
@@ -780,17 +768,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
               <Card
                 key={card.id}
                 card={card}
-                handleClick={() => {
-                  if (
-                    card.subtype?.includes("EQUIPMENT") ||
-                    //TODO: should food be equipable?
-                    card.subtype === "EVENT_FOOD"
-                  ) {
-                    handleEquipCard(card);
-                  } else {
-                    activateCard(card);
-                  }
-                }}
+                handleClick={() => activateCard(card)}
               />
             ))}
         </div>
@@ -804,11 +782,48 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                   playerID={playerID}
                   attack={attack}
                   handleAttack={() => {
-                    activateAttackEffect(attack);
-                    channel &&
-                      broadcastSwitchPlayer({ channel, playerID: opponentID });
-                    setCurrentPlayerID(opponentID);
-                    setMySelectedDice({});
+                    const res = activateAttackEffect(attack);
+                    if (res) {
+                      const {
+                        myUpdatedCards,
+                        myUpdatedDice,
+                        opponentUpdatedCards,
+                        opponentUpdatedDice,
+                        errorMessage,
+                      } = res;
+                      if (errorMessage) {
+                        setErrorMessage(errorMessage);
+                        return;
+                      }
+                      myUpdatedCards && setMyCards(myUpdatedCards);
+                      myUpdatedDice && setMyDice(myUpdatedDice);
+                      opponentUpdatedCards &&
+                        setOpponentInGameCards(opponentUpdatedCards);
+                      opponentUpdatedDice &&
+                        setOpponentDice(opponentUpdatedDice);
+                      setSelectedTargets([]);
+                      channel
+                        ?.send({
+                          type: "broadcast",
+                          //TODO: use this event or delete it
+                          event: "updated_cards_and_dice",
+                          payload: {
+                            // effect: attackEffect,
+                            myCards: myUpdatedCards,
+                            myDice: myUpdatedDice,
+                            opponentCards: opponentUpdatedCards,
+                            opponentDice: opponentUpdatedDice,
+                          },
+                        })
+                        .then(() => {
+                          setCurrentPlayerID(opponentID);
+                          setMySelectedDice({});
+                          broadcastSwitchPlayer({
+                            channel,
+                            playerID: opponentID,
+                          });
+                        });
+                    }
                   }}
                 />
               ))}
