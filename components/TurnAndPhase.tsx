@@ -173,7 +173,8 @@ export default ({}) => {
           //reduce duration of all effects by 1
           statuses: card.statuses?.map((status) => ({
             ...status,
-            duration: status.duration - 1,
+            duration:
+              status.duration === undefined ? undefined : status.duration - 1,
           })),
           hasUsedFoodThisTurn: false,
         }));
