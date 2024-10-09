@@ -28,7 +28,7 @@ export default () => {
               <span
                 //TODO: use a unique key
                 key={status.name}
-              >{`${status.name} : ${status.turnsLeft}`}</span>
+              >{`${status.name}  ${status.turnsLeft ?? ""}`}</span>
             ))}
           </div>
         )}
