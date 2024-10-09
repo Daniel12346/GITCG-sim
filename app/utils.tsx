@@ -351,6 +351,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
   ({
     damage,
     damageElement,
+    // effectDuration
     attackerCardId,
     targetCardId,
     myCards,
@@ -578,19 +579,18 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
         return card;
       });
     } else {
-      //adding the attacking element to the target's statuses if no other reaction happened
-      opponentUpdatedCards = opponentCards.map((card) => {
-        if (card.id === targetCardId) {
-          return {
-            ...card,
-            statuses: [
-              ...(card.statuses || []),
-              { name: damageElement, turnsLeft: 1 },
-            ],
-          } as CardExt;
-        }
-        return card;
-      });
+      if (!(damageElement === "PHYSICAL" || damageElement === "PIERCING")) {
+        //adding the attacking element to the target's statuses if no other reaction happened
+        opponentUpdatedCards = opponentCards.map((card) => {
+          if (card.id === targetCardId) {
+            return {
+              ...card,
+              statuses: [...(card.statuses || []), { name: damageElement }],
+            } as CardExt;
+          }
+          return card;
+        });
+      }
     }
     opponentUpdatedCards = opponentUpdatedCards.map((card) => {
       const damageToHealth =
