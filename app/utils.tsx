@@ -118,13 +118,16 @@ export const removeBasicInfoFromDeck = async (
 };
 
 export const findEquippedCards = (target: CardExt, playerCards: CardExt[]) => {
-  return playerCards.filter((card) => card.equippedTo === target.id);
+  return playerCards.filter(
+    (card) => card.equippedTo === target.id && card.location !== "DISCARDED"
+  );
 };
 
 export const findCostModifyingEffects = (cards: CardExt[]) => {
   return cards.reduce((acc, card) => {
     //TODO: add other allowed locations
-    return ["ACTION", "EQUIPPED"].includes(card.location!)
+    return ["ACTION", "EQUIPPED"].includes(card.location!) ||
+      (card.location === "DISCARDED" && card.wasActivatedThisTurn)
       ? acc.concat(
           card.effects.filter((effect) => effect.effectType === "COST_MODIFIER")
         )
@@ -145,7 +148,8 @@ export const findDamageModifyingEffects = (
   trigger?: EventType
 ) => {
   return cards.reduce((acc, card) => {
-    return ["ACTION", "EQUIPPED"].includes(card.location!)
+    return ["ACTION", "EQUIPPED"].includes(card.location!) ||
+      (card.location === "DISCARDED" && card.wasActivatedThisTurn)
       ? acc.concat(
           card.effects.filter((effect) => {
             const effectLogic = findEffectLogic(effect);
@@ -169,7 +173,8 @@ export const findEffectsThatTriggerOn = (
 ) => {
   return cards.reduce((acc, card) => {
     //only looking at cards in action, equipped or summon locations or null for creation cards
-    return ["ACTION", "EQUIPPED", "SUMMON", null].includes(card.location!)
+    return ["ACTION", "EQUIPPED", "SUMMON", null].includes(card.location!) ||
+      (card.location === "DISCARDED" && card.wasActivatedThisTurn)
       ? acc.concat(
           card.effects.filter((effect) => {
             const effectLogic = findEffectLogic(effect);
@@ -317,17 +322,23 @@ const addStatusToCard = (
 ) => {
   const alreadyHasStatus = card.statuses?.find((s) => s.name === status);
   const statuses = alreadyHasStatus
-    ? [
-        ...(card.statuses || []),
-        { name: status, turnsLeft: duration || 1, amount },
-      ]
-    : card.statuses?.map((s) => {
+    ? card.statuses?.map((s: CardStatus) => {
         if (s.name === status) {
           //TODO: how much to increase duration by?
-          return { ...s, turnsLeft: s.turnsLeft + (duration || 1), amount };
+          return {
+            ...s,
+            turnsLeft:
+              //status has unlimited duration
+              s.turnsLeft === undefined || duration === undefined
+                ? undefined
+                : s.turnsLeft + duration,
+            amount,
+          };
         }
         return s;
-      });
+      })
+    : [...(card.statuses || []), { name: status, turnsLeft: duration, amount }];
+
   return {
     ...card,
     statuses,
