@@ -425,6 +425,18 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
         });
       }
     }
+    if (
+      damageElement === "PYRO" &&
+      targetStatuses.find((status) => status.name === "FROZEN")
+    ) {
+      damageAfterReaction += 2;
+      opponentCards = opponentCards.map((card) => {
+        if (card.id === targetCardId) {
+          return clearCardStatuses(card, ["FROZEN"]);
+        }
+        return card;
+      });
+    }
     //VAPORIZE
     if (
       reactingElements.includes("PYRO") &&
@@ -524,6 +536,38 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
         }
       });
     }
+    //CRYSTALLIZE
+    else if (
+      targetStatuses.find((status: CardStatus) =>
+        ["PYRO", "HYDRO", "ELECTRO", "CRYO"].includes(status.name)
+      ) &&
+      damageElement === "GEO"
+    ) {
+      const elementToCrystallize = targetStatuses.find((status) =>
+        ["PYRO", "HYDRO", "ELECTRO", "CRYO"].includes(status.name)
+      );
+      opponentUpdatedCards = opponentCards.map((card) => {
+        if (card.id === targetCardId) {
+          return clearCardStatuses(card, [elementToCrystallize?.name]);
+        }
+        return card;
+      });
+      myUpdatedCards = myCards.map((card) => {
+        if (card.is_active) {
+          const shield =
+            card.shield !== undefined && card.shield < 2
+              ? card.shield + 1
+              : card.shield;
+          return {
+            ...card,
+            shield,
+          };
+        }
+        return card;
+      });
+      damageAfterReaction += 1;
+      reactions?.push("CRYSTALLIZE");
+    }
     //SUPERCONDUCT
     else if (
       reactingElements.includes("CRYO") &&
@@ -537,6 +581,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
         return card;
       });
       damageAfterReaction += 1;
+      //superconduct does 1 piercing damage to all characters except the target
       const piercingTargets = opponentCards.filter(
         (card) => card.location === "CHARACTER" && card.id !== targetCardId
       );
@@ -578,6 +623,52 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
         }
         return card;
       });
+    } else if (
+      reactingElements.includes("PYRO") &&
+      reactingElements.includes("ELECTRO")
+    ) {
+      damageAfterReaction += 2;
+      reactions.push("OVERLOADED");
+      let opponentCharacters = opponentUpdatedCards.filter(
+        (card) => card.location === "CHARACTER"
+      );
+      let previousActiveCharacterIndex = opponentCharacters.findIndex(
+        (card) => card.is_active
+      );
+      if (previousActiveCharacterIndex === -1) {
+        //TODO: throw an error
+        previousActiveCharacterIndex = 0;
+      }
+      const nextActiveCharacterIndex =
+        previousActiveCharacterIndex === opponentCharacters.length - 1
+          ? 0
+          : previousActiveCharacterIndex + 1;
+      const previousActiveCharacter =
+        opponentCharacters[previousActiveCharacterIndex];
+      const nextActiveCharacter = opponentCharacters[nextActiveCharacterIndex];
+      opponentUpdatedCards = opponentUpdatedCards
+        ?.map((card) => {
+          if (card.location === "CHARACTER") {
+            if (card.id === previousActiveCharacter.id) {
+              return {
+                ...card,
+                is_active: false,
+              };
+            } else if (card.id === nextActiveCharacter.id) {
+              return {
+                ...card,
+                is_active: true,
+              };
+            }
+          }
+          return card;
+        })
+        .map((card) => {
+          if (card.id === targetCardId) {
+            return clearCardStatuses(card, ["PYRO", "ELECTRO"]);
+          }
+          return card;
+        });
     } else {
       if (!(damageElement === "PHYSICAL" || damageElement === "PIERCING")) {
         //adding the attacking element to the target's statuses if no other reaction happened
