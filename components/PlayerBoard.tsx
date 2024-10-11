@@ -24,7 +24,7 @@ import {
   subtractCost,
   switchActiveCharacterCard,
 } from "@/app/actions";
-import { CardExtended } from "@/app/global";
+import { CardExtended, CostT } from "@/app/global";
 import {
   broadcastSwitchPlayer,
   calculateTotalDice,
@@ -145,7 +145,8 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         }) as CardExtended[]
       );
     } else {
-      let cost = mySelectedDice;
+      //the default cost of switching a character is 1 UNALIGNED die
+      let cost: CostT = { UNALIGNED: 1 };
       const {
         errorMessage,
         myUpdatedCards: myUpdatedCardsAfterSwitch,
@@ -776,57 +777,68 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         <div className="flex justify-between gap-2 overflow-hidden">
           {isMyBoard && (
             <>
-              {attacks?.map((attack) => (
-                <CardAttack
-                  key={attack.id}
-                  playerID={playerID}
-                  attack={attack}
-                  handleAttack={() => {
-                    const res = activateAttackEffect(attack);
-                    if (res) {
-                      const {
-                        myUpdatedCards,
-                        myUpdatedDice,
-                        opponentUpdatedCards,
-                        opponentUpdatedDice,
-                        errorMessage,
-                      } = res;
-                      if (errorMessage) {
-                        setErrorMessage(errorMessage);
-                        return;
-                      }
-                      myUpdatedCards && setMyCards(myUpdatedCards);
-                      myUpdatedDice && setMyDice(myUpdatedDice);
-                      opponentUpdatedCards &&
-                        setOpponentInGameCards(opponentUpdatedCards);
-                      opponentUpdatedDice &&
-                        setOpponentDice(opponentUpdatedDice);
-                      setSelectedTargets([]);
-                      channel
-                        ?.send({
-                          type: "broadcast",
-                          //TODO: use this event or delete it
-                          event: "updated_cards_and_dice",
-                          payload: {
-                            // effect: attackEffect,
-                            myCards: myUpdatedCards,
-                            myDice: myUpdatedDice,
-                            opponentCards: opponentUpdatedCards,
-                            opponentDice: opponentUpdatedDice,
-                          },
-                        })
-                        .then(() => {
-                          setCurrentPlayerID(opponentID);
-                          setMySelectedDice({});
-                          broadcastSwitchPlayer({
-                            channel,
-                            playerID: opponentID,
-                          });
-                        });
-                    }
-                  }}
-                />
-              ))}
+              {
+                /* sort so the attack with effect type NORMAL_ATTACK is first, ELEMENTAL_SKILL is second and ELEMENTAL_BURST is last */
+                attacks?.length &&
+                  attacks
+                    ?.toSorted((a, b) => {
+                      if (a.effectType === "NORMAL_ATTACK") return -1;
+                      if (a.effectType === "ELEMENTAL_SKILL") return 0;
+                      if (a.effectType === "ELEMENTAL_BURST") return 1;
+                      return 0;
+                    })
+                    ?.map((attack) => (
+                      <CardAttack
+                        key={attack.id}
+                        playerID={playerID}
+                        attack={attack}
+                        handleAttack={() => {
+                          const res = activateAttackEffect(attack);
+                          if (res) {
+                            const {
+                              myUpdatedCards,
+                              myUpdatedDice,
+                              opponentUpdatedCards,
+                              opponentUpdatedDice,
+                              errorMessage,
+                            } = res;
+                            if (errorMessage) {
+                              setErrorMessage(errorMessage);
+                              return;
+                            }
+                            myUpdatedCards && setMyCards(myUpdatedCards);
+                            myUpdatedDice && setMyDice(myUpdatedDice);
+                            opponentUpdatedCards &&
+                              setOpponentInGameCards(opponentUpdatedCards);
+                            opponentUpdatedDice &&
+                              setOpponentDice(opponentUpdatedDice);
+                            setSelectedTargets([]);
+                            channel
+                              ?.send({
+                                type: "broadcast",
+                                //TODO: use this event or delete it
+                                event: "updated_cards_and_dice",
+                                payload: {
+                                  // effect: attackEffect,
+                                  myCards: myUpdatedCards,
+                                  myDice: myUpdatedDice,
+                                  opponentCards: opponentUpdatedCards,
+                                  opponentDice: opponentUpdatedDice,
+                                },
+                              })
+                              .then(() => {
+                                setCurrentPlayerID(opponentID);
+                                setMySelectedDice({});
+                                broadcastSwitchPlayer({
+                                  channel,
+                                  playerID: opponentID,
+                                });
+                              });
+                          }
+                        }}
+                      />
+                    ))
+              }
             </>
           )}
         </div>
