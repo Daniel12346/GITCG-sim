@@ -346,7 +346,6 @@ const addStatusToCard = (
 };
 
 //TODO?: move to a new file
-//TODO: rename because this also calculates damage (?)
 export const calculateAttackElementalReaction: CalculateAttackElementalReaction =
   ({
     damage,

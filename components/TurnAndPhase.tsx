@@ -119,7 +119,6 @@ export default ({}) => {
       case "PREPARATION_PHASE":
         break;
       case "ROLL_PHASE":
-        //TODO: reroll dice
         myUpdatedCards = drawCards(myUpdatedCards, 2);
         opponentUpdatedCards = drawCards(opponentUpdatedCards, 2);
         break;

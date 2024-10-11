@@ -25,7 +25,6 @@ type CreationDisplays = {
     }): React.JSX.Element | null;
   };
 };
-//TODO: rename
 export const creationDisplays: CreationDisplays = {
   "529ec9d6-67ed-430a-acc2-22219f0880ef": {
     shouldDisplayOnCard: ({ thisCreation, card }) => {

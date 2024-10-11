@@ -301,7 +301,6 @@ export const isGameOverState = selector<boolean>({
     return !!gameWinnerID;
   },
 });
-//TODO: restrict strings to only valid phase names
 export const amIPlayer1State = atom<boolean>({
   key: "amIPlayer1State",
 });
