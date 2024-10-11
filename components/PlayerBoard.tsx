@@ -461,11 +461,10 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       if (attackerCard.location !== "CHARACTER") {
         return { errorMessage: "Effect card not a character" };
       }
-      //TODO: uncomment this
-      // if (effectCard.energy !== effectCard.max_energy) {
-      //   setErrorMessage("Not enough energy");
-      //   return;
-      // }
+      if (attackerCard.energy !== attackerCard.max_energy) {
+        setErrorMessage("Not enough energy");
+        return;
+      }
     }
 
     const effectLogic = findEffectLogic(attackEffect);
@@ -478,7 +477,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       }
     }
     //attack effects have a cost
-    //removing energy from cost
     //TODO: remove energy from cost in db
     let cost =
       attackEffect.cost &&
@@ -899,43 +897,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         {playerCards
           ?.filter((card) => card.location === "SUMMON")
           .map((card) => {
-            return (
-              <Card
-                key={card.id}
-                card={card}
-
-                //TODO: remove (just for testing)
-                // handleClick={() => {
-                //   if (!myCards) return;
-                //   const effect = card.effects.find((eff) => {
-                //     const effectLogic = findEffectLogic(eff);
-                //     return effectLogic.triggerOn?.includes("REACTION");
-                //   });
-                //   if (!effect) return;
-                //   const { myUpdatedCards, errorMessage } = activateEffect({
-                //     effect,
-                //     playerID: myID,
-                //     myCards,
-                //     myDice,
-                //     opponentCards: opponentInGameCards,
-                //     opponentDice: opponentDice,
-                //     targetCards: selectedTargetCards,
-                //     summons,
-                //     thisCard: card,
-                //     triggerContext: {
-                //       eventType: "REACTION",
-                //       reaction: {
-                //         name: "SWIRL",
-                //         resultingElement: "PYRO",
-                //       },
-                //     },
-                //   });
-                //   errorMessage && setErrorMessage(errorMessage);
-                //   myUpdatedCards && setMyCards(myUpdatedCards);
-                //   // effect && myCards && activateAttackEffect(effect);
-                // }}
-              />
-            );
+            return <Card key={card.id} card={card} />;
           })}
       </div>
       {/* //TODO: display on cards */}
