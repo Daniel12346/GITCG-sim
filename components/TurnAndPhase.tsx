@@ -21,6 +21,7 @@ import {
   isMyTurnState,
   gameWinnerIDState,
   opponentIDState,
+  nextRoundFirstPlayerIDState,
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -40,7 +41,11 @@ export default ({}) => {
   const [gameWinnerID, setGameWinnerID] = useRecoilState(gameWinnerIDState);
   const [currentPhase, setCurrentPhase] = useRecoilState(currentPhaseState);
   const [currentRound, setCurrentRound] = useRecoilState(currentRoundState);
-  const [turnPlayerID, setTurnPlayerID] = useRecoilState(currentPlayerIDState);
+  const [currentPlayerID, setCurrentPlayerID] =
+    useRecoilState(currentPlayerIDState);
+  const [nextRoundFirstPlayerID, setNextRoundFirstPlayerID] = useRecoilState(
+    nextRoundFirstPlayerIDState
+  );
   const [opponentCards, setOpponentCards] = useRecoilState(
     opponentInGameCardsState
   );
@@ -88,7 +93,7 @@ export default ({}) => {
       })
       .on("broadcast", { event: "switch_player" }, ({ payload }) => {
         const { playerID } = payload;
-        playerID && setTurnPlayerID(playerID);
+        playerID && setCurrentPlayerID(playerID);
       })
       .on("broadcast", { event: "game_over" }, ({ payload }) => {
         setGameWinnerID(payload.gameWinnerID);
@@ -119,11 +124,15 @@ export default ({}) => {
       case "PREPARATION_PHASE":
         break;
       case "ROLL_PHASE":
+        setCurrentPlayerID(nextRoundFirstPlayerID);
         myUpdatedCards = drawCards(myUpdatedCards, 2);
         opponentUpdatedCards = drawCards(opponentUpdatedCards, 2);
+
+        //TODO: reset dice
         break;
       case "ACTION_PHASE":
         break;
+      case "END_PHASE":
     }
     if (
       !(
@@ -143,6 +152,7 @@ export default ({}) => {
       errorMessage,
     } = executePhaseEffectsForBothPlayers({
       phaseName: currentPhase,
+      areMyEffectsFirst: nextRoundFirstPlayerID === myID,
       executeArgs: {
         currentRound,
         myCards: myUpdatedCards,
@@ -254,7 +264,11 @@ export default ({}) => {
 
   useEffect(() => {
     if (amIReadyForNextPhase && isOpponentReadyForNextPhase) {
-      if (currentPhase === "END_PHASE") {
+      if (currentPhase === "ACTION_PHASE") {
+        console.log("currentPlayerID", currentPlayerID);
+        //the player that ended the action phase (?) first is the first player of the next round
+        //if both players are ready, it means the current turn player ended the round second and will go second next round
+        setNextRoundFirstPlayerID(currentPlayerID === myID ? opponentID : myID);
         setCurrentRound((prev) => prev + 1);
       }
       setCurrentPhase((prev) => {
@@ -276,7 +290,6 @@ export default ({}) => {
       <span>Round {currentRound}</span>
       <button
         onClick={async () => {
-          //TODO: fix
           await channel?.send({
             type: "broadcast",
             event: "ready_for_next_phase",
