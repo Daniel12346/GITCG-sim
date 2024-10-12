@@ -268,17 +268,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         });
     }
   };
-  // const switchCurrentPlayer = () => {
-  //   const nextPlayerID = currentPlayerID === myID ? opponentID : myID;
-  //   setCurrentPlayerID(nextPlayerID);
-  //   channel?.send({
-  //     type: "broadcast",
-  //     event: "switch_player",
-  //     payload: {
-  //       playerID: nextPlayerID,
-  //     },
-  //   });
-  // };
 
   const handleEquipCard = (cardToEquip: CardExt) => {
     // setCurrentlyBeingEquipped(cardToEquip);
