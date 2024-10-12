@@ -1,10 +1,12 @@
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import DiceDisplay from "./DiceDisplay";
 import {
+  amIPlayer1State,
   amIRerollingState,
   currentPhaseState,
   myDiceState,
   mySelectedDiceState,
+  opponentDiceState,
 } from "@/recoil/atoms";
 import { addDice, createRandomDice, subtractCost } from "@/app/actions";
 import { broadcastUpdatedCardsAndDice, calculateTotalDice } from "@/app/utils";
@@ -21,6 +23,8 @@ export default function DiceReroll({
   const [amIRerolling, setAmIRerolling] = useRecoilState(amIRerollingState);
   const setSelectedDice = useSetRecoilState(mySelectedDiceState);
   const currentPhase = useRecoilValue(currentPhaseState);
+  const amIPlayer1 = useRecoilValue(amIPlayer1State);
+  const setOpponentDice = useSetRecoilState(opponentDiceState);
   const rerollDice = () => {
     try {
       const amountSelected = calculateTotalDice(selectedDice);
@@ -28,15 +32,6 @@ export default function DiceReroll({
       const leftoverDice = subtractCost(myDice, selectedDice);
       const newDice = createRandomDice(amountSelected);
       const updatedDice = addDice(leftoverDice, newDice);
-      console.log(
-        "rerolling dice",
-        leftoverDice,
-        newDice,
-        updatedDice,
-        "selected",
-        selectedDice,
-        calculateTotalDice(selectedDice)
-      );
       channel && broadcastUpdatedCardsAndDice({ channel, myDice: updatedDice });
       setMyDice(updatedDice);
       setSelectedDice({});
@@ -47,6 +42,19 @@ export default function DiceReroll({
   };
   useEffect(() => {
     if (currentPhase === "ROLL_PHASE") {
+      if (amIPlayer1) {
+        //resettting dice for both players
+        const myDice = createRandomDice(8);
+        const opponentDice = createRandomDice(8);
+        setMyDice(myDice);
+        setOpponentDice(opponentDice);
+        channel &&
+          broadcastUpdatedCardsAndDice({
+            channel,
+            myDice,
+            opponentDice,
+          });
+      }
       setAmIRerolling(true);
     } else {
       setAmIRerolling(false);
