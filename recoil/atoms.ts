@@ -328,6 +328,11 @@ export const currentPlayerIDState = atom<string>({
   key: "currentPlayerIDState",
   default: "",
 });
+
+export const nextRoundFirstPlayerIDState = atom<string>({
+  key: "nextRoundFirstPlayerIDState",
+  default: "",
+});
 export const isMyTurnState = selector<boolean>({
   key: "isMyTurnState",
   get: ({ get }) => {
