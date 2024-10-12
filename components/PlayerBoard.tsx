@@ -38,6 +38,7 @@ import ElementalTuning from "./ElementalTuning";
 import { findEffectLogic } from "@/app/cardEffects";
 import { getCreationDisplayComponentForCard } from "./CreationDisplay";
 import DiceReroll from "./DiceReroll";
+import CardRedraw from "./CardRedraw";
 
 //TODO: move to another file
 interface PlayerBoardProps {
@@ -137,12 +138,13 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         },
       });
       setMyCards(
-        myCards.map((c) => {
-          if (c.id === card.id) {
-            return { ...c, is_active: true };
-          }
-          return c;
-        }) as CardExtended[]
+        (prev) =>
+          prev.map((c) => {
+            if (c.id === card.id) {
+              return { ...c, is_active: true };
+            }
+            return c;
+          }) as CardExtended[]
       );
     } else {
       //the default cost of switching a character is 1 UNALIGNED die
@@ -269,177 +271,177 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     }
   };
 
-  const handleEquipCard = (cardToEquip: CardExt) => {
-    // setCurrentlyBeingEquipped(cardToEquip);
-    // setRequiredTargets(1);
-    // setSelectionPurpose("EQUIP");
-    // setAmSelectingTargets(true);
-    if (!myCards) return;
-    if (!mySelectedDice) return;
-    if (selectedTargetCards.length !== 1) {
-      setErrorMessage("Incorrect number of targets");
-      return;
-    }
-    const targetCard = selectedTargetCards[0];
-    let updatedDice = null;
+  // const handleEquipCard = (cardToEquip: CardExt) => {
+  //   // setCurrentlyBeingEquipped(cardToEquip);
+  //   // setRequiredTargets(1);
+  //   // setSelectionPurpose("EQUIP");
+  //   // setAmSelectingTargets(true);
+  //   if (!myCards) return;
+  //   if (!mySelectedDice) return;
+  //   if (selectedTargetCards.length !== 1) {
+  //     setErrorMessage("Incorrect number of targets");
+  //     return;
+  //   }
+  //   const targetCard = selectedTargetCards[0];
+  //   let updatedDice = null;
 
-    //TODO: compare selectedDice to cardToEquip.cost
-    if (cardToEquip.cost) {
-      try {
-        //TODO: fix this
-        const difference = subtractCost(mySelectedDice, cardToEquip.cost);
-        if (
-          Object.keys(difference).length === 0 ||
-          Object.values(difference).every((val) => val === 0)
-        ) {
-          updatedDice = subtractCost(myDice, mySelectedDice);
-        }
-        setMySelectedDice({});
-      } catch (e) {
-        console.log(e);
-        setErrorMessage("Incorrect dice");
-        return;
-      }
-      updatedDice && setMyDice(updatedDice);
-    }
+  //   //TODO: compare selectedDice to cardToEquip.cost
+  //   if (cardToEquip.cost) {
+  //     try {
+  //       //TODO: fix this
+  //       const difference = subtractCost(mySelectedDice, cardToEquip.cost);
+  //       if (
+  //         Object.keys(difference).length === 0 ||
+  //         Object.values(difference).every((val) => val === 0)
+  //       ) {
+  //         updatedDice = subtractCost(myDice, mySelectedDice);
+  //       }
+  //       setMySelectedDice({});
+  //     } catch (e) {
+  //       console.log(e);
+  //       setErrorMessage("Incorrect dice");
+  //       return;
+  //     }
+  //     updatedDice && setMyDice(updatedDice);
+  //   }
 
-    const updatedCards = myCards.map((card) => {
-      if (card.id === cardToEquip.id) {
-        return {
-          ...card,
-          location: card.subtype?.includes("EQUIPMENT")
-            ? "EQUIPPED"
-            : "DISCARDED",
-          equippedTo: targetCard.id,
-          wasActivatedThisTurn: true,
-        };
-      }
-      return card;
-    });
-    channel?.send({
-      type: "broadcast",
-      event: "updated_cards_and_dice",
-      payload: {
-        myCards: updatedCards,
-        myDice: updatedDice,
-      },
-    });
-    setMyCards(updatedCards as CardExtended[]);
-    setSelectionPurpose(null);
-    setSelectedTargets([]);
-  };
+  //   const updatedCards = myCards.map((card) => {
+  //     if (card.id === cardToEquip.id) {
+  //       return {
+  //         ...card,
+  //         location: card.subtype?.includes("EQUIPMENT")
+  //           ? "EQUIPPED"
+  //           : "DISCARDED",
+  //         equippedTo: targetCard.id,
+  //         wasActivatedThisTurn: true,
+  //       };
+  //     }
+  //     return card;
+  //   });
+  //   channel?.send({
+  //     type: "broadcast",
+  //     event: "updated_cards_and_dice",
+  //     payload: {
+  //       myCards: updatedCards,
+  //       myDice: updatedDice,
+  //     },
+  //   });
+  //   setMyCards(updatedCards as CardExtended[]);
+  //   setSelectionPurpose(null);
+  //   setSelectedTargets([]);
+  // };
 
-  //TODO: why is this not used?
-  const handleActivateEffect = (effect: Effect) => {
-    if (!myCards) return;
+  // //TODO: why is this not used?
+  // const handleActivateEffect = (effect: Effect) => {
+  //   if (!myCards) return;
 
-    //regular effects don't have a cost, the cost of a card's activation is not handled here
-    //TODO: what if I try activating a card but could't use its effect?
-    //an effect won't change anything until the state is updated with its return values,
-    //so the execute function itself can be used to check if the effect can be executed and checkIfCanBeExecuted may not be needed
-    //TODO: effect selection
-    //TODO: do I need to check if effect can be executed or just return an error message when executing effect?
-    const effectLogic = findEffectLogic(effect);
-    // if (effectLogic.checkIfCanBeExecuted) {
-    //   const { errorMessage: executionErrorMessage } =
-    //     effectLogic.checkIfCanBeExecuted({
-    //       playerID: myID,
-    //       myCards,
-    //       myDice,
-    //       opponentCards: opponentInGameCards,
-    //       opponentDice: opponentDice,
-    //       targetCards: selectedTargetCards,
-    //     });
-    //   if (executionErrorMessage) {
-    //     setErrorMessage(executionErrorMessage);
-    //     return;
-    //   }
-    // }
+  //   //regular effects don't have a cost, the cost of a card's activation is not handled here
+  //   //TODO: what if I try activating a card but could't use its effect?
+  //   //an effect won't change anything until the state is updated with its return values,
+  //   //so the execute function itself can be used to check if the effect can be executed and checkIfCanBeExecuted may not be needed
+  //   //TODO: effect selection
+  //   //TODO: do I need to check if effect can be executed or just return an error message when executing effect?
+  //   const effectLogic = findEffectLogic(effect);
+  //   // if (effectLogic.checkIfCanBeExecuted) {
+  //   //   const { errorMessage: executionErrorMessage } =
+  //   //     effectLogic.checkIfCanBeExecuted({
+  //   //       playerID: myID,
+  //   //       myCards,
+  //   //       myDice,
+  //   //       opponentCards: opponentInGameCards,
+  //   //       opponentDice: opponentDice,
+  //   //       targetCards: selectedTargetCards,
+  //   //     });
+  //   //   if (executionErrorMessage) {
+  //   //     setErrorMessage(executionErrorMessage);
+  //   //     return;
+  //   //   }
+  //   // }
 
-    // if (effect.requiredTargets && !amSelectingTargets) {
-    //   setRequiredTargets(effect.requiredTargets);
-    //   setCurrentEffect(effect);
-    //   setSelectionPurpose("EFFECT");
-    //   setAmSelectingTargets(true);
-    //   return;
-    // }
+  //   // if (effect.requiredTargets && !amSelectingTargets) {
+  //   //   setRequiredTargets(effect.requiredTargets);
+  //   //   setCurrentEffect(effect);
+  //   //   setSelectionPurpose("EFFECT");
+  //   //   setAmSelectingTargets(true);
+  //   //   return;
+  //   // }
 
-    const {
-      myUpdatedCards,
-      myUpdatedDice,
-      opponentUpdatedCards,
-      opponentUpdatedDice,
-      errorMessage,
-    } = activateEffect({
-      playerID: myID,
-      effect,
-      myCards: myCards,
-      myDice,
-      opponentCards: opponentInGameCards,
-      opponentDice: opponentDice,
-      targetCards: selectedTargetCards,
-      currentRound,
-    });
-    if (errorMessage) {
-      //if an error occurs, effect execution is stopped
-      setErrorMessage(errorMessage);
-      return;
-    }
-    const effectSourceCard = myCards.find((c) => c.id === effect.card_id);
-    if (!effectSourceCard) {
-      console.log("no effect card");
-      return;
-    }
-    //if the effect was activated from the hand, it should be moved to the action zone
-    let newLocation = effectSourceCard.location;
-    let wasActivatedThisTurn = effectSourceCard.wasActivatedThisTurn;
-    if (effectSourceCard.location === "HAND") {
-      newLocation = "ACTION";
-      wasActivatedThisTurn = true;
-      //TODO: check all effects that activate on card activation
-    }
-    //updating the the effect whose effect was activated
-    const updateEffectSourceCard = (effectSourceCard: CardExtended) => {
-      return {
-        ...effectSourceCard,
-        location: newLocation,
-        wasActivatedThisTurn,
-        effects: effectSourceCard.effects.map((eff) => {
-          return {
-            ...eff,
-            total_usages: eff.total_usages ? eff.total_usages + 1 : 0,
-            usages_this_turn: eff.usages_this_turn
-              ? eff.usages_this_turn + 1
-              : 0,
-          };
-        }),
-      };
-    };
-    //the most recent card state
-    const myCurrentCards = myUpdatedCards || myCards;
-    const myCurrentCardsWithUpdatedEffectCard = myCurrentCards.map((card) => {
-      if (card.id === effectSourceCard.id) {
-        return updateEffectSourceCard(card);
-      }
-      return card;
-    });
-    setMyCards(myCurrentCardsWithUpdatedEffectCard as CardExtended[]);
+  //   const {
+  //     myUpdatedCards,
+  //     myUpdatedDice,
+  //     opponentUpdatedCards,
+  //     opponentUpdatedDice,
+  //     errorMessage,
+  //   } = activateEffect({
+  //     playerID: myID,
+  //     effect,
+  //     myCards: myCards,
+  //     myDice,
+  //     opponentCards: opponentInGameCards,
+  //     opponentDice: opponentDice,
+  //     targetCards: selectedTargetCards,
+  //     currentRound,
+  //   });
+  //   if (errorMessage) {
+  //     //if an error occurs, effect execution is stopped
+  //     setErrorMessage(errorMessage);
+  //     return;
+  //   }
+  //   const effectSourceCard = myCards.find((c) => c.id === effect.card_id);
+  //   if (!effectSourceCard) {
+  //     console.log("no effect card");
+  //     return;
+  //   }
+  //   //if the effect was activated from the hand, it should be moved to the action zone
+  //   let newLocation = effectSourceCard.location;
+  //   let wasActivatedThisTurn = effectSourceCard.wasActivatedThisTurn;
+  //   if (effectSourceCard.location === "HAND") {
+  //     newLocation = "ACTION";
+  //     wasActivatedThisTurn = true;
+  //     //TODO: check all effects that activate on card activation
+  //   }
+  //   //updating the the effect whose effect was activated
+  //   const updateEffectSourceCard = (effectSourceCard: CardExtended) => {
+  //     return {
+  //       ...effectSourceCard,
+  //       location: newLocation,
+  //       wasActivatedThisTurn,
+  //       effects: effectSourceCard.effects.map((eff) => {
+  //         return {
+  //           ...eff,
+  //           total_usages: eff.total_usages ? eff.total_usages + 1 : 0,
+  //           usages_this_turn: eff.usages_this_turn
+  //             ? eff.usages_this_turn + 1
+  //             : 0,
+  //         };
+  //       }),
+  //     };
+  //   };
+  //   //the most recent card state
+  //   const myCurrentCards = myUpdatedCards || myCards;
+  //   const myCurrentCardsWithUpdatedEffectCard = myCurrentCards.map((card) => {
+  //     if (card.id === effectSourceCard.id) {
+  //       return updateEffectSourceCard(card);
+  //     }
+  //     return card;
+  //   });
+  //   setMyCards(myCurrentCardsWithUpdatedEffectCard as CardExtended[]);
 
-    opponentUpdatedCards && setOpponentInGameCards(opponentUpdatedCards);
-    myUpdatedDice && setMyDice(myUpdatedDice);
-    opponentUpdatedDice && setOpponentDice(opponentUpdatedDice);
-    setSelectedTargets([]);
-    channel?.send({
-      type: "broadcast",
-      event: "updated_cards_and_dice",
-      payload: {
-        myCards: myCurrentCardsWithUpdatedEffectCard,
-        myDice: myUpdatedDice,
-        opponentCards: opponentUpdatedCards,
-        opponentDice: opponentUpdatedDice,
-      },
-    });
-  };
+  //   opponentUpdatedCards && setOpponentInGameCards(opponentUpdatedCards);
+  //   myUpdatedDice && setMyDice(myUpdatedDice);
+  //   opponentUpdatedDice && setOpponentDice(opponentUpdatedDice);
+  //   setSelectedTargets([]);
+  //   channel?.send({
+  //     type: "broadcast",
+  //     event: "updated_cards_and_dice",
+  //     payload: {
+  //       myCards: myCurrentCardsWithUpdatedEffectCard,
+  //       myDice: myUpdatedDice,
+  //       opponentCards: opponentUpdatedCards,
+  //       opponentDice: opponentUpdatedDice,
+  //     },
+  //   });
+  // };
   const activateAttackEffect = (attackEffect: Effect) => {
     if (!myCards) return;
     const attackerCard = myCards.find((c) => c.id === attackEffect.card_id);
@@ -907,6 +909,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       <DiceDisplay dice={playerDice} isMyBoard={isMyBoard}></DiceDisplay>
       {isMyBoard && <ElementalTuning channel={channel} />}
       {isMyBoard && <DiceReroll channel={channel} />}
+      {isMyBoard && <CardRedraw channel={channel} />}
     </div>
   );
 }
