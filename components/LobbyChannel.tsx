@@ -10,19 +10,15 @@ import {
   myDiceState,
   opponentDiceState,
   currentPlayerIDState,
+  nextRoundFirstPlayerIDState,
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRecoilValue, useRecoilState, useSetRecoilState } from "recoil";
 import { cardFromBasicInfo } from "@/app/utils";
 
-type FoundGamePayload = {
-  gameID: string;
-  player1ID: string;
-  player2ID: string;
-};
 export default function LobbyChannel() {
   const myID = useRecoilValue(myIDState);
   const [usersInLobbyIDs, setUsersInLobbyIDs] =
@@ -35,6 +31,9 @@ export default function LobbyChannel() {
   const setMyDice = useSetRecoilState(myDiceState);
   const setOpponentDice = useSetRecoilState(opponentDiceState);
   const setCurrentPlayerID = useSetRecoilState(currentPlayerIDState);
+  const setNextRoundFirstPlayer = useSetRecoilState(
+    nextRoundFirstPlayerIDState
+  );
   //TDO: use or remove
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
   const router = useRouter();
@@ -125,7 +124,10 @@ export default function LobbyChannel() {
 
           const myDice = createRandomDice(8);
           const opponentDice = createRandomDice(8);
-
+          //decide who goes first
+          const startingPlayerID =
+            Math.random() > 0.5 ? data[0].player1_id : data[0].player2_id;
+          setNextRoundFirstPlayer(startingPlayerID);
           await channel.send({
             type: "broadcast",
             event: "game_data",
@@ -133,6 +135,7 @@ export default function LobbyChannel() {
               gameID: data[0].id,
               player1ID: data[0].player1_id,
               player2ID: data[0].player2_id,
+              startingPlayerID,
               myCards,
               opponentCards,
               myDice,
@@ -142,7 +145,7 @@ export default function LobbyChannel() {
           setCurrentGameID(data[0].id);
           setOpponentID(data[0].player2_id);
           setAmIPlayer1(true);
-          setCurrentPlayerID(data[0].player1_id);
+
           myCards && setMyCards(myCards as CardExt[]);
           opponentCards && setOpponentCards(opponentCards);
           setMyDice(myDice);
@@ -167,6 +170,7 @@ export default function LobbyChannel() {
             gameID,
             player1ID,
             player2ID,
+            startingPlayerID,
             myCards,
             opponentCards,
             myDice,
@@ -174,6 +178,7 @@ export default function LobbyChannel() {
           } = payload;
           setCurrentGameID(gameID);
           setOpponentID(player1ID);
+          setNextRoundFirstPlayer(startingPlayerID);
           setAmIPlayer1(false);
           setMyCards(opponentCards);
           setOpponentCards(myCards);
