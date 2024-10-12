@@ -346,6 +346,10 @@ export const amIRerollingState = atom<boolean>({
   key: "amIRerollingState",
   default: false,
 });
+export const amIRedrawingState = atom<boolean>({
+  key: "amIRedrawingState",
+  default: false,
+});
 
 export const mySelectedCardsState = atom<CardExt[]>({
   key: "mySelectedCardsState",
@@ -408,5 +412,3 @@ export const summonsState = selector({
     return summons;
   },
 });
-//TODO: add player count to game table
-//-----------------------------------------
