@@ -42,19 +42,19 @@ export default function DiceReroll({
   };
   useEffect(() => {
     if (currentPhase === "ROLL_PHASE") {
-      if (amIPlayer1) {
-        //resettting dice for both players
-        const myDice = createRandomDice(8);
-        const opponentDice = createRandomDice(8);
-        setMyDice(myDice);
-        setOpponentDice(opponentDice);
-        channel &&
-          broadcastUpdatedCardsAndDice({
-            channel,
-            myDice,
-            opponentDice,
-          });
-      }
+      // if (amIPlayer1) {
+      //   //resettting dice for both players
+      //   const myDice = createRandomDice(8);
+      //   const opponentDice = createRandomDice(8);
+      //   setMyDice(myDice);
+      //   setOpponentDice(opponentDice);
+      //   channel &&
+      //     broadcastUpdatedCardsAndDice({
+      //       channel,
+      //       myDice,
+      //       opponentDice,
+      //     });
+      // }
       setAmIRerolling(true);
     } else {
       setAmIRerolling(false);

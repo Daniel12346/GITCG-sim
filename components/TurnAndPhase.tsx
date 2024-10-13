@@ -125,15 +125,17 @@ export default ({}) => {
         break;
       case "ROLL_PHASE":
         setCurrentPlayerID(nextRoundFirstPlayerID);
-        myUpdatedCards = drawCards(myUpdatedCards, 2);
-        opponentUpdatedCards = drawCards(opponentUpdatedCards, 2);
-
+        myUpdatedDice = createRandomDice(8);
+        opponentUpdatedDice = createRandomDice(8);
         //TODO: reset dice
         break;
       case "ACTION_PHASE":
         break;
       case "END_PHASE":
+        myUpdatedCards = drawCards(myUpdatedCards, 2);
+        opponentUpdatedCards = drawCards(opponentUpdatedCards, 2);
     }
+    //player 1 executes phase effects for both players and broadcasts the updated cards and dice
     if (
       !(
         amIPlayer1 &&
