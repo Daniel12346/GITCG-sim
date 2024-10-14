@@ -146,6 +146,8 @@ export default ({}) => {
       )
     )
       return;
+    //no phase effects activate in preparation phase
+    if (currentPhase === "PREPARATION_PHASE") return;
     const {
       myUpdatedCards: myCardsAfterPhaseEffects,
       myUpdatedDice: myDiceAfterPhaseEffects,
