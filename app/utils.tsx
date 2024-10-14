@@ -2,6 +2,7 @@ import { uuid } from "uuidv4";
 import { findEffectLogic, EventType, ExecuteEffectParams } from "./cardEffects";
 import { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { DieElementNameT } from "./global";
+import { DeckWithCardBasicInfo } from "@/recoil/atoms";
 
 type CardBasicInfo = Database["public"]["Tables"]["card_basic_info"]["Row"];
 export const cardFromBasicInfo = (
@@ -953,6 +954,7 @@ type ExecutePhaseEffectsParams = {
   // amIPlayer1: boolean;
   phaseName: PhaseName;
   executeArgs: Omit<ExecuteEffectParams, "effect">;
+  areMyEffectsFirst?: boolean;
 };
 const executePhaseEffectsForOnePlayer = ({
   phaseName,
@@ -967,7 +969,6 @@ const executePhaseEffectsForOnePlayer = ({
     phaseName,
     myUpdatedCards
   );
-  console.log(phaseName, myEffectsThatTriggeOnPhase);
   //TODO: handle opponent's effects
   const {
     myUpdatedCards: myCardsAfterTriggeredEffects,
@@ -1003,44 +1004,75 @@ const executePhaseEffectsForOnePlayer = ({
 export const executePhaseEffectsForBothPlayers = ({
   phaseName,
   executeArgs,
+  //TODO: implement!
+  areMyEffectsFirst,
 }: ExecutePhaseEffectsParams) => {
-  //executing phase effects for player 1
+  //executing phase effects for player 1 (myUpdatedCards, myUpdatedDice refer to player 1)
+
+  const firstSideExecuteArgs = areMyEffectsFirst
+    ? executeArgs
+    : {
+        ...executeArgs,
+        myCards: executeArgs.opponentCards,
+        myDice: executeArgs.opponentDice,
+        opponentCards: executeArgs.myCards,
+        opponentDice: executeArgs.myDice,
+      };
   const {
-    myUpdatedCards: myUpdatedCardsAfterPhaseEffectsMySide,
-    myUpdatedDice: myUpdatedDiceAfterPhaseEffectsMySide,
-    opponentUpdatedCards: opponentUpdatedCardsAfterPhaseEffectsMySide,
-    opponentUpdatedDice: opponentUpdatedDiceAfterPhaseEffectsMySide,
-    errorMessage,
-  } = executePhaseEffectsForOnePlayer({ phaseName, executeArgs });
-  if (errorMessage) {
-    return { errorMessage };
-  }
-  //executing phase effects for player 2, reversing the arguments because the effects are executed from the perspective of the player
-  const {
-    myUpdatedCards: opponentUpdatedCardsAfterPhaseEffectsOpponentSide,
-    myUpdatedDice: opponentUpdatedDiceAfterPhaseEffectsOpponentSide,
-    opponentUpdatedCards: myUpdatedCardsAfterPhaseEffectsOpponentSide,
-    opponentUpdatedDice: myUpdatedDiceAfterPhaseEffectsOpponentSide,
-    errorMessage: errorMessageOpponent,
+    myUpdatedCards: thisSideUpdatedCardsFromFirstSide,
+    myUpdatedDice: thisSideUpdatedDiceFromFirstSide,
+    opponentUpdatedCards: otherSideUpdatedCardsFromFirstSide,
+    opponentUpdatedDice: otherSideUpdatedDiceFromFirstSide,
+    errorMessage: errorMessageFirstSide,
   } = executePhaseEffectsForOnePlayer({
     phaseName,
-    executeArgs: {
-      ...executeArgs,
-      myCards: opponentUpdatedCardsAfterPhaseEffectsMySide,
-      myDice: opponentUpdatedDiceAfterPhaseEffectsMySide,
-      opponentCards: myUpdatedCardsAfterPhaseEffectsMySide,
-      opponentDice: myUpdatedDiceAfterPhaseEffectsMySide,
-    },
+    executeArgs: firstSideExecuteArgs,
   });
-  if (errorMessageOpponent) {
-    return { errorMessage: errorMessageOpponent };
+  if (errorMessageFirstSide) {
+    return { errorMessage: errorMessageFirstSide };
   }
-  return {
-    myUpdatedCards: myUpdatedCardsAfterPhaseEffectsOpponentSide,
-    myUpdatedDice: myUpdatedDiceAfterPhaseEffectsOpponentSide,
-    opponentUpdatedCards: opponentUpdatedCardsAfterPhaseEffectsOpponentSide,
-    opponentUpdatedDice: opponentUpdatedDiceAfterPhaseEffectsOpponentSide,
-  };
+  //executing phase effects for the other side, reversing the arguments because the effects are executed from the perspective of that player
+  const secondSideExecuteArgs = areMyEffectsFirst
+    ? {
+        ...executeArgs,
+        myCards: otherSideUpdatedCardsFromFirstSide,
+        myDice: otherSideUpdatedDiceFromFirstSide,
+        opponentCards: thisSideUpdatedCardsFromFirstSide,
+        opponentDice: thisSideUpdatedDiceFromFirstSide,
+      }
+    : {
+        ...executeArgs,
+        myCards: thisSideUpdatedCardsFromFirstSide,
+        myDice: thisSideUpdatedDiceFromFirstSide,
+        opponentCards: otherSideUpdatedCardsFromFirstSide,
+        opponentDice: otherSideUpdatedDiceFromFirstSide,
+      };
+  const {
+    myUpdatedCards: thisSideUpdatedCardsFromSecondSide,
+    myUpdatedDice: thisSideUpdatedDiceFromSecondSide,
+    opponentUpdatedCards: otherSideUpdatedCardsFromSecondSide,
+    opponentUpdatedDice: otherSideUpdatedDiceFromSecondSide,
+    errorMessage: errorMessageOtherSide,
+  } = executePhaseEffectsForOnePlayer({
+    phaseName,
+    executeArgs: secondSideExecuteArgs,
+  });
+  if (errorMessageOtherSide) {
+    return { errorMessage: errorMessageOtherSide };
+  }
+  return areMyEffectsFirst
+    ? {
+        myUpdatedCards: otherSideUpdatedCardsFromSecondSide,
+        myUpdatedDice: otherSideUpdatedDiceFromSecondSide,
+        opponentUpdatedCards: thisSideUpdatedCardsFromSecondSide,
+        opponentUpdatedDice: thisSideUpdatedDiceFromSecondSide,
+      }
+    : {
+        myUpdatedCards: thisSideUpdatedCardsFromSecondSide,
+        myUpdatedDice: thisSideUpdatedDiceFromSecondSide,
+        opponentUpdatedCards: otherSideUpdatedCardsFromSecondSide,
+        opponentUpdatedDice: otherSideUpdatedDiceFromSecondSide,
+      };
 };
 
 export const broadcastSwitchPlayer = ({
@@ -1082,4 +1114,15 @@ export const broadcastUpdatedCardsAndDice = ({
     event: "updated_cards_and_dice",
     payload: { myCards, myDice },
   });
+};
+
+export const shuffleDeck = (deck: CardExt[]) => {
+  return deck.sort(() => Math.random() - 0.5);
+};
+
+export const deckCardTotalCount = (deck: DeckWithCardBasicInfo) => {
+  return deck.deck_card_basic_info.reduce(
+    (acc, card) => acc + (card.quantity ?? 0),
+    0
+  );
 };
