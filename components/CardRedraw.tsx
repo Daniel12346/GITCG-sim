@@ -18,8 +18,9 @@ export default function CardRedraw({
 }) {
   const currentPhase = useRecoilValue(currentPhaseState);
   const [myCards, setMyCards] = useRecoilState(myInGameCardsState);
-  const selectedCards = useRecoilValue(mySelectedCardsState);
   const [amIRedrawing, setAmIRedrawing] = useRecoilState(amIRedrawingState);
+  const [selectedCards, setSelectedCards] =
+    useRecoilState(mySelectedCardsState);
   const redrawCards = (myCards: CardExt[], selectedCards: CardExt[]) => {
     const amountToDraw = selectedCards.length;
     const myCardsAfterReturningToDeck = myCards.map((card) => {
@@ -44,26 +45,7 @@ export default function CardRedraw({
       setAmIRedrawing(false);
     }
   }, [currentPhase]);
-  //   useEffect(() => {
-  //     if (currentPhase === "ROLL_PHASE") {
-  //       if (amIPlayer1) {
-  //         //resettting dice for both players
-  //         const myDice = createRandomDice(8);
-  //         const opponentDice = createRandomDice(8);
-  //         setMyDice(myDice);
-  //         setOpponentDice(opponentDice);
-  //         channel &&
-  //           broadcastUpdatedCardsAndDice({
-  //             channel,
-  //             myDice,
-  //             opponentDice,
-  //           });
-  //       }
-  //       setAmIRerolling(true);
-  //     } else {
-  //       setAmIRerolling(false);
-  //     }
-  //   }, [currentPhase]);
+
   return (
     <div
       //TODO: center properly
@@ -80,33 +62,36 @@ export default function CardRedraw({
                 <Card key={card.id} card={card} />
               ))}
           </div>
-          <button
-            onClick={() => {
-              const myUpdatedCards = redrawCards(myCards, selectedCards);
-              console.log(
-                "myUpdatedCards",
-                myUpdatedCards,
-                myCards,
-                selectedCards
-              );
-              channel &&
-                channel.send({
-                  type: "broadcast",
-                  event: "updated_cards_and_dice",
-                  payload: { myCards: myUpdatedCards },
-                });
-              setMyCards(myUpdatedCards);
-            }}
-          >
-            Redraw
-          </button>
-          <button
-            onClick={() => {
-              setAmIRedrawing(false);
-            }}
-          >
-            confirm
-          </button>
+          <div className="flex justify-between w-full ">
+            <button
+              onClick={() => {
+                const myUpdatedCards = redrawCards(myCards, selectedCards);
+                console.log(
+                  "myUpdatedCards",
+                  myUpdatedCards,
+                  myCards,
+                  selectedCards
+                );
+                channel &&
+                  channel.send({
+                    type: "broadcast",
+                    event: "updated_cards_and_dice",
+                    payload: { myCards: myUpdatedCards },
+                  });
+                setMyCards(myUpdatedCards);
+                setSelectedCards([]);
+              }}
+            >
+              Redraw
+            </button>
+            <button
+              onClick={() => {
+                setAmIRedrawing(false);
+              }}
+            >
+              confirm
+            </button>
+          </div>
         </div>
       )}
     </div>
