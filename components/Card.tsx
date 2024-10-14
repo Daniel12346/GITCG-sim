@@ -1,4 +1,8 @@
-import { addCardBasicInfoToDeck, removeBasicInfoFromDeck } from "@/app/utils";
+import {
+  addCardBasicInfoToDeck,
+  deckCardTotalCount,
+  removeBasicInfoFromDeck,
+} from "@/app/utils";
 import {
   currentViewedCardState,
   myCurrentDeckCardsBasicInfoState,
@@ -8,8 +12,10 @@ import {
   currentGameIDState,
   isMyTurnState,
   currentPhaseState,
+  myCurrentDeckState,
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { useState } from "react";
 import {
   useRecoilRefresher_UNSTABLE,
   useRecoilState,
@@ -36,9 +42,8 @@ export default function Card({
   const setCurrentViewedCard = useSetRecoilState(currentViewedCardState);
   const currentDeckID = useRecoilValue(myCurrentDeckIDState);
   const client = createClientComponentClient<Database>();
-  const refreshDeck = useRecoilRefresher_UNSTABLE(
-    myCurrentDeckCardsBasicInfoState
-  );
+  const currentDeck = useRecoilValue(myCurrentDeckState);
+  const refreshDeck = useRecoilRefresher_UNSTABLE(myCurrentDeckState);
   const myID = useRecoilValue(myIDState);
   const isMyCard = card.owner_id === myID;
   const isSelected = selectedTargets.find((target) => target.id === card.id);
@@ -50,6 +55,8 @@ export default function Card({
   const isInGame = !!gameID;
   const isMyTurn = useRecoilValue(isMyTurnState);
   const currentPhase = useRecoilValue(currentPhaseState);
+  const deckCardCount = currentDeck && deckCardTotalCount(currentDeck);
+  const [errorMessage, setErrorMessage] = useState("");
   return (
     <div
       className={`group bg-blue-200 flex flex-col items-center relative h-24 w-16 border-4
@@ -98,7 +105,8 @@ export default function Card({
             </span>
           )}
         {/* used for selecting cards */}
-        {isInGame && (
+        {/* only my cards can be selected outside the action phase*/}
+        {isInGame && (currentPhase !== "ACTION_PHASE" ? isMyCard : true) && (
           <span
             className="z-30 cursor-pointer hidden group-hover:block absolute top-10 left-1 bg-slate-200 text-blue-800 p-1"
             onClick={() => {
@@ -170,6 +178,10 @@ export default function Card({
           <span
             className="bg-slate-200 px-0.5 text-blue-800 h-fit font-extrabold cursor-pointer"
             onClick={async () => {
+              if (deckCardCount! >= 33) {
+                setErrorMessage("Deck is full");
+                return;
+              }
               await addCardBasicInfoToDeck(
                 client,
                 card.card_basic_info_id,
