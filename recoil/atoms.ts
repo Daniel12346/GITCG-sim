@@ -94,12 +94,14 @@ export const myCurrentDeckIDState = atom<string>({
   default: "",
   effects_UNSTABLE: [persistAtom],
 });
+
 type DeckCardsBasicInfo =
   Database["public"]["Tables"]["deck_card_basic_info"]["Row"][];
-type Deck = Database["public"]["Tables"]["deck"]["Row"] & {
-  deck_card_basic_info: DeckCardsBasicInfo;
-};
-export const myCurrentDeckState = selector<Deck | null>({
+export type DeckWithCardBasicInfo =
+  Database["public"]["Tables"]["deck"]["Row"] & {
+    deck_card_basic_info: DeckCardsBasicInfo;
+  };
+export const myCurrentDeckState = selector<DeckWithCardBasicInfo | null>({
   key: "myCurrentDeckState",
   get: async ({ get }) => {
     const supabase = createClientComponentClient<Database>();
