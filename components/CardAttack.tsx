@@ -43,20 +43,21 @@ export default function CardAttackInfo({
         {/* <p className="text-xs">{attack.name}</p> */}
         <div
           className={`flex flex-col items-center p-2 bg-orange-200 
-             ${!isMyTurn && "opacity-60"}
             ${isCardFrozen && "bg-gray-600"}
           }`}
         >
-          <span className="text-lg mb-1">
-            {attack?.effectType &&
-              attacktypeDisplayText[
-                //TODO: is it always one of these 3?
-                attack.effectType as
-                  | "NORMAL_ATTACK"
-                  | "ELEMENTAL_SKILL"
-                  | "ELEMENTAL_BURST"
-              ]}
-          </span>
+          {isMyTurn && (
+            <span className="text-lg mb-1">
+              {attack?.effectType &&
+                attacktypeDisplayText[
+                  //TODO: is it always one of these 3?
+                  attack.effectType as
+                    | "NORMAL_ATTACK"
+                    | "ELEMENTAL_SKILL"
+                    | "ELEMENTAL_BURST"
+                ]}
+            </span>
+          )}
           {Object.entries(attack.cost!)
             .sort()
             .map(([element, amount]) => (
