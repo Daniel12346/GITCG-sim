@@ -1372,7 +1372,9 @@ export const effects: {
       currentRound,
     }) => {
       //TODO? check if it is the end phase
-
+      thisCard =
+        thisCard ||
+        (effect && myCards.find((card) => card.id === effect.card_id));
       if (!thisCard) {
         return { errorMessage: "No card passed to effect" };
       }
@@ -1406,6 +1408,8 @@ export const effects: {
           );
         }
       }
+      console.log("wind Spirit end phase effect", myUpdatedCards);
+
       return {
         myUpdatedCards,
         opponentUpdatedCards,
