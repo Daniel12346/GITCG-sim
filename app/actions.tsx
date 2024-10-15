@@ -159,6 +159,12 @@ export const createRandomDice = (amount: number) => {
   }
   return result;
 };
+export const createOmniDice = (amount: number) => {
+  const result: Dice = {};
+  if (!amount) return result;
+  result["OMNI"] = amount;
+  return result;
+};
 
 const rerollDice = (diceToChooseFrom: Dice, chosenDice: Dice) => {
   let result = {};
