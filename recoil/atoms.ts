@@ -296,6 +296,14 @@ export const gameWinnerIDState = atom<string>({
   key: "gameWinnerIDState",
   default: "",
 });
+export const amIGameWinnerState = selector<boolean>({
+  key: "amIGameWinnerState",
+  get: ({ get }) => {
+    const gameWinnerID = get(gameWinnerIDState);
+    const myID = get(myIDState);
+    return gameWinnerID === myID;
+  },
+});
 export const isGameOverState = selector<boolean>({
   key: "isGameOverState",
   get: ({ get }) => {
