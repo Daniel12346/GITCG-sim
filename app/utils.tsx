@@ -993,31 +993,31 @@ const executePhaseEffectsForOnePlayer = ({
   if (errorMessage) {
     return { errorMessage };
   }
+  myCardsAfterTriggeredEffects &&
+    (myUpdatedCards = myCardsAfterTriggeredEffects);
+  myDiceAfterTriggeredEffects && (myUpdatedDice = myDiceAfterTriggeredEffects);
+  opponentInGameCardsAfterTriggeredEffects &&
+    (opponentUpdatedCards = opponentInGameCardsAfterTriggeredEffects);
+  opponentDiceAfterTriggeredEffects &&
+    (opponentUpdatedDice = opponentDiceAfterTriggeredEffects);
+
   return {
-    myUpdatedCards: myCardsAfterTriggeredEffects,
-    myUpdatedDice: myDiceAfterTriggeredEffects,
-    opponentUpdatedCards: opponentInGameCardsAfterTriggeredEffects,
-    opponentUpdatedDice: opponentDiceAfterTriggeredEffects,
+    myUpdatedCards,
+    myUpdatedDice,
+    opponentUpdatedCards,
+    opponentUpdatedDice,
   };
 };
 
 export const executePhaseEffectsForBothPlayers = ({
   phaseName,
   executeArgs,
-  //TODO: implement!
-  areMyEffectsFirst,
-}: ExecutePhaseEffectsParams) => {
-  //executing phase effects for player 1 (myUpdatedCards, myUpdatedDice refer to player 1)
+}: //TODO: implement!
+// areMyEffectsFirst,
+ExecutePhaseEffectsParams) => {
+  //player 1 is always the one executing this entire function
 
-  const firstSideExecuteArgs = areMyEffectsFirst
-    ? executeArgs
-    : {
-        ...executeArgs,
-        myCards: executeArgs.opponentCards,
-        myDice: executeArgs.opponentDice,
-        opponentCards: executeArgs.myCards,
-        opponentDice: executeArgs.myDice,
-      };
+  //executing phase effects for player 1 (myUpdatedCards, myUpdatedDice refer to player 1)
   const {
     myUpdatedCards: thisSideUpdatedCardsFromFirstSide,
     myUpdatedDice: thisSideUpdatedDiceFromFirstSide,
@@ -1026,27 +1026,19 @@ export const executePhaseEffectsForBothPlayers = ({
     errorMessage: errorMessageFirstSide,
   } = executePhaseEffectsForOnePlayer({
     phaseName,
-    executeArgs: firstSideExecuteArgs,
+    executeArgs,
   });
   if (errorMessageFirstSide) {
     return { errorMessage: errorMessageFirstSide };
   }
   //executing phase effects for the other side, reversing the arguments because the effects are executed from the perspective of that player
-  const secondSideExecuteArgs = areMyEffectsFirst
-    ? {
-        ...executeArgs,
-        myCards: otherSideUpdatedCardsFromFirstSide,
-        myDice: otherSideUpdatedDiceFromFirstSide,
-        opponentCards: thisSideUpdatedCardsFromFirstSide,
-        opponentDice: thisSideUpdatedDiceFromFirstSide,
-      }
-    : {
-        ...executeArgs,
-        myCards: thisSideUpdatedCardsFromFirstSide,
-        myDice: thisSideUpdatedDiceFromFirstSide,
-        opponentCards: otherSideUpdatedCardsFromFirstSide,
-        opponentDice: otherSideUpdatedDiceFromFirstSide,
-      };
+  const secondSideExecuteArgs = {
+    ...executeArgs,
+    myCards: otherSideUpdatedCardsFromFirstSide,
+    myDice: otherSideUpdatedDiceFromFirstSide,
+    opponentCards: thisSideUpdatedCardsFromFirstSide,
+    opponentDice: thisSideUpdatedDiceFromFirstSide,
+  };
   const {
     myUpdatedCards: thisSideUpdatedCardsFromSecondSide,
     myUpdatedDice: thisSideUpdatedDiceFromSecondSide,
@@ -1060,19 +1052,13 @@ export const executePhaseEffectsForBothPlayers = ({
   if (errorMessageOtherSide) {
     return { errorMessage: errorMessageOtherSide };
   }
-  return areMyEffectsFirst
-    ? {
-        myUpdatedCards: otherSideUpdatedCardsFromSecondSide,
-        myUpdatedDice: otherSideUpdatedDiceFromSecondSide,
-        opponentUpdatedCards: thisSideUpdatedCardsFromSecondSide,
-        opponentUpdatedDice: thisSideUpdatedDiceFromSecondSide,
-      }
-    : {
-        myUpdatedCards: thisSideUpdatedCardsFromSecondSide,
-        myUpdatedDice: thisSideUpdatedDiceFromSecondSide,
-        opponentUpdatedCards: otherSideUpdatedCardsFromSecondSide,
-        opponentUpdatedDice: otherSideUpdatedDiceFromSecondSide,
-      };
+  //TODO: is this correct?
+  return {
+    myUpdatedCards: otherSideUpdatedCardsFromSecondSide,
+    myUpdatedDice: otherSideUpdatedDiceFromSecondSide,
+    opponentUpdatedCards: thisSideUpdatedCardsFromSecondSide,
+    opponentUpdatedDice: thisSideUpdatedDiceFromSecondSide,
+  };
 };
 
 export const broadcastSwitchPlayer = ({
@@ -1112,7 +1098,7 @@ export const broadcastUpdatedCardsAndDice = ({
   return channel?.send({
     type: "broadcast",
     event: "updated_cards_and_dice",
-    payload: { myCards, myDice },
+    payload: { myCards, myDice, opponentCards, opponentDice },
   });
 };
 
