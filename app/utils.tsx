@@ -3,6 +3,7 @@ import { findEffectLogic, EventType, ExecuteEffectParams } from "./cardEffects";
 import { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { DieElementNameT } from "./global";
 import { DeckWithCardBasicInfo } from "@/recoil/atoms";
+import { subtractCost } from "./actions";
 
 type CardBasicInfo = Database["public"]["Tables"]["card_basic_info"]["Row"];
 export const cardFromBasicInfo = (
@@ -142,6 +143,70 @@ export const findCostModifyingEffectsOfCardsEquippedTo = (
 ) => {
   const equippedCards = findEquippedCards(target, playerCards);
   return findCostModifyingEffects(equippedCards);
+};
+
+export const calculateCostAfterModifiers = ({
+  baseCost,
+  executeArgs,
+  selectedDice,
+}: {
+  baseCost: Cost;
+  executeArgs: Omit<ExecuteEffectParams, "effect">;
+  selectedDice: Dice;
+}) => {
+  let modifiedCost = baseCost;
+  let myUpdatedDice = executeArgs.myDice;
+  let myUpdatedCards = executeArgs.myCards;
+  const triggerContext = executeArgs.triggerContext;
+
+  if (!triggerContext) {
+    return { errorMessage: "No trigger context" };
+  }
+  const costModifyingEffects = findCostModifyingEffects(myUpdatedCards);
+  //execute all cost modifying effects
+  costModifyingEffects.forEach((effect) => {
+    const effectLogic = findEffectLogic(effect);
+    if (!effectLogic?.execute) return;
+    let {
+      modifiedCost: modifiedCostAfterCostModyfingEffect,
+      errorMessage,
+      myUpdatedCards: myUpdatedCardsAfterCostModifyingEffect,
+    } = effectLogic.execute({
+      ...executeArgs,
+      effect,
+      triggerContext: {
+        ...triggerContext,
+        cost: modifiedCost,
+      },
+    });
+
+    if (errorMessage) {
+      return { errorMessage };
+    }
+    if (myUpdatedCardsAfterCostModifyingEffect) {
+      myUpdatedCards = myUpdatedCardsAfterCostModifyingEffect;
+    }
+    if (modifiedCostAfterCostModyfingEffect) {
+      modifiedCost = modifiedCostAfterCostModyfingEffect;
+    }
+  });
+  try {
+    //checking if there are enough dice among the selected dice
+    if (calculateTotalDice(selectedDice) !== calculateTotalDice(modifiedCost)) {
+      return { errorMessage: "Incorrect number of dice" };
+    }
+    //subtracting the cost from the selected dice to check if the dice are correct
+    subtractCost(selectedDice, modifiedCost);
+  } catch (e) {
+    return { errorMessage: "Incorrect dice" };
+  }
+  //if there are enough dice, subtract the selected dice from the total dice
+  try {
+    myUpdatedDice = subtractCost(myUpdatedDice, selectedDice);
+  } catch (e) {
+    return { errorMessage: "Not enough total dice" };
+  }
+  return { modifiedCost, myUpdatedDice, myUpdatedCards };
 };
 
 export const findDamageModifyingEffects = (
@@ -885,6 +950,7 @@ export const executeEffectsSequentially = ({
   let opponentUpdatedCards = executeArgs.opponentCards;
   let opponentUpdatedDice = executeArgs.opponentDice;
   let errorMessage: string | null = null;
+
   effects.forEach((effect) => {
     if (errorMessage) return;
     const effectLogic = findEffectLogic(effect);
