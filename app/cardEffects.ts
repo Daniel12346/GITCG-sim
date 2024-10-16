@@ -14,7 +14,6 @@ export type EventType =
   | "CARD_ACTIVATION"
   | "ATTACK"
   | "REACTION"
-  | "EQUIP_TALENT"
   | "EQUIP_ARTIFACT"
   | "EQUIP_WEAPON"
   | "SWITCH_CHARACTER"
@@ -138,20 +137,28 @@ const makeExecuteFunctionOfElementalRelicWith2UnalignedCost = (
       thisCard ||
       (effect && myCards.find((card) => card.id === effect.card_id));
     //TODO: check if this card is equipped
-    let cost = triggerContext?.cost;
     if (!triggerContext) {
       return { errorMessage: "No trigger context" };
     }
     const thisEffect = thisCard?.effects.find(
       (eff) => eff.effect_basic_info_id === baseEffectID
     );
-    //returning {} means this effect won't affect the cost of the event or the state of the cards but it will still be executed
+    //returning {} means this effect won't affect the cost of the event or the state of the cards but it will not throw an error
     if (thisEffect?.usages_this_turn && thisEffect.usages_this_turn >= 1) {
       return {};
     }
-    if (!["ATTACK", "EQUIP_TALENT"].includes(triggerContext.eventType)) {
+    if (!["ATTACK", "CARD_ACTIVATION"].includes(triggerContext.eventType)) {
       return {};
     }
+    let cost = triggerContext.cost;
+    const activatedCard = triggerContext.activatedCard;
+    //only reduce the cost if the activated card was a talent card
+    if (triggerContext.eventType === "CARD_ACTIVATION") {
+      if (!activatedCard || activatedCard.card_type !== "TALENT") {
+        return {};
+      }
+    }
+
     try {
       cost = subtractCost({ ...cost }, { [element]: 1 }) as Cost;
       //even if the cost is not reduced, the effect should still be executed
@@ -273,6 +280,7 @@ export type TriggerContext = {
   //can be used both for attacks and equips
   targetCard?: CardExt;
   cost?: Cost;
+  activatedCard?: CardExt;
   attack?: {
     attackBaseEffectID?: string;
     attackerCard?: CardExt;
@@ -666,7 +674,7 @@ export const effects: {
   },
   //Mask of Solitude Basalt
   "85247510-9f6b-4d6e-8da0-55264aba3c8b": {
-    triggerOn: ["ATTACK", "EQUIP_TALENT"],
+    triggerOn: ["ATTACK", "CARD_ACTIVATION"],
     execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost(
       "GEO",
       "85247510-9f6b-4d6e-8da0-55264aba3c8b"
@@ -674,7 +682,7 @@ export const effects: {
   },
   //Viridescent Venerer's Diadem
   "176b463b-fa66-454b-94f6-b81a60ff5598": {
-    triggerOn: ["ATTACK", "EQUIP_TALENT"],
+    triggerOn: ["ATTACK", "CARD_ACTIVATION"],
     execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost(
       "ANEMO",
       "176b463b-fa66-454b-94f6-b81a60ff5598"
@@ -927,7 +935,7 @@ export const effects: {
         }
         //reduce cost of the attack by 1 unaligned
         try {
-          const modifiedCostCost = subtractCost(cost, { UNALIGNED: 1 });
+          const modifiedCost = subtractCost(cost, { UNALIGNED: 1 });
           //increase the usage of this effect by 1
           const myUpdatedCards = myCards.map((card) => {
             if (card.id === thisCard.id) {
@@ -945,7 +953,7 @@ export const effects: {
               return card;
             }
           });
-          return { modifiedCost: modifiedCostCost, myUpdatedCards };
+          return { modifiedCost: modifiedCost, myUpdatedCards };
         } catch (e) {
           return { errorMessage: "could not subtract cost" };
         }
