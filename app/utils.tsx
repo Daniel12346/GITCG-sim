@@ -1181,7 +1181,7 @@ export const shuffleDeck = (deck: CardExt[]) => {
   return deck.sort(() => Math.random() - 0.5);
 };
 
-export const deckCardTotalCount = (deck: DeckWithCardBasicInfo) => {
+export const calculateDeckCardCount = (deck: DeckWithCardBasicInfo) => {
   return deck.deck_card_basic_info.reduce(
     (acc, card) => acc + (card.quantity ?? 0),
     0
