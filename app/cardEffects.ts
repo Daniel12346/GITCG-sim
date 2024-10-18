@@ -689,35 +689,35 @@ export const effects: {
     ),
   },
   //Witch's Scorching Hat
-  "1c92a021-aaab-42e0-91dd-9e3ac0bf3ef5": {
+  "a43ca945-b79a-47b4-8043-9964004af01f": {
     triggerOn: ["ATTACK", "CARD_ACTIVATION"],
     execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost(
       "PYRO",
-      "1c92a021-aaab-42e0-91dd-9e3ac0bf3ef5"
+      "a43ca945-b79a-47b4-8043-9964004af01f"
     ),
   },
   //Broken Rime's Echo
-  "5c8c9c3e-2f7b-4c65-9226-6a93860378cc": {
+  "5f3ed7ee-b221-467d-8772-27d5f6b84218": {
     triggerOn: ["ATTACK", "CARD_ACTIVATION"],
     execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost(
       "CRYO",
-      "5c8c9c3e-2f7b-4c65-9226-6a93860378cc"
+      "5f3ed7ee-b221-467d-8772-27d5f6b84218"
     ),
   },
   //Wine-Stained Tricorne
-  "f9cf8520-8c98-48ae-91af-3f8a94ecec6d": {
+  "4834c506-eaac-42ec-b10f-8d1bbcc9e8db": {
     triggerOn: ["ATTACK", "CARD_ACTIVATION"],
     execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost(
       "HYDRO",
-      "f9cf8520-8c98-48ae-91af-3f8a94ecec6d"
+      "4834c506-eaac-42ec-b10f-8d1bbcc9e8db"
     ),
   },
   //Thunder Summoner's Crown
-  "8078d3a1-4b6e-40b6-af2b-a07d8d3a8029": {
+  "cef04fc2-6fc7-4eab-a3b2-3545c65f8dcd": {
     triggerOn: ["ATTACK", "CARD_ACTIVATION"],
     execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost(
       "ELECTRO",
-      "8078d3a1-4b6e-40b6-af2b-a07d8d3a8029"
+      "cef04fc2-6fc7-4eab-a3b2-3545c65f8dcd"
     ),
   },
   //TODO: add other elemental relics
