@@ -1,5 +1,5 @@
-import { get } from "http";
 import { EventType, ExecuteEffect, findEffectLogic } from "./cardEffects";
+import { calculateTotalDice } from "./utils";
 
 export function drawCards(currentCards: CardExt[], amount: number) {
   const newCardsState = currentCards.map((card) => {
@@ -63,6 +63,14 @@ export const subtractCost = (
   costToSubtract: Cost
 ) => {
   const result = { ...diceToSubtractFrom };
+  if (calculateTotalDice(diceToSubtractFrom) === 0) {
+    return diceToSubtractFrom;
+  }
+  if (
+    calculateTotalDice(diceToSubtractFrom) < calculateTotalDice(costToSubtract)
+  ) {
+    throw new Error("Not enough dice");
+  }
   Object.keys(costToSubtract)
     //sorting so that matching and unaligned are subtracted last because specific elements need to be checked first
     //matching and unaligned must not take any of the dice that are needed for specific elements before those requirements are met
