@@ -151,6 +151,7 @@ const makeExecuteFunctionOfElementalRelicWith2UnalignedCost = (
       return {};
     }
     let cost = triggerContext.cost;
+    let modifiedCost;
     const activatedCard = triggerContext.activatedCard;
     //only reduce the cost if the activated card was a talent card
     if (triggerContext.eventType === "CARD_ACTIVATION") {
@@ -160,9 +161,7 @@ const makeExecuteFunctionOfElementalRelicWith2UnalignedCost = (
     }
 
     try {
-      cost = subtractCost({ ...cost }, { [element]: 1 }) as Cost;
-      //even if the cost is not reduced, the effect should still be executed
-    } finally {
+      modifiedCost = subtractCost({ ...cost }, { [element]: 1 }) as Cost;
       const myCardsWithUpdatedEffects = myCards.map((card) => {
         if (card.id === thisCard?.id) {
           return {
@@ -173,7 +172,10 @@ const makeExecuteFunctionOfElementalRelicWith2UnalignedCost = (
           return card;
         }
       });
-      return { modifiedCost: cost, myUpdatedCards: myCardsWithUpdatedEffects };
+      return { modifiedCost, myUpdatedCards: myCardsWithUpdatedEffects };
+    } catch {
+      //if the cost was not reduced, the effect usage is not increased
+      return {};
     }
   };
 };
