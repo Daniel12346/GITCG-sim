@@ -7,7 +7,11 @@ import { atom, selector, selectorFamily, waitForAll } from "recoil";
 import { recoilPersist } from "recoil-persist";
 import { RealtimeChannel } from "@supabase/supabase-js";
 
-import { cardFromBasicInfo, PhaseName } from "@/app/utils";
+import {
+  cardFromBasicInfo,
+  calculateDeckCardCount,
+  PhaseName,
+} from "@/app/utils";
 const { persistAtom } = recoilPersist();
 // const supabase = createClientComponentClient();
 type Profile = Database["public"]["Tables"]["profile"]["Row"];
@@ -93,6 +97,14 @@ export const myCurrentDeckIDState = atom<string>({
   key: "currentDeckIDState",
   default: "",
   effects_UNSTABLE: [persistAtom],
+});
+export const myCurrentDeckCardCountState = selector<number>({
+  key: "myCurrentDeckCardCountState",
+  get: ({ get }) => {
+    const myCurrentDeck = get(myCurrentDeckState);
+    if (!myCurrentDeck) return 0;
+    return calculateDeckCardCount(myCurrentDeck);
+  },
 });
 
 type DeckCardsBasicInfo =
