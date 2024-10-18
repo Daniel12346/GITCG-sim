@@ -119,9 +119,18 @@ export const removeBasicInfoFromDeck = async (
   return result;
 };
 
-export const findEquippedCards = (target: CardExt, playerCards: CardExt[]) => {
+export const findEquippedCards = (
+  target: CardExt,
+  playerCards: CardExt[],
+  //TODO: use string enum
+  type?: string
+) => {
   return playerCards.filter(
-    (card) => card.equippedTo === target.id && card.location !== "DISCARDED"
+    (card) =>
+      card.equippedTo === target.id &&
+      (card.location !== "DISCARDED" ||
+        (card.subtype === "EVENT_FOOD" && card.wasActivatedThisTurn)) &&
+      (type ? card.subtype === type : true)
   );
 };
 
