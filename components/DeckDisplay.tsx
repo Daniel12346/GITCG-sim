@@ -1,8 +1,4 @@
-import {
-  myInGameCardsState,
-  opponentInGameCardsState,
-  myCurrentDeckCardsBasicInfoState,
-} from "@/recoil/atoms";
+import { myCurrentDeckCardsBasicInfoState } from "@/recoil/atoms";
 import { useEffect } from "react";
 import { useRecoilValue } from "recoil";
 import Card from "@/components/Card";
@@ -20,9 +16,14 @@ export default function DeckDisplay() {
     // const
   }, [myDeckCardsBasicInfo]);
 
+  const sortedDeckCards = myDeckCards?.sort((a, b) => {
+    if (a.card_type === "CHARACTER" && b.card_type !== "CHARACTER") return -1;
+    if (b.card_type === "CHARACTER" && a.card_type !== "CHARACTER") return 1;
+    return 0;
+  });
   return (
-    <div className="flex bg-slate-600 flex-row gap-3 justify-evenly flex-wrap rounded-md p-3">
-      {myDeckCards?.map((card) => {
+    <div className="flex bg-slate-600 flex-row gap-4 justify-evenly flex-wrap rounded-md p-3">
+      {sortedDeckCards?.map((card) => {
         return <Card key={card.id} card={card} isInDeckDisplay />;
       })}
     </div>
