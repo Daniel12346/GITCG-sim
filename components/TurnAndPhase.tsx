@@ -1,5 +1,6 @@
 import {
   addOneCardFromDeckByName,
+  createOmniDice,
   createRandomDice,
   drawCards,
 } from "@/app/actions";
@@ -125,8 +126,9 @@ export default ({}) => {
         break;
       case "ROLL_PHASE":
         setCurrentPlayerID(nextRoundFirstPlayerID);
-        myUpdatedDice = createRandomDice(8);
-        opponentUpdatedDice = createRandomDice(8);
+        //TODO: revert to createRandomDice
+        myUpdatedDice = createOmniDice(8);
+        opponentUpdatedDice = createOmniDice(8);
         //TODO: reset dice
         break;
       case "ACTION_PHASE":
@@ -148,6 +150,22 @@ export default ({}) => {
       return;
     //no phase effects activate in preparation phase
     if (currentPhase === "PREPARATION_PHASE") return;
+    const areMyEffectsFirst = nextRoundFirstPlayerID === myID;
+    const phaseEffectsExecuteArgs = areMyEffectsFirst
+      ? {
+          currentRound,
+          myCards: myUpdatedCards,
+          myDice: myUpdatedDice,
+          opponentCards: opponentUpdatedCards,
+          opponentDice: opponentUpdatedDice,
+        }
+      : {
+          currentRound,
+          myCards: opponentUpdatedCards,
+          myDice: opponentUpdatedDice,
+          opponentCards: myUpdatedCards,
+          opponentDice: myUpdatedDice,
+        };
     const {
       myUpdatedCards: myCardsAfterPhaseEffects,
       myUpdatedDice: myDiceAfterPhaseEffects,
@@ -156,23 +174,23 @@ export default ({}) => {
       errorMessage,
     } = executePhaseEffectsForBothPlayers({
       phaseName: currentPhase,
-      areMyEffectsFirst: nextRoundFirstPlayerID === myID,
-      executeArgs: {
-        currentRound,
-        myCards: myUpdatedCards,
-        myDice: myUpdatedDice,
-        opponentCards: opponentUpdatedCards,
-        opponentDice: opponentUpdatedDice,
-      },
+      executeArgs: phaseEffectsExecuteArgs,
     });
     if (errorMessage) {
       console.error(errorMessage);
       return;
     }
-    myUpdatedCards = myCardsAfterPhaseEffects;
-    myUpdatedDice = myDiceAfterPhaseEffects;
-    opponentUpdatedCards = opponentCardsAfterPhaseEffects;
-    opponentUpdatedDice = opponentDiceAfterPhaseEffects;
+    if (areMyEffectsFirst) {
+      myUpdatedCards = myCardsAfterPhaseEffects;
+      myUpdatedDice = myDiceAfterPhaseEffects;
+      opponentUpdatedCards = opponentCardsAfterPhaseEffects;
+      opponentUpdatedDice = opponentDiceAfterPhaseEffects;
+    } else {
+      myUpdatedCards = opponentCardsAfterPhaseEffects;
+      myUpdatedDice = opponentDiceAfterPhaseEffects;
+      opponentUpdatedCards = myCardsAfterPhaseEffects;
+      opponentUpdatedDice = myDiceAfterPhaseEffects;
+    }
     if (currentPhase === "END_PHASE") {
       //reset usages on all cards and effects
       const resetStatusesAndEffects = (cards: CardExtended[]) => {
@@ -232,27 +250,39 @@ export default ({}) => {
       return (
         cards.filter(
           (card) => card.location === "CHARACTER" && card.health === 0
-        ).length === 3
+          //TODO: revert to 3
+        ).length === 1
       );
     };
+    const updateGameWinnerInDatabase = async (gameWinnerID: string) => {
+      const supabase = createClientComponentClient<Database>();
+      const { data, error } = await supabase
+        .from("game")
+        .update({ winner_id: gameWinnerID })
+        .eq("id", gameID)
+        .single();
+      if (error) console.error("error", error);
+      console.log("updated game winner", data);
+    };
+    const updateAndBroadcastGameWinner = async (gameWinnerID: string) => {
+      await updateGameWinnerInDatabase(gameWinnerID);
+      setGameWinnerID(gameWinnerID);
+      setTimeout(() => {
+        channel?.send({
+          type: "broadcast",
+          event: "game_over",
+          payload: { gameWinnerID },
+        });
+      }, 400);
+    };
+    let gameWinnerID;
     if (allCharactersHaveBeenDefeated(myCards)) {
-      setTimeout(() => {
-        channel?.send({
-          type: "broadcast",
-          event: "game_over",
-          payload: { gameWinnerID: opponentID },
-        });
-      }, 400);
-      setGameWinnerID(opponentID);
+      gameWinnerID = opponentID;
     } else if (allCharactersHaveBeenDefeated(opponentCards)) {
-      setTimeout(() => {
-        channel?.send({
-          type: "broadcast",
-          event: "game_over",
-          payload: { gameWinnerID: myID },
-        });
-      }, 400);
-      setGameWinnerID(myID);
+      gameWinnerID = myID;
+    }
+    if (gameWinnerID) {
+      updateAndBroadcastGameWinner(gameWinnerID);
     }
   }, [myCards, opponentCards]);
 
