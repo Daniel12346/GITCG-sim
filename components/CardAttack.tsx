@@ -46,18 +46,17 @@ export default function CardAttackInfo({
             ${isCardFrozen && "bg-gray-600"}
           }`}
         >
-          {isMyTurn && (
-            <span className="text-lg mb-1">
-              {attack?.effectType &&
-                attacktypeDisplayText[
-                  //TODO: is it always one of these 3?
-                  attack.effectType as
-                    | "NORMAL_ATTACK"
-                    | "ELEMENTAL_SKILL"
-                    | "ELEMENTAL_BURST"
-                ]}
-            </span>
-          )}
+          <span className="text-lg mb-1">
+            {attack?.effectType &&
+              attacktypeDisplayText[
+                //TODO: is it always one of these 3?
+                attack.effectType as
+                  | "NORMAL_ATTACK"
+                  | "ELEMENTAL_SKILL"
+                  | "ELEMENTAL_BURST"
+              ]}
+          </span>
+
           {Object.entries(attack.cost!)
             .sort()
             .map(([element, amount]) => (
