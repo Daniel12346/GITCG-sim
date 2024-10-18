@@ -154,7 +154,7 @@ const makeExecuteFunctionOfElementalRelicWith2UnalignedCost = (
     const activatedCard = triggerContext.activatedCard;
     //only reduce the cost if the activated card was a talent card
     if (triggerContext.eventType === "CARD_ACTIVATION") {
-      if (!activatedCard || activatedCard.card_type !== "TALENT") {
+      if (!activatedCard || activatedCard.card_type !== "EQUIPMENT_TALENT") {
         return {};
       }
     }
@@ -686,6 +686,38 @@ export const effects: {
     execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost(
       "ANEMO",
       "176b463b-fa66-454b-94f6-b81a60ff5598"
+    ),
+  },
+  //Witch's Scorching Hat
+  "1c92a021-aaab-42e0-91dd-9e3ac0bf3ef5": {
+    triggerOn: ["ATTACK", "CARD_ACTIVATION"],
+    execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost(
+      "PYRO",
+      "1c92a021-aaab-42e0-91dd-9e3ac0bf3ef5"
+    ),
+  },
+  //Broken Rime's Echo
+  "5c8c9c3e-2f7b-4c65-9226-6a93860378cc": {
+    triggerOn: ["ATTACK", "CARD_ACTIVATION"],
+    execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost(
+      "CRYO",
+      "5c8c9c3e-2f7b-4c65-9226-6a93860378cc"
+    ),
+  },
+  //Wine-Stained Tricorne
+  "f9cf8520-8c98-48ae-91af-3f8a94ecec6d": {
+    triggerOn: ["ATTACK", "CARD_ACTIVATION"],
+    execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost(
+      "HYDRO",
+      "f9cf8520-8c98-48ae-91af-3f8a94ecec6d"
+    ),
+  },
+  //Thunder Summoner's Crown
+  "8078d3a1-4b6e-40b6-af2b-a07d8d3a8029": {
+    triggerOn: ["ATTACK", "CARD_ACTIVATION"],
+    execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost(
+      "ELECTRO",
+      "8078d3a1-4b6e-40b6-af2b-a07d8d3a8029"
     ),
   },
   //TODO: add other elemental relics
