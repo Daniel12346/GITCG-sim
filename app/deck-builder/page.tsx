@@ -55,9 +55,11 @@ export default function DeckBuilder() {
               className="px-1 mb-3 bg-indigo-100 text-indigo-950"
             ></input>
             <div className="flex flex-wrap px-2 justify-evenly gap-3 overflow-y-scroll max-h-[25rem]">
-              {searchResultCards.map((card) => {
-                return <CardInDeckDisplay key={card.id} card={card} />;
-              })}
+              {searchResultCards
+                .filter((card) => card.card_type !== "SUMMON")
+                .map((card) => {
+                  return <CardInDeckDisplay key={card.id} card={card} />;
+                })}
             </div>
           </div>
         </div>
