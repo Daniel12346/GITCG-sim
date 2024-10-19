@@ -32,7 +32,6 @@ export default function Card({
   const isFrozen = card.statuses?.find((status) => status.name === "FROZEN");
   const isDefeated = card.location === "CHARACTER" && card.health === 0;
   const isSummon = card.location === "SUMMON";
-  const gameID = useRecoilValue(currentGameIDState);
   const isMyTurn = useRecoilValue(isMyTurnState);
   const currentPhase = useRecoilValue(currentPhaseState);
 
