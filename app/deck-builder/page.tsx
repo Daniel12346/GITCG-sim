@@ -1,10 +1,10 @@
 "use client";
-import Card from "@/components/Card";
-import CardDisplay from "@/components/CardDisplay";
+import CardDisplay from "@/components/CurrentViewedCard";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import dynamic from "next/dynamic";
 import { Suspense, useEffect, useState } from "react";
 import { cardFromBasicInfo } from "../utils";
+import CardInDeckDisplay from "@/components/CardInDeckDisplay";
 const DeckDisplayNoSSR = dynamic(() => import("@/components/DeckDisplay"), {
   ssr: false,
 });
@@ -56,7 +56,7 @@ export default function DeckBuilder() {
             ></input>
             <div className="flex flex-wrap px-2 justify-evenly gap-3 overflow-y-scroll max-h-[25rem]">
               {searchResultCards.map((card) => {
-                return <Card key={card.id} card={card} isInDeckDisplay />;
+                return <CardInDeckDisplay key={card.id} card={card} />;
               })}
             </div>
           </div>
