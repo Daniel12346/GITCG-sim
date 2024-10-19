@@ -1,7 +1,7 @@
 "use client";
 import { Suspense, useEffect } from "react";
 import GameBoard from "@/components/GameBoard";
-import CardDisplay from "@/components/CardDisplay";
+import CurrentViewedCardDisplay from "@/components/CurrentViewedCard";
 
 export default function Game() {
   // // console.log("opponent in game", opponent);
@@ -13,7 +13,7 @@ export default function Game() {
     <div className="w-full p-3">
       <div className="grid grid-cols-[5fr_1fr] bg-indigo-950">
         <GameBoard />
-        <CardDisplay />
+        <CurrentViewedCardDisplay />
       </div>
     </div>
   );
