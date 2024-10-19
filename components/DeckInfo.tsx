@@ -12,13 +12,35 @@ export default function DeckInfo() {
   switch (deckLoadable.state) {
     case "hasValue":
       return (
-        <div className="text-slate-200 ">
-          <span>{deckLoadable.contents?.name + " "}</span>
-          <span className="text-slate-300">
-            ({deckCardBasicInfoTotalCards} cards)
+        <div className="text-slate-200 flex gap-1">
+          <span>
+            <span>{deckLoadable.contents?.name + " "}</span>
+            <span
+              className={`${
+                deckCardBasicInfoTotalCards === 33
+                  ? "text-slate-300"
+                  : "text-red-300"
+              }`}
+            >
+              ({deckCardBasicInfoTotalCards} cards)
+            </span>
           </span>
+          <button
+            className={`${
+              deckCardBasicInfoTotalCards !== 33 &&
+              "opacity-50 pointer-events-none bg-red-100 text-red-900"
+            }
+            bg-green-200 ml-4 text-green-800 px-1 cursor-pointer font-semibold rounded-sm text-center`}
+            onClick={
+              () => {}
+              // TODO:
+            }
+          >
+            save
+          </button>
         </div>
       );
+
     case "loading":
       return (
         <div className="text-slate-300">
