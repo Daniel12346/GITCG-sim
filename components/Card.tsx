@@ -1,8 +1,4 @@
-import {
-  addCardBasicInfoToDeck,
-  calculateDeckCardCount,
-  removeBasicInfoFromDeck,
-} from "@/app/utils";
+import { addCardBasicInfoToDeck, removeBasicInfoFromDeck } from "@/app/utils";
 import {
   currentViewedCardState,
   myCurrentDeckIDState,
