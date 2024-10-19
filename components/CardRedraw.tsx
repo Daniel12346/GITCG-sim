@@ -7,7 +7,7 @@ import {
 } from "@/recoil/atoms";
 import { drawCards } from "@/app/actions";
 import { RealtimeChannel } from "@supabase/supabase-js";
-import Card from "./Card";
+import CardInGame from "./CardInGame";
 import { shuffleDeck } from "@/app/utils";
 import { useEffect } from "react";
 
@@ -59,7 +59,7 @@ export default function CardRedraw({
             {myCards
               .filter((c) => c.location === "HAND")
               .map((card) => (
-                <Card key={card.id} card={card} />
+                <CardInGame key={card.id} card={card} />
               ))}
           </div>
           <div className="flex justify-between w-full ">
