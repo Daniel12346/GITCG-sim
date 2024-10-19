@@ -17,7 +17,7 @@ import {
 import { useRecoilState, useRecoilValue } from "recoil";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useState } from "react";
-import Card from "./Card";
+import CardInGame from "./CardInGame";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import {
   activateEffect,
@@ -64,10 +64,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
 
   const [selectedTargetCards, setSelectedTargets] =
     useRecoilState(mySelectedCardsState);
-
-  const [selectionPurpose, setSelectionPurpose] = useRecoilState(
-    selectionPurposeState
-  );
 
   const summons = useRecoilValue(summonsState);
 
@@ -900,7 +896,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           {playerCards
             ?.filter((card) => card.location === "HAND")
             .map((card) => (
-              <Card
+              <CardInGame
                 key={card.id}
                 card={card}
                 handleClick={() => activateCard(card)}
@@ -993,7 +989,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                 !card.subtype.includes("EQUIPMENT")
             )
             .map((card) => (
-              <Card key={card.id} card={card} />
+              <CardInGame key={card.id} card={card} />
             ))}
         </div>
       </div>
@@ -1014,7 +1010,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                   creations,
                 });
               return (
-                <Card
+                <CardInGame
                   key={card.id}
                   card={card}
                   equippedCards={equippedCards}
@@ -1033,7 +1029,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         {playerCards
           ?.filter((card) => card.location === "SUMMON")
           .map((card) => {
-            return <Card key={card.id} card={card} />;
+            return <CardInGame key={card.id} card={card} />;
           })}
       </div>
       {/* //TODO: display on cards */}
