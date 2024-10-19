@@ -1,8 +1,8 @@
 import { myCurrentDeckCardsBasicInfoState } from "@/recoil/atoms";
 import { useEffect } from "react";
 import { useRecoilValue } from "recoil";
-import Card from "@/components/Card";
 import { cardFromBasicInfo } from "@/app/utils";
+import CardInDeckDisplay from "./CardInDeckDisplay";
 
 export default function DeckDisplay() {
   //TODO: view other players' decks
@@ -22,9 +22,9 @@ export default function DeckDisplay() {
     return 0;
   });
   return (
-    <div className="flex bg-slate-600 flex-row gap-4 justify-evenly flex-wrap rounded-md p-3">
+    <div className="flex bg-slate-600 flex-row gap-4 justify-evenly flex-wrap rounded-md p-4">
       {sortedDeckCards?.map((card) => {
-        return <Card key={card.id} card={card} isInDeckDisplay />;
+        return <CardInDeckDisplay key={card.id} card={card} isInDeck={true} />;
       })}
     </div>
   );
