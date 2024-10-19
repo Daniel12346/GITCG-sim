@@ -1,11 +1,10 @@
 import {
   addCardBasicInfoToDeck,
-  deckCardTotalCount,
+  calculateDeckCardCount,
   removeBasicInfoFromDeck,
 } from "@/app/utils";
 import {
   currentViewedCardState,
-  myCurrentDeckCardsBasicInfoState,
   myCurrentDeckIDState,
   mySelectedCardsState,
   myIDState,
@@ -13,9 +12,9 @@ import {
   isMyTurnState,
   currentPhaseState,
   myCurrentDeckState,
+  myCurrentDeckCardCountState,
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { useState } from "react";
 import {
   useRecoilRefresher_UNSTABLE,
   useRecoilState,
@@ -42,7 +41,7 @@ export default function Card({
   const setCurrentViewedCard = useSetRecoilState(currentViewedCardState);
   const currentDeckID = useRecoilValue(myCurrentDeckIDState);
   const client = createClientComponentClient<Database>();
-  const currentDeck = useRecoilValue(myCurrentDeckState);
+  const currentDeckCardCount = useRecoilValue(myCurrentDeckCardCountState);
   const refreshDeck = useRecoilRefresher_UNSTABLE(myCurrentDeckState);
   const myID = useRecoilValue(myIDState);
   const isMyCard = card.owner_id === myID;
@@ -55,8 +54,8 @@ export default function Card({
   const isInGame = !!gameID;
   const isMyTurn = useRecoilValue(isMyTurnState);
   const currentPhase = useRecoilValue(currentPhaseState);
-  const deckCardCount = currentDeck && deckCardTotalCount(currentDeck);
-  const [errorMessage, setErrorMessage] = useState("");
+  const isDeckFull = currentDeckCardCount >= 33;
+
   return (
     <div
       className={`group bg-blue-200 flex flex-col items-center relative h-24 w-16 border-4
@@ -65,6 +64,7 @@ export default function Card({
          rounded-md transition-transform duration-300 ease-in-out
         ${isSelected && "ring-4 ring-blue-600"}
         ${card && card.is_active && "scale-125"}
+  ${isInDeckDisplay && card.card_type === "CHARACTER" && "scale-125 mx-2"}
         `}
       onMouseEnter={() => {
         console.log(card);
@@ -176,18 +176,15 @@ export default function Card({
       {isInDeckDisplay && (
         <div className="z-10 flex justify-center w-full bottom-[-10px] absolute ">
           <span
-            className="bg-slate-200 px-0.5 text-blue-800 h-fit font-extrabold cursor-pointer"
+            className={`bg-slate-200 px-0.5 text-blue-800 h-fit font-extrabold cursor-pointer
+              ${isDeckFull && "opacity-50 pointer-events-none"}
+              `}
             onClick={async () => {
-              if (deckCardCount! >= 33) {
-                setErrorMessage("Deck is full");
-                return;
-              }
               await addCardBasicInfoToDeck(
                 client,
                 card.card_basic_info_id,
                 currentDeckID
               );
-              //TODO: set new value on cardsBasicInfoState
               refreshDeck();
             }}
           >
