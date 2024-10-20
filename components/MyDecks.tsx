@@ -3,7 +3,7 @@
 import { myDecksState } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useState } from "react";
-import SetCurrentDeck from "./SetCurrentDeck";
+import SelectCurrentDeck from "./SelectCurrentDeck";
 
 interface Props {
   userId: string;
@@ -31,7 +31,7 @@ export default function ClientComponent({ userId }: Props) {
         return (
           <div key={deck.id}>
             <span>{deck.name}</span>
-            <SetCurrentDeck id={deck.id} />
+            <SelectCurrentDeck deck={deck} />
           </div>
         );
       })}
