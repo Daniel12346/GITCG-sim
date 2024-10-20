@@ -2,7 +2,7 @@ import { uuid } from "uuidv4";
 import { findEffectLogic, EventType, ExecuteEffectParams } from "./cardEffects";
 import { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { DieElementNameT } from "./global";
-import { DeckWithCardBasicInfo } from "@/recoil/atoms";
+import { CardBasicInfoWithQuantityAndEffects } from "@/recoil/atoms";
 import { subtractCost } from "./actions";
 
 type CardBasicInfo = Database["public"]["Tables"]["card_basic_info"]["Row"];
@@ -1181,9 +1181,8 @@ export const shuffleDeck = (deck: CardExt[]) => {
   return deck.sort(() => Math.random() - 0.5);
 };
 
-export const calculateDeckCardCount = (deck: DeckWithCardBasicInfo) => {
-  return deck.deck_card_basic_info.reduce(
-    (acc, card) => acc + (card.quantity ?? 0),
-    0
-  );
+export const calculateDeckCardCount = (
+  deck: CardBasicInfoWithQuantityAndEffects[]
+) => {
+  return deck.reduce((acc, card) => acc + card.quantity, 0);
 };
