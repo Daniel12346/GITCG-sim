@@ -1,31 +1,42 @@
-import { addCardBasicInfoToDeck, removeBasicInfoFromDeck } from "@/app/utils";
+import {
+  cardFromBasicInfo,
+} from "@/app/utils";
 import {
   currentViewedCardState,
   myCurrentDeckIDState,
-  mySelectedCardsState,
-  myCurrentDeckState,
-  myCurrentDeckCardCountState,
+  deckInDeckBuilderCardCountState,
+  deckInDeckBuilderCardsBasicInfoWithQuantitiesAndEffectsState,
+  CardBasicInfo,
+  EffectBasicInfo,
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import {
-  useRecoilRefresher_UNSTABLE,
   useRecoilState,
   useRecoilValue,
   useSetRecoilState,
 } from "recoil";
 
 interface Props {
-  card: CardExt;
+  card: CardBasicInfo & {
+    //only the cards in the deck have a quantity, the cards in the search results don't
+    quantity?: number;
+    effect_basic_info: EffectBasicInfo[];
+  };
   isInDeck?: boolean;
 }
 export default function CardInDeckDisplay({ card, isInDeck }: Props) {
   const setCurrentViewedCard = useSetRecoilState(currentViewedCardState);
-  const currentDeckID = useRecoilValue(myCurrentDeckIDState);
-  const client = createClientComponentClient<Database>();
-  const currentDeckCardCount = useRecoilValue(myCurrentDeckCardCountState);
-  const refreshDeck = useRecoilRefresher_UNSTABLE(myCurrentDeckState);
-
-  const isDeckFull = currentDeckCardCount >= 33;
+  // const deckInDeckBuilderCards = useRecoilValue(deckInDeckBuilderCardsState);
+  const [
+    deckInDeckBuilderCardsBasicInfoExtended,
+    setDeckInDeckBuilderCardsBasicInfoExtended,
+  ] = useRecoilState(
+    deckInDeckBuilderCardsBasicInfoWithQuantitiesAndEffectsState
+  );
+  const deckInDeckBuilderCardCount = useRecoilValue(
+    deckInDeckBuilderCardCountState
+  );
+  const isDeckFull = deckInDeckBuilderCardCount >= 33;
 
   return (
     <div
@@ -34,7 +45,7 @@ export default function CardInDeckDisplay({ card, isInDeck }: Props) {
    
       ${card.card_type === "CHARACTER" && isInDeck && "scale-125 mx-2"}`}
       onMouseEnter={() => {
-        setCurrentViewedCard(card);
+        setCurrentViewedCard(cardFromBasicInfo(card));
       }}
     >
       <div
@@ -50,19 +61,14 @@ export default function CardInDeckDisplay({ card, isInDeck }: Props) {
       </div>
       {/* energy */}
       <div className="z-10 absolute h-full w-2 top-0 right-0">
-        {card.energy !== null && (
+        {card.max_energy !== null && (
           <div className="flex flex-col rounded-sm gap-2 items-center text-orange-300 -mr-1">
             {card.max_energy &&
               Array.from({ length: card.max_energy }).map((_, i) => {
-                const isEnergyUsed = i < card.energy!;
                 return (
                   <div className="flex flex-col gap-1 justify-center">
                     <span
-                      className={`${
-                        isEnergyUsed
-                          ? "bg-amber-300"
-                          : "bg-slate-100 opacity-90"
-                      }  w-2  h-2  outline-orange-600 outline-double outline-2
+                      className={`bg-orange-200 w-2  h-2  outline-orange-600 outline-double outline-2
                     rounded-full
                     `}
                     ></span>
@@ -71,15 +77,6 @@ export default function CardInDeckDisplay({ card, isInDeck }: Props) {
               })}
           </div>
         )}
-      </div>
-      {/* statuses */}
-      <div className="bg-orange-100 rounded-sm text-blue-800">
-        {card.statuses?.map((status) => (
-          //TODO: use unique key
-          <span>
-            {status.name}: {status.turnsLeft}
-          </span>
-        ))}
       </div>
       <div className="z-10 flex justify-center w-full bottom-[-10px] absolute ">
         {(isInDeck ? card.card_type !== "CHARACTER" : true) && (
@@ -90,28 +87,63 @@ export default function CardInDeckDisplay({ card, isInDeck }: Props) {
                 "opacity-50 pointer-events-none"
               }
               `}
-            onClick={async () => {
-              await addCardBasicInfoToDeck(
-                client,
-                card.card_basic_info_id,
-                currentDeckID
-              );
-              refreshDeck();
+            onClick={() => {
+              setDeckInDeckBuilderCardsBasicInfoExtended((prev) => {
+                const deckIncludesCard = prev.find(
+                  (cardInDeck) => cardInDeck.id === card.id
+                );
+                return deckIncludesCard
+                  ? prev.map((cardInDeck) => {
+                      if (cardInDeck.id === card.id) {
+                        return {
+                          ...cardInDeck,
+                          quantity: cardInDeck.quantity + 1,
+                        };
+                      }
+                      return cardInDeck;
+                    })
+                  : [...prev, { ...card, quantity: 1 }];
+              });
             }}
+            // onClick={async () => {
+            //   await addCardBasicInfoToDeck(
+            //     client,
+            //     card.card_basic_info_id,
+            //     currentDeckID
+            //   );
+            //   refreshDeck();
+            // }}
           >
             +
           </span>
         )}
         <span
           className="bg-slate-200 px-0.5 text-red-800 h-fit font-extrabold cursor-pointer"
-          onClick={async () => {
-            await removeBasicInfoFromDeck(
-              client,
-              card.card_basic_info_id,
-              currentDeckID
-            );
-            refreshDeck();
-          }}
+          onClick={
+            () => {
+              setDeckInDeckBuilderCardsBasicInfoExtended((prev) => {
+                return prev
+                  .map((cardInDeck) => {
+                    const newQuantity = cardInDeck.quantity - 1;
+                    if (cardInDeck.id === card.id) {
+                      return { ...cardInDeck, quantity: newQuantity };
+                    }
+                    return cardInDeck;
+                  })
+                  .filter((cardInDeck) => {
+                    return cardInDeck.quantity > 0;
+                  });
+              });
+            }
+            //   async () => {
+            //   await removeBasicInfoFromDeck(
+            //     client,
+            //     card.card_basic_info_id,
+            //     currentDeckID
+            //   );
+            //   refreshDeck();
+            // }
+          }
         >
           -
         </span>
