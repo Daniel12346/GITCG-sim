@@ -1,20 +1,26 @@
-import { myCurrentDeckState } from "@/recoil/atoms";
+import {
+  deckInDeckBuilderCardCountState,
+  deckInDeckBuilderNameState,
+  deckInDeckBuilderWithCardBasicInfoState,
+} from "@/recoil/atoms";
 import { useRecoilValue, useRecoilValueLoadable } from "recoil";
 
 export default function DeckInfo() {
-  const deckLoadable = useRecoilValueLoadable(myCurrentDeckState);
-  const deckCardBasicInfoTotalCards =
-    deckLoadable.contents?.deck_card_basic_info?.length &&
-    deckLoadable.contents?.deck_card_basic_info
-      .map((deckCardBasicInfo: any) => deckCardBasicInfo.quantity)
-      .reduce((a: number, b: number) => a + b, 0);
+  const deckLoadable = useRecoilValueLoadable(
+    deckInDeckBuilderWithCardBasicInfoState
+  );
+  const deckCardBasicInfoTotalCards = useRecoilValue(
+    deckInDeckBuilderCardCountState
+  );
+  const deckName = useRecoilValue(deckInDeckBuilderNameState);
 
   switch (deckLoadable.state) {
     case "hasValue":
       return (
         <div className="text-slate-200 flex gap-1">
           <span>
-            <span>{deckLoadable.contents?.name + " "}</span>
+            {/* //TODO: make editable */}
+            <span>{deckName}</span>
             <span
               className={`${
                 deckCardBasicInfoTotalCards === 33
