@@ -20,14 +20,12 @@ import SetCurrentDeck from "./SelectCurrentDeck";
 export default function DeckDisplay() {
   //TODO: view other players' decks
   const myDecks = useRecoilValue(myDecksState);
+  const myCurrentDeck = useRecoilValue(myCurrentDeckWithCardBasicInfoState);
   const myCurrentDeckLoadable = useRecoilValueLoadable(
     myCurrentDeckWithCardBasicInfoState
   );
   const myCurrentDeckCardsLoadable = useRecoilValueLoadable(
     myCurrentDeckCardsBasicInfoWithQuantitiesAndEffectsState
-  );
-  const setDeckInDeckBuilderName = useSetRecoilState(
-    deckInDeckBuilderNameState
   );
   const [
     deckInDeckBuilderCardsBasicInfoWithQuantitiesAndEffects,
@@ -35,6 +33,12 @@ export default function DeckDisplay() {
   ] = useRecoilState(
     deckInDeckBuilderCardsBasicInfoWithQuantitiesAndEffectsState
   );
+  const setDeckInDeckBuilderName = useSetRecoilState(
+    deckInDeckBuilderNameState
+  );
+  useEffect(() => {
+    setDeckInDeckBuilderName(myCurrentDeck?.name ?? "");
+  }, [myCurrentDeck]);
 
   useEffect(() => {
     myCurrentDeckCardsLoadable.state === "hasValue" &&
