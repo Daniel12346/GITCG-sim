@@ -1,9 +1,13 @@
+import { Tables } from "@/lib/database.types";
 import {
+  CardBasicInfoWithQuantityAndEffects,
   deckInDeckBuilderCardCountState,
   deckInDeckBuilderNameState,
   deckInDeckBuilderWithCardBasicInfoState,
 } from "@/recoil/atoms";
-import { useRecoilValue, useRecoilValueLoadable } from "recoil";
+import { useRecoilState, useRecoilValue, useRecoilValueLoadable } from "recoil";
+import DeckSaveButton from "./DeckSaveButton";
+
 
 export default function DeckInfo() {
   const deckLoadable = useRecoilValueLoadable(
@@ -12,15 +16,13 @@ export default function DeckInfo() {
   const deckCardBasicInfoTotalCards = useRecoilValue(
     deckInDeckBuilderCardCountState
   );
-  const deckName = useRecoilValue(deckInDeckBuilderNameState);
+  const [deckName, setDeckName] = useRecoilState(deckInDeckBuilderNameState);
 
   switch (deckLoadable.state) {
     case "hasValue":
       return (
         <div className="text-slate-200 flex gap-1">
           <span>
-            {/* //TODO: make editable */}
-            <span>{deckName}</span>
             <span
               className={`${
                 deckCardBasicInfoTotalCards === 33
@@ -31,19 +33,12 @@ export default function DeckInfo() {
               ({deckCardBasicInfoTotalCards} cards)
             </span>
           </span>
-          <button
-            className={`${
-              deckCardBasicInfoTotalCards !== 33 &&
-              "opacity-50 pointer-events-none bg-red-100 text-red-900"
-            }
-            bg-green-200 ml-4 text-green-800 px-1 cursor-pointer font-semibold rounded-sm text-center`}
-            onClick={
-              () => {}
-              // TODO:
-            }
-          >
-            save
-          </button>
+          <input
+            className="bg-transparent border-b-[1.75px]  border-blue-100 border-opacity-70 text-slate-200 mx-1"
+            value={deckName}
+            onChange={(e) => setDeckName(e.target.value)}
+          ></input>
+          <DeckSaveButton></DeckSaveButton>
         </div>
       );
 
