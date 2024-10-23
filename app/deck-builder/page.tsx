@@ -1,10 +1,12 @@
 "use client";
-import CardDisplay from "@/components/CurrentViewedCard";
+import CurrentViewedCard from "@/components/CurrentViewedCard";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import dynamic from "next/dynamic";
 import { Suspense, useEffect, useState } from "react";
-import { cardFromBasicInfo } from "../utils";
 import CardInDeckDisplay from "@/components/CardInDeckDisplay";
+import {
+  CardBasicInfoWithEffects,
+} from "@/recoil/atoms";
 const DeckDisplayNoSSR = dynamic(() => import("@/components/DeckDisplay"), {
   ssr: false,
 });
@@ -15,7 +17,9 @@ const DeckInfoNoSSR = dynamic(() => import("@/components/DeckInfo"), {
 export default function DeckBuilder() {
   const client = createClientComponentClient<Database>();
   const [searchKey, setSearchKey] = useState("");
-  const [searchResultCards, setSearchResultCards] = useState<CardExt[]>([]);
+  const [searchResultCards, setSearchResultCards] = useState<
+    CardBasicInfoWithEffects[]
+  >([]);
   useEffect(() => {
     const getCardsBasicInfo = async () => {
       const result = await client
@@ -24,10 +28,7 @@ export default function DeckBuilder() {
         .ilike("name", `%${searchKey}%`);
       result.error && console.log(result.error);
       const cardsBasicInfo = result.data;
-      const cards = cardsBasicInfo?.map((cardBasicInfo) => {
-        return cardFromBasicInfo(cardBasicInfo);
-      });
-      cards && setSearchResultCards(cards);
+      cardsBasicInfo && setSearchResultCards(cardsBasicInfo);
     };
     if (!searchKey.trim()) {
       setSearchResultCards([]);
@@ -64,7 +65,7 @@ export default function DeckBuilder() {
           </div>
         </div>
         <div>
-          <CardDisplay />
+          <CurrentViewedCard />
         </div>
       </Suspense>
     </div>
