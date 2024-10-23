@@ -7,7 +7,7 @@ import {
   currentGameIDState,
   isMyTurnState,
   currentPhaseState,
-  myCurrentDeckState,
+  myCurrentDeckWithCardBasicInfoState,
   myCurrentDeckCardCountState,
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
@@ -38,7 +38,9 @@ export default function Card({
   const currentDeckID = useRecoilValue(myCurrentDeckIDState);
   const client = createClientComponentClient<Database>();
   const currentDeckCardCount = useRecoilValue(myCurrentDeckCardCountState);
-  const refreshDeck = useRecoilRefresher_UNSTABLE(myCurrentDeckState);
+  const refreshDeck = useRecoilRefresher_UNSTABLE(
+    myCurrentDeckWithCardBasicInfoState
+  );
   const myID = useRecoilValue(myIDState);
   const isMyCard = card.owner_id === myID;
   const isSelected = selectedTargets.find((target) => target.id === card.id);
@@ -77,7 +79,6 @@ export default function Card({
         {creationDisplayElements?.map((element) => element)}
       </div>
       {/* used for activating cards from hand */}
-      {/* {isMyTurn && ( */}
       <>
         {card.location === "HAND" && isMyCard && isMyTurn && (
           <span
@@ -119,8 +120,6 @@ export default function Card({
           </span>
         )}
       </>
-      {/* )} */}
-      {/* health */}
       {isSummon && (
         <div className="z-10 flex justify-between w-full">
           <span className="bg-blue-600 rounded-sm text-blue-100  -mr-1 ">
