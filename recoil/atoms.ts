@@ -2,18 +2,16 @@ import {
   Session,
   createClientComponentClient,
 } from "@supabase/auth-helpers-nextjs";
-import { uuid } from "uuidv4";
-import { atom, selector, selectorFamily, waitForAll } from "recoil";
+import { atom, selector } from "recoil";
 import { recoilPersist } from "recoil-persist";
-import { RealtimeChannel } from "@supabase/supabase-js";
 
 import {
   cardFromBasicInfo,
   calculateDeckCardCount,
   PhaseName,
 } from "@/app/utils";
+import { CardExtended } from "@/app/global";
 const { persistAtom } = recoilPersist();
-// const supabase = createClientComponentClient();
 type Profile = Database["public"]["Tables"]["profile"]["Row"];
 
 export const mySessionState = selector<Session | null>({
@@ -101,7 +99,9 @@ export const myCurrentDeckIDState = atom<string>({
 export const myCurrentDeckCardCountState = selector<number>({
   key: "myCurrentDeckCardCountState",
   get: ({ get }) => {
-    const myCurrentDeck = get(myCurrentDeckState);
+    const myCurrentDeck = get(
+      myCurrentDeckCardsBasicInfoWithQuantitiesAndEffectsState
+    );
     if (!myCurrentDeck) return 0;
     return calculateDeckCardCount(myCurrentDeck);
   },
@@ -113,58 +113,119 @@ export type DeckWithCardBasicInfo =
   Database["public"]["Tables"]["deck"]["Row"] & {
     deck_card_basic_info: DeckCardsBasicInfo;
   };
-export const myCurrentDeckState = selector<DeckWithCardBasicInfo | null>({
-  key: "myCurrentDeckState",
-  get: async ({ get }) => {
-    const supabase = createClientComponentClient<Database>();
-    const myCurrentDeckID = get(myCurrentDeckIDState);
-    if (!myCurrentDeckID) return null;
-    const { data, error } = await supabase
-      .from("deck")
-      .select("*, deck_card_basic_info(*)")
-      .eq("id", myCurrentDeckID)
-      .single();
-    if (error) console.log("error", error);
-    return data;
+export const myCurrentDeckWithCardBasicInfoState =
+  selector<DeckWithCardBasicInfo | null>({
+    key: "myCurrentDeckState",
+    get: async ({ get }) => {
+      const supabase = createClientComponentClient<Database>();
+      const myCurrentDeckID = get(myCurrentDeckIDState);
+      if (!myCurrentDeckID) return null;
+      const { data, error } = await supabase
+        .from("deck")
+        .select("*, deck_card_basic_info(*)")
+        .eq("id", myCurrentDeckID)
+        .single();
+      if (error) console.log("error", error);
+      return data;
+    },
+  });
+
+//gets the basic info of all the cards in the deck along with their quantities in deck
+export type CardBasicInfo =
+  Database["public"]["Tables"]["card_basic_info"]["Row"];
+export type EffectBasicInfo =
+  Database["public"]["Tables"]["effect_basic_info"]["Row"];
+export type CardBasicInfoWithEffects = CardBasicInfo & {
+  effect_basic_info: EffectBasicInfo[];
+};
+export type CardBasicInfoWithQuantityAndEffects = CardBasicInfo & {
+  quantity: number;
+  effect_basic_info: EffectBasicInfo[];
+};
+export const myCurrentDeckCardsBasicInfoWithQuantitiesAndEffectsState =
+  selector<CardBasicInfoWithQuantityAndEffects[] | null>({
+    key: "myCurrentDeckCardsBasicInfoWithQuantitiesAndEffectsState",
+    get: async ({ get }) => {
+      const supabase = createClientComponentClient<Database>();
+      const myCurrentDeck = get(myCurrentDeckWithCardBasicInfoState);
+      if (!myCurrentDeck) return null;
+      const myCardsBasicInfoIDs = myCurrentDeck.deck_card_basic_info.map(
+        ({ card_basic_info_id }) => card_basic_info_id
+      );
+      console.log("cardsBasicInfoIDs", myCardsBasicInfoIDs);
+      const { data, error } = await supabase
+        .from("card_basic_info")
+        .select("* , effect_basic_info(*)")
+        .in("id", myCardsBasicInfoIDs);
+      console.log("data", data);
+      if (error) console.log("error", error);
+      if (!data) return null;
+      const cardsBasicInfoWithQuantitiesAndEffects = data.map(
+        (cardBasicInfo) => ({
+          ...cardBasicInfo,
+          quantity:
+            myCurrentDeck.deck_card_basic_info.find(
+              (deckCardInfo) =>
+                deckCardInfo.card_basic_info_id === cardBasicInfo.id
+            )?.quantity ?? 0,
+        })
+      );
+      return cardsBasicInfoWithQuantitiesAndEffects;
+    },
+  });
+export const deckInDeckBuilderIDState = atom<string>({
+  key: "deckInDeckBuilderIDState",
+  default: "",
+});
+
+export const deckInDeckBuilderWithCardBasicInfoState =
+  selector<DeckWithCardBasicInfo | null>({
+    key: "deckInDeckBuilderWithCardBasicInfo",
+    get: async ({ get }) => {
+      const supabase = createClientComponentClient<Database>();
+      const deckID = get(deckInDeckBuilderIDState);
+      if (!deckID) return null;
+      const { data, error } = await supabase
+        .from("deck")
+        .select("*, deck_card_basic_info(*)")
+        .eq("id", deckID)
+        .single();
+      if (error) console.log("error", error);
+      return data;
+    },
+  });
+//this state can be changed in the deck builder
+export const deckInDeckBuilderCardsBasicInfoWithQuantitiesAndEffectsState =
+  atom<CardBasicInfoWithQuantityAndEffects[]>({
+    key: "deckInDeckBuilderCardBasicInfoWithQuantitiesStateAndEffects",
+    default: [],
+  });
+export const deckInDeckBuilderCardsState = selector<CardExtended[] | null>({
+  key: "deckInDeckBuilderCardsState",
+  get: ({ get }) => {
+    const deckInDeckBuilderCardsBasicInfoWithQuantities = get(
+      deckInDeckBuilderCardsBasicInfoWithQuantitiesAndEffectsState
+    );
+    if (!deckInDeckBuilderCardsBasicInfoWithQuantities) return null;
+    return deckInDeckBuilderCardsBasicInfoWithQuantities.map((cardBasicInfo) =>
+      cardFromBasicInfo(cardBasicInfo)
+    );
+  },
+});
+export const deckInDeckBuilderCardCountState = selector<number>({
+  key: "deckInDeckBuilderCardCountState",
+  get: ({ get }) => {
+    const deckInDeckBuilder = get(
+      deckInDeckBuilderCardsBasicInfoWithQuantitiesAndEffectsState
+    );
+    if (!deckInDeckBuilder) return 0;
+    return calculateDeckCardCount(deckInDeckBuilder);
   },
 });
 
-//gets the basic info of all the cards in the deck along with their quantities in deck
-type CardBasicInfo = Database["public"]["Tables"]["card_basic_info"]["Row"];
-type EffectbasicInfo = Database["public"]["Tables"]["effect_basic_info"]["Row"];
-type CardWithQuantity = CardBasicInfo & {
-  quantity: number;
-  effect_basic_info: EffectbasicInfo[];
-};
-export const myCurrentDeckCardsBasicInfoState = selector<
-  CardWithQuantity[] | null
->({
-  key: "myCurrentDeckCardsBasicInfoState",
-  get: async ({ get }) => {
-    const supabase = createClientComponentClient<Database>();
-    const myCurrentDeck = get(myCurrentDeckState);
-    console.log("myCurrentDeck in atom", myCurrentDeck);
-    if (!myCurrentDeck) return null;
-    const myCardsBasicInfoIDs = myCurrentDeck.deck_card_basic_info.map(
-      ({ card_basic_info_id }) => card_basic_info_id
-    );
-    console.log("cardsBasicInfoIDs", myCardsBasicInfoIDs);
-    const { data, error } = await supabase
-      .from("card_basic_info")
-      .select("* , effect_basic_info(*)")
-      .in("id", myCardsBasicInfoIDs);
-    console.log("data", data);
-    if (error) console.log("error", error);
-    if (!data) return null;
-    const cardsBasicInfoWithQuantities = data.map((cardBasicInfo) => ({
-      ...cardBasicInfo,
-      quantity:
-        myCurrentDeck.deck_card_basic_info.find(
-          (deckCardInfo) => deckCardInfo.card_basic_info_id === cardBasicInfo.id
-        )?.quantity ?? 0,
-    }));
-    return cardsBasicInfoWithQuantities;
-  },
+export const deckInDeckBuilderNameState = atom<string>({
+  key: "deckInDeckBuilderNameState",
+  default: "",
 });
 
 //TODO: make this depend on gameState?
