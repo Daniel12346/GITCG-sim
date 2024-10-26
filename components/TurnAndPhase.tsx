@@ -320,70 +320,77 @@ export default ({}) => {
   }, [amIReadyForNextPhase, isOpponentReadyForNextPhase]);
 
   return (
-    <div className="text-slate-100 flex gap-4">
-      <span>Round {currentRound}</span>
-      <button
-        onClick={async () => {
-          await channel?.send({
-            type: "broadcast",
-            event: "ready_for_next_phase",
-            payload: {
-              isReadyForNextPhase: !amIReadyForNextPhase,
-            },
-          });
-          setAmIReadyForNextPhase((prev) => !prev);
-        }}
-      >
-        Move to next phase:
-        <span className="underline">
-          {amIReadyForNextPhase ? "ready" : "not ready"}
-        </span>
-      </button>
-      <button
-        className="bg-blue-500"
-        onClick={() => {
-          if (!myCards?.length) return;
-          const updatedCards = drawCards(myCards, 2);
-          channel?.send({
-            type: "broadcast",
-            event: "updated_cards",
-            payload: { myUpdatedCards: updatedCards },
-          });
-          setMyCards((prev) => prev && drawCards(prev, 2));
-        }}
-      >
-        draw
-      </button>
-      {/* TEST:------------------ */}
-      <button
-        className="bg-pink-500"
-        onClick={() => {
-          if (!myCards?.length) return;
-          const card = prompt("card name");
-          if (!card) return;
-          const newState = addOneCardFromDeckByName(myCards, card);
-          channel?.send({
-            type: "broadcast",
-            event: "updated_cards",
-            payload: { myUpdatedCards: newState },
-          });
-          setMyCards(newState);
-        }}
-      >
-        add card
-      </button>
-      {/* <button
+    <div className="py-2 flex justify-center">
+      <div className="w-4/5 text-blue-100 bg-indigo-900 px-1 py-2 flex gap-4 justify-evenly">
+        <span className="font-semibold">Round {currentRound}</span>
+        <button
+          onClick={async () => {
+            await channel?.send({
+              type: "broadcast",
+              event: "ready_for_next_phase",
+              payload: {
+                isReadyForNextPhase: !amIReadyForNextPhase,
+              },
+            });
+            setAmIReadyForNextPhase((prev) => !prev);
+          }}
+        >
+          Move to next phase:
+          <span className="underline">
+            {amIReadyForNextPhase ? "ready" : "not ready"}
+          </span>
+        </button>
+        <div className="flex gap-2 items-baseline">
+          {isMyTurn && <span>My turn</span>}
+          <span className="font-semibold text-lg">
+            {currentPhase?.replace("_", " ")}
+          </span>
+          <span className={`${isMyTurn ? "text-green-400" : "text-red-400"}`}>
+            {isMyTurn ? "your turn" : "opponent's turn"}
+          </span>
+          {/* {isMyTurn && <span>pass turn</span>} */}
+        </div>
+        <button
+          className="bg-blue-500"
+          onClick={() => {
+            if (!myCards?.length) return;
+            const updatedCards = drawCards(myCards, 2);
+            channel?.send({
+              type: "broadcast",
+              event: "updated_cards",
+              payload: { myUpdatedCards: updatedCards },
+            });
+            setMyCards((prev) => prev && drawCards(prev, 2));
+          }}
+        >
+          draw
+        </button>
+        {/* TEST:------------------ */}
+        <button
+          className="bg-pink-500"
+          onClick={() => {
+            if (!myCards?.length) return;
+            const card = prompt("card name");
+            if (!card) return;
+            const newState = addOneCardFromDeckByName(myCards, card);
+            channel?.send({
+              type: "broadcast",
+              event: "updated_cards",
+              payload: { myUpdatedCards: newState },
+            });
+            setMyCards(newState);
+          }}
+        >
+          add card
+        </button>
+        {/* <button
         className="bg-pink-500"
         onClick={() => setMyDice({ ANEMO: 4, CRYO: 4 })}
       >
         create dice
       </button> */}
 
-      {/* ------------------- */}
-      <span>
-        {isMyTurn && "My turn"}
-        {currentPhase} {amIPlayer1 ? "player1" : "player2"}
-      </span>
+      </div>
     </div>
   );
 };
