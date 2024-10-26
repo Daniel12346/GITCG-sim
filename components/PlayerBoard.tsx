@@ -9,10 +9,12 @@ import {
   mySelectedCardsState,
   myInGameCardsState,
   currentActiveCharacterAttacksState,
-  selectionPurposeState,
   mySelectedDiceState,
   summonsState,
   currentRoundState,
+  isMyTurnState,
+  currentPhaseState,
+  errorMessageState,
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
@@ -35,7 +37,6 @@ import {
 } from "@/app/utils";
 import DiceDisplay from "./DiceDisplay";
 import CardAttack from "./CardAttack";
-import ElementalTuning from "./ElementalTuning";
 import { findEffectLogic } from "@/app/cardEffects";
 import { getCreationDisplayComponentForCard } from "./CreationDisplay";
 import DiceReroll from "./DiceReroll";
@@ -49,7 +50,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   const gameID = useRecoilValue(currentGameIDState);
   const myID = useRecoilValue(myIDState);
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
-
+  const currentPhase = useRecoilValue(currentPhaseState);
   const [currentPlayerID, setCurrentPlayerID] =
     useRecoilState(currentPlayerIDState);
   const opponentID = useRecoilValue(opponentIDState);
@@ -67,13 +68,14 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
 
   const summons = useRecoilValue(summonsState);
 
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useRecoilState(errorMessageState);
   const currentRound = useRecoilValue(currentRoundState);
 
   const isMyBoard = playerID === myID;
   const playerCards = isMyBoard ? myCards : opponentInGameCards;
   const playerDice = isMyBoard ? myDice : opponentDice;
   const attacks = useRecoilValue(currentActiveCharacterAttacksState);
+  const isMyTurn = useRecoilValue(isMyTurnState);
 
   useEffect(() => {
     const supabase = createClientComponentClient<Database>();
@@ -881,15 +883,16 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
 
   return (
     <div
-      className={`${
-        isMyBoard ? "bg-green-400" : "bg-red-400"
-      } grid grid-cols-[10%_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)_10%] 
-    gap-2 w-100% p-2 overflow-x-hidden`}
+      className={`bg-fieldSecondary grid grid-cols-[10%_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)_10%] 
+    gap-2 w-100% text-slate-100 p-2 overflow-x-hidden border-x-4 transition-colors duration-300 ${
+      isMyBoard
+        ? isMyTurn && currentPhase !== "PREPARATION_PHASE" && "border-green-500"
+        : !isMyTurn && currentPhase !== "PREPARATION_PHASE" && "border-red-500"
+    }`}
     >
       <div
-        className={`${
-          isMyBoard && "order-2"
-        } bg-blue-200 col-span-full h-32 p-2 grid grid-cols-[4fr_8fr_4fr] `}
+        className={`${isMyBoard && "order-2"} 
+        bg-fieldHand col-span-full h-32 p-2 grid grid-cols-[4fr_8fr_4fr] `}
       >
         <div className="text-red-700">{errorMessage || ""}</div>
         <div className="flex flex-row justify-center items-center gap-2 ">
@@ -974,11 +977,11 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         </div>
       </div>
 
-      <div className="bg-yellow-50 h-full p-1">
+      <div className="h-full p-1">
         deck zone{" "}
         {playerCards?.filter((card) => card.location === "DECK").length}
       </div>
-      <div className="bg-yellow-50">
+      <div className="bg-fieldMain">
         action zone
         <div className="grid grid-cols-2">
           {playerCards
@@ -993,7 +996,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             ))}
         </div>
       </div>
-      <div className="bg-yellow-50 h-40">
+      <div className="bg-fieldMain h-40">
         character zone
         <div className="flex flex-row justify-evenly gap-2 px-2">
           {playerCards
@@ -1024,7 +1027,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             })}
         </div>
       </div>
-      <div className="bg-yellow-50 h-full">
+      <div className="bg-fieldMain h-full">
         {/* SUMMONS */}
         {playerCards
           ?.filter((card) => card.location === "SUMMON")
@@ -1046,9 +1049,12 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             );
           })}
       </div> */}
-      {/* //TODO: display dice */}
-      <DiceDisplay dice={playerDice} isMyBoard={isMyBoard}></DiceDisplay>
-      {isMyBoard && <ElementalTuning channel={channel} />}
+      <DiceDisplay
+        channel={channel}
+        dice={playerDice}
+        isMyBoard={isMyBoard}
+        withElementalTuning
+      ></DiceDisplay>
       {isMyBoard && <DiceReroll channel={channel} />}
       {isMyBoard && <CardRedraw channel={channel} />}
     </div>
