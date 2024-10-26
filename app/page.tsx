@@ -11,25 +11,25 @@ export default async function Index() {
     <div className="flex w-full flex-col pt-12">
       <MyIDNoSSR />
       <div className="flex justify-center">
-        <h1 className="text-indigo-200 font-semibold text-3xl mb-10 text-center">
+        <h1 className="text-slate-300 font-semibold text-3xl mb-10 text-center">
           Genshin Impact TCG simulator
         </h1>
       </div>
       <div className="flex justify-center w-full">
-        <div className="uppercase flex justify-evenly md:flex-row flex-col text-amber-200 text-xl font-light">
+        <div className="uppercase flex md:flex-row gap-2 md:gap-20 flex-col text-amber-200 text-xl font-light">
           <div className="flex flex-col gap-3 items-center group cursor-pointer">
             <Link
               href="/deck-builder"
-              className="flex flex-col gap-3 items-center"
+              className="flex h-full flex-col gap-3 justify-end items-center"
             >
               <Image
-                className="h-1/2"
+                className="group-hover:scale-105 transition-transform"
                 src="deck_icon1.svg"
                 alt="battle icon"
-                width={200}
-                height={200}
+                width={100}
+                height={100}
               />
-              <span className="text-center group-hover:underline">
+              <span className="text-center group-hover:underline underline-offset-4">
                 deck builder
               </span>
             </Link>
@@ -37,13 +37,15 @@ export default async function Index() {
           <div className="flex flex-col gap-3 items-center group cursor-pointer">
             <Link href="/lobby" className="flex flex-col gap-3 items-center">
               <Image
-                className="h-1/2"
+                className="flex h-full flex-col gap-3 justify-end items-center"
                 src="swords_icon1.svg"
                 alt="battle icon"
-                width={200}
-                height={200}
+                width={100}
+                height={100}
               />
-              <span className="text-center group-hover:underline">match</span>
+              <span className="text-center group-hover:underline underline-offset-4">
+                match
+              </span>
             </Link>
           </div>
         </div>

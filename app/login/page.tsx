@@ -1,5 +1,5 @@
-import Link from 'next/link'
-import Messages from './messages'
+import Link from "next/link";
+import Messages from "./messages";
 
 export default function Login() {
   return (
@@ -18,10 +18,10 @@ export default function Login() {
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1"
+          className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1 fill"
         >
           <polyline points="15 18 9 12 15 6" />
-        </svg>{' '}
+        </svg>{" "}
         Back
       </Link>
 
@@ -30,20 +30,20 @@ export default function Login() {
         action="/auth/sign-in"
         method="post"
       >
-        <label className="text-md" htmlFor="email">
+        <label className="text-md text-blue-100" htmlFor="email">
           Email
         </label>
         <input
-          className="rounded-md px-4 py-2 bg-inherit border mb-6"
+          className="rounded-md px-4 py-2 bg-inherit border-2 mb-6 focus:outline-amber-100"
           name="email"
           placeholder="you@example.com"
           required
         />
-        <label className="text-md" htmlFor="password">
+        <label className="text-md text-blue-100" htmlFor="password">
           Password
         </label>
         <input
-          className="rounded-md px-4 py-2 bg-inherit border mb-6"
+          className="rounded-md px-4 py-2 bg-inherit border mb-6 focus:outline-amber-100"
           type="password"
           name="password"
           placeholder="••••••••"
@@ -54,12 +54,12 @@ export default function Login() {
         </button>
         <button
           formAction="/auth/sign-up"
-          className="border border-gray-700 rounded px-4 py-2 text-white mb-2"
+          className="border border-gray-700 bg-blue-600 rounded px-4 py-2 text-white mb-2"
         >
           Sign Up
         </button>
         <Messages />
       </form>
     </div>
-  )
+  );
 }
