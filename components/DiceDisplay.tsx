@@ -1,10 +1,13 @@
 import { mySelectedDiceState } from "@/recoil/atoms";
-import { useState } from "react";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import ElementalTuning from "./ElementalTuning";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 type DiceDisplayProps = {
   dice: Dice;
+  channel?: RealtimeChannel | null;
   isMyBoard: boolean;
+  withElementalTuning?: boolean;
 };
 
 const Die = ({
@@ -47,13 +50,21 @@ const Die = ({
 
   return (
     //the dice itself
-    <div
+    // <div
+    //   key={element + isMyBoard}
+    //   onClick={handleSelectDie}
+    //   className={`text-sm w-4 h-4 rotate-45 ${bgColors[element]} ${
+    //     isMyBoard && isSelected && " ring-2 ring-white "
+    //   }`}
+    // ></div>
+    <img
       key={element + isMyBoard}
       onClick={handleSelectDie}
-      className={`text-sm w-4 h-4 rotate-45 ${bgColors[element]} ${
-        isMyBoard && isSelected && "ring-2 ring-gray-700"
+      className={`w-8 h-8 cursor-pointer ${
+        isMyBoard && isSelected && "ring-2 ring-yellow-200 stroke-none"
       }`}
-    ></div>
+      src={`/${element.toLowerCase()}_die.svg`}
+    />
   );
 };
 
@@ -76,18 +87,28 @@ const DiceOfElement = ({
   });
 };
 
-export default function DiceDisplay({ dice, isMyBoard }: DiceDisplayProps) {
+export default function DiceDisplay({
+  dice,
+  isMyBoard,
+  channel,
+  withElementalTuning,
+}: DiceDisplayProps) {
   return (
-    <ul className="bg-yellow-50 flex gap-2 p-3 flex-wrap">
-      {Object.entries(dice)
-        .sort()
-        .map(([element, amount]) => (
-          <DiceOfElement
-            element={element as DieElementName}
-            amount={amount}
-            isMyBoard={isMyBoard}
-          />
-        ))}
-    </ul>
+    <div className={`${!isMyBoard && "pt-3"}`}>
+      <ul className="flex gap-2 p-3 flex-wrap">
+        {Object.entries(dice)
+          .sort()
+          .map(([element, amount]) => (
+            <DiceOfElement
+              element={element as DieElementName}
+              amount={amount}
+              isMyBoard={isMyBoard}
+            />
+          ))}
+      </ul>
+      {withElementalTuning && isMyBoard && (
+        <ElementalTuning channel={channel || null} />
+      )}
+    </div>
   );
 }
