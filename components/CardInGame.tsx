@@ -41,7 +41,7 @@ export default function Card({
          border-orange-300 
          ${isDefeated && "border-gray-400"}
          rounded-md transition-transform duration-300 ease-in-out
-        ${isSelected && "ring-4 ring-blue-600"}
+        ${isSelected && "ring-4 ring-offset-2 ring-blue-300"}
         ${card && card.is_active && "scale-125"}
   ${isInDeckDisplay && card.card_type === "CHARACTER" && "scale-125 mx-2"}
         `}
