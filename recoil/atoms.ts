@@ -495,3 +495,8 @@ export const summonsState = selector({
     return summons;
   },
 });
+
+export const errorMessageState = atom<string>({
+  key: "errorMessageState",
+  default: "",
+});
