@@ -4,9 +4,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import dynamic from "next/dynamic";
 import { Suspense, useEffect, useState } from "react";
 import CardInDeckDisplay from "@/components/CardInDeckDisplay";
-import {
-  CardBasicInfoWithEffects,
-} from "@/recoil/atoms";
+import { CardBasicInfoWithEffects } from "@/recoil/atoms";
 const DeckDisplayNoSSR = dynamic(() => import("@/components/DeckDisplay"), {
   ssr: false,
 });
