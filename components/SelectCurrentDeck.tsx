@@ -19,7 +19,7 @@ export default function SetCurrentDeck({ deck }: Props) {
     <div className="flex gap-2 items-center mb-2">
       <span>{deck.name}</span>
       <button
-        className="bg-blue-500 hover:bg-blue-700 text-blue-100 font-bold p-1 rounded-lg"
+        className="bg-blue-600 hover:bg-blue-400 text-blue-100  px-1 rounded"
         onClick={() => {
           setMyCurrentDeckID(deck.id);
           setDeckInDeckBuilderName(deck.name ?? "");
