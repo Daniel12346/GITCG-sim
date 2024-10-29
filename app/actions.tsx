@@ -1,4 +1,4 @@
-import { EventType, ExecuteEffect, findEffectLogic } from "./cardEffects";
+import { findEffectLogic } from "./cardEffects";
 import { calculateTotalDice } from "./utils";
 
 export function drawCards(currentCards: CardExt[], amount: number) {

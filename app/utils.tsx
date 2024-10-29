@@ -1,8 +1,7 @@
 import { uuid } from "uuidv4";
-import { findEffectLogic, EventType, ExecuteEffectParams } from "./cardEffects";
+import { findEffectLogic} from "./cardEffects";
 import { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { DieElementNameT } from "./global";
-import { CardBasicInfoWithQuantityAndEffects } from "@/recoil/atoms";
 import { subtractCost } from "./actions";
 
 type CardBasicInfo = Database["public"]["Tables"]["card_basic_info"]["Row"];
@@ -1020,11 +1019,7 @@ export const executeEffectsSequentially = ({
     opponentUpdatedDice,
   };
 };
-export type PhaseName =
-  | "PREPARATION_PHASE"
-  | "ROLL_PHASE"
-  | "ACTION_PHASE"
-  | "END_PHASE";
+
 type ExecutePhaseEffectsParams = {
   // amIPlayer1: boolean;
   phaseName: PhaseName;
