@@ -5,11 +5,7 @@ import {
 import { atom, selector } from "recoil";
 import { recoilPersist } from "recoil-persist";
 
-import {
-  cardFromBasicInfo,
-  calculateDeckCardCount,
-  PhaseName,
-} from "@/app/utils";
+import { cardFromBasicInfo, calculateDeckCardCount } from "@/app/utils";
 import { CardExtended } from "@/app/global";
 const { persistAtom } = recoilPersist();
 type Profile = Database["public"]["Tables"]["profile"]["Row"];
@@ -107,12 +103,6 @@ export const myCurrentDeckCardCountState = selector<number>({
   },
 });
 
-type DeckCardsBasicInfo =
-  Database["public"]["Tables"]["deck_card_basic_info"]["Row"][];
-export type DeckWithCardBasicInfo =
-  Database["public"]["Tables"]["deck"]["Row"] & {
-    deck_card_basic_info: DeckCardsBasicInfo;
-  };
 export const myCurrentDeckWithCardBasicInfoState =
   selector<DeckWithCardBasicInfo | null>({
     key: "myCurrentDeckState",
@@ -131,17 +121,6 @@ export const myCurrentDeckWithCardBasicInfoState =
   });
 
 //gets the basic info of all the cards in the deck along with their quantities in deck
-export type CardBasicInfo =
-  Database["public"]["Tables"]["card_basic_info"]["Row"];
-export type EffectBasicInfo =
-  Database["public"]["Tables"]["effect_basic_info"]["Row"];
-export type CardBasicInfoWithEffects = CardBasicInfo & {
-  effect_basic_info: EffectBasicInfo[];
-};
-export type CardBasicInfoWithQuantityAndEffects = CardBasicInfo & {
-  quantity: number;
-  effect_basic_info: EffectBasicInfo[];
-};
 export const myCurrentDeckCardsBasicInfoWithQuantitiesAndEffectsState =
   selector<CardBasicInfoWithQuantityAndEffects[] | null>({
     key: "myCurrentDeckCardsBasicInfoWithQuantitiesAndEffectsState",
