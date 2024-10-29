@@ -3,61 +3,9 @@ import {
   calculateAttackElementalReaction,
   calculateDamageAfterModifiers,
   createSummon,
-  findDamageModifyingEffects,
   findEquippedCards,
   increaseEffectUsages,
 } from "./utils";
-
-//TODO: add missing events
-export type EventType =
-  | "THIS_CARD_ACTIVATION"
-  | "CARD_ACTIVATION"
-  | "ATTACK"
-  | "REACTION"
-  | "EQUIP_ARTIFACT"
-  | "EQUIP_WEAPON"
-  | "SWITCH_CHARACTER"
-  | "PREPARATION_PHASE"
-  | "ROLL_PHASE"
-  | "ACTION_PHASE"
-  | "END_PHASE";
-
-export type ExecuteEffectParams = {
-  //TODO: move some params to the trigger context
-  myCards: CardExt[];
-  opponentCards: CardExt[];
-  myDice: Dice;
-  effect: Effect;
-  opponentDice: Dice;
-  playerID?: string;
-  triggerContext?: TriggerContext;
-  thisCard?: CardExt;
-  //the card that is being targeted by the activated card
-  targetCards?: CardExt[];
-  summons?: CardExt[];
-  currentRound: number;
-};
-
-export type CheckIfEffectCanBeExecutedParams = ExecuteEffectParams;
-//  {
-//   myCards?: CardExt[];
-//   opponentCards?: CardExt[];
-//   triggerContext?: TriggerContext;
-//   effect?: Effect;
-//   thisCard?: CardExt;
-//   opponentDice?: Dice;
-//   playerID?: string;
-//   myDice?: Dice;
-//   //the card that is being targeted by the activated card
-//   targetCards?: CardExt[];
-//   //TODO: add more params
-// };
-
-//TODO:
-//const withEffectUsageUpdate = ()=>
-
-//TODO: add trigger
-//used to make the execute effect functions of 6 relics with their only difference being the element, all with the cost of 2 unaligned
 
 const executeAttack = ({
   myCards,
@@ -259,51 +207,6 @@ const makeNormalAttackExecuteFunction = (
   return execute;
 };
 
-export type CheckIfEffectCanBeExecuted = (
-  params: CheckIfEffectCanBeExecutedParams
-) => { errorMessage?: string };
-export type ExecuteEffect = (params: ExecuteEffectParams) => {
-  //return all cards, including the ones that haven't changed
-  myUpdatedCards?: CardExt[];
-  myUpdatedDice?: Dice;
-  opponentUpdatedCards?: CardExt[];
-  opponentUpdatedDice?: Dice;
-  errorMessage?: string;
-  modifiedCost?: Cost;
-  modifiedDamage?: number;
-  isFastAction?: boolean;
-};
-
-export type TriggerEvents = EventType[] | null;
-
-export type TriggerContext = {
-  //will be used with cost reduction effects
-  eventType: EventType;
-  //can be used both for attacks and equips
-  targetCard?: CardExt;
-  cost?: Cost;
-  activatedCard?: CardExt;
-  attack?: {
-    attackBaseEffectID?: string;
-    attackerCard?: CardExt;
-  };
-  damage?: number;
-  reaction?: {
-    name: ElementalReaction;
-    resultingElement?: ElementName;
-  };
-  switched?: {
-    from?: CardExt;
-    to?: CardExt;
-  };
-};
-
-export type EffectLogic = {
-  triggerOn?: TriggerEvents;
-  checkIfCanBeExecuted?: CheckIfEffectCanBeExecuted;
-  execute: ExecuteEffect;
-  requiredTargets?: number;
-};
 
 //only handles the execution, not the effect cost
 export const effects: {
@@ -961,7 +864,7 @@ export const effects: {
         return { errorMessage: "No attacker card found" };
       }
       const attackEffect = attackerCard.effects.find(
-        (effect) => effect.effect_basic_info_id === attackBaseEffectID
+        (effect: Effect) => effect.effect_basic_info_id === attackBaseEffectID
       );
       if (attackEffect?.effectType === "NORMAL_ATTACK") {
         if (effect.usages_this_turn != null && effect.usages_this_turn >= 3) {
