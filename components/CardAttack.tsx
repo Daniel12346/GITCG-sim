@@ -32,7 +32,7 @@ export default function CardAttackInfo({
   return (
     currentPhase === "ACTION_PHASE" && (
       <div
-        className={`flex bg-blue-300
+        className={`flex bg-indigo-600 rounded-md ring-indigo-400  ring-4
          ${!isCardFrozen && "cursor-pointer"} z-20`}
         onClick={() => {
           if (!isCardFrozen) {
@@ -42,11 +42,11 @@ export default function CardAttackInfo({
       >
         {/* <p className="text-xs">{attack.name}</p> */}
         <div
-          className={`flex flex-col items-center p-2 bg-orange-200 
-            ${isCardFrozen && "bg-gray-600"}
+          className={`flex flex-col items-center p-2 
+            ${isCardFrozen && "opacity-50"}}
           }`}
         >
-          <span className="text-lg mb-1">
+          <span className="text-lg mb-1 font-semibold">
             {attack?.effectType &&
               attacktypeDisplayText[
                 //TODO: is it always one of these 3?
@@ -60,7 +60,7 @@ export default function CardAttackInfo({
           {Object.entries(attack.cost!)
             .sort()
             .map(([element, amount]) => (
-              <div key={element + amount + playerID}>
+              <div className="text-slate-200" key={element + amount + playerID}>
                 <span>
                   {element}:{amount}
                 </span>

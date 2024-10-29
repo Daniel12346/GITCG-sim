@@ -68,7 +68,7 @@ export default function DiceReroll({
       flex items-center justify-center z-[100] overflow-hidden pointer-events-none"
     >
       {currentPhase === "ROLL_PHASE" && amIRerolling && (
-        <div className="bg-blue-600 p-4 border-yellow-300 border-solid border-4 overflow-hidden pointer-events-auto">
+        <div className="animate-in bg-blue-600 p-4 border-yellow-300 border-solid border-4 overflow-hidden pointer-events-auto">
           {/* should not be displayed at all for the other player's board */}
 
           <DiceDisplay dice={myDice} isMyBoard={true}></DiceDisplay>
