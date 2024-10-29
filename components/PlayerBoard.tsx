@@ -41,6 +41,7 @@ import { findEffectLogic } from "@/app/cardEffects";
 import { getCreationDisplayComponentForCard } from "./CreationDisplay";
 import DiceReroll from "./DiceReroll";
 import CardRedraw from "./CardRedraw";
+import Card from "./CardInGame";
 
 //TODO: move to another file
 interface PlayerBoardProps {
@@ -76,6 +77,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   const playerDice = isMyBoard ? myDice : opponentDice;
   const attacks = useRecoilValue(currentActiveCharacterAttacksState);
   const isMyTurn = useRecoilValue(isMyTurnState);
+  const cardsInDeck = playerCards.filter((card) => card.location === "DECK");
 
   useEffect(() => {
     const supabase = createClientComponentClient<Database>();
@@ -977,9 +979,20 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         </div>
       </div>
 
-      <div className="h-full p-1">
-        deck zone{" "}
-        {playerCards?.filter((card) => card.location === "DECK").length}
+      <div
+        className={`h-full w-full p-1 flex gap-1 ${
+          isMyBoard ? "flex-col" : "flex-col-reverse"
+        } justify-center items-center`}
+      >
+        {/* <span className="text-slate-200">deck zone</span> */}
+        <div className="relative flex-col items-center">
+          {cardsInDeck.length && (
+            <CardInGame card={cardsInDeck[0]} overrideIsFaceDown />
+          )}
+        </div>
+        <span className="text-lg font-semibold text-slate-300">
+          {cardsInDeck.length}
+        </span>
       </div>
       <div className="bg-fieldMain">
         action zone
@@ -996,7 +1009,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             ))}
         </div>
       </div>
-      <div className="bg-fieldMain h-40">
+      <div className={`bg-fieldMain h-40  ${!isMyBoard && "self-end"}`}>
         character zone
         <div className="flex flex-row justify-evenly gap-2 px-2">
           {playerCards
