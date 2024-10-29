@@ -14,6 +14,7 @@ interface Props {
   isInDeckDisplay?: boolean;
   equippedCards?: CardExt[];
   creationDisplayElements?: (React.JSX.Element | null)[];
+  overrideIsFaceDown?: boolean;
 }
 export default function Card({
   card,
@@ -21,6 +22,7 @@ export default function Card({
   isInDeckDisplay,
   equippedCards,
   creationDisplayElements,
+  overrideIsFaceDown = false,
 }: Props) {
   const [selectedTargets, setSelectedTargets] =
     useRecoilState(mySelectedCardsState);
@@ -28,7 +30,8 @@ export default function Card({
   const myID = useRecoilValue(myIDState);
   const isMyCard = card.owner_id === myID;
   const isSelected = selectedTargets.find((target) => target.id === card.id);
-  const isFaceDown = card.location === "HAND" && !isMyCard;
+  const isFaceDown =
+    overrideIsFaceDown || (card.location === "HAND" && !isMyCard);
   const isFrozen = card.statuses?.find((status) => status.name === "FROZEN");
   const isDefeated = card.location === "CHARACTER" && card.health === 0;
   const isSummon = card.location === "SUMMON";
@@ -43,9 +46,11 @@ export default function Card({
          rounded-md transition-transform duration-300 ease-in-out
         ${isSelected && "ring-4 ring-offset-2 ring-blue-300"}
         ${card && card.is_active && "scale-125"}
-  ${isInDeckDisplay && card.card_type === "CHARACTER" && "scale-125 mx-2"}
+        ${isInDeckDisplay && card.card_type === "CHARACTER" && "scale-125 mx-2"}
+        ${overrideIsFaceDown && "pointer-events-none"}
         `}
       onMouseEnter={() => {
+        if (isFaceDown) return;
         console.log(card);
         setCurrentViewedCard(card);
       }}
