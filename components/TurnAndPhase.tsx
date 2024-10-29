@@ -5,7 +5,7 @@ import {
   drawCards,
 } from "@/app/actions";
 import { CardExtended } from "@/app/global";
-import { executePhaseEffectsForBothPlayers, PhaseName } from "@/app/utils";
+import { executePhaseEffectsForBothPlayers } from "@/app/utils";
 import {
   amIReadyForNextPhaseState,
   currentGameIDState,
@@ -305,7 +305,7 @@ export default ({}) => {
         setNextRoundFirstPlayerID(currentPlayerID === myID ? opponentID : myID);
         setCurrentRound((prev) => prev + 1);
       }
-      setCurrentPhase((prev) => {
+      setCurrentPhase((prev: PhaseName | null) => {
         if (!prev) return "PREPARATION_PHASE";
         if (prev === "END_PHASE") {
           return "ROLL_PHASE";
@@ -322,7 +322,7 @@ export default ({}) => {
   return (
     <div className="py-2 flex justify-center">
       <div className="w-4/5 text-blue-100 bg-indigo-900 px-1 py-2 flex gap-4 justify-evenly">
-        <span className="font-semibold">Round {currentRound}</span>
+        <span className="text-lg">Round {currentRound}</span>
         <button
           onClick={async () => {
             await channel?.send({
@@ -340,8 +340,7 @@ export default ({}) => {
             {amIReadyForNextPhase ? "ready" : "not ready"}
           </span>
         </button>
-        <div className="flex gap-2 items-baseline">
-          {isMyTurn && <span>My turn</span>}
+        <div className="flex gap-2">
           <span className="font-semibold text-lg">
             {currentPhase?.replace("_", " ")}
           </span>
@@ -389,7 +388,6 @@ export default ({}) => {
       >
         create dice
       </button> */}
-
       </div>
     </div>
   );
