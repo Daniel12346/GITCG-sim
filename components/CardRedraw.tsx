@@ -66,12 +66,6 @@ export default function CardRedraw({
             <button
               onClick={() => {
                 const myUpdatedCards = redrawCards(myCards, selectedCards);
-                console.log(
-                  "myUpdatedCards",
-                  myUpdatedCards,
-                  myCards,
-                  selectedCards
-                );
                 channel &&
                   channel.send({
                     type: "broadcast",
