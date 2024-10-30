@@ -43,3 +43,96 @@
     transform: translateY(0);
   }
 }
+
+.highlight-with-shadow {
+  animation: highlightWithShadow 1.5s ease;
+}
+@keyframes highlightWithShadow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(255, 255, 0, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 0, 0.3);
+  }
+}
+
+.my-attack-attacker {
+  animation: my-attack-attacker 1s ease-out;
+}
+.my-attack-target {
+  animation: my-attack-target 1s ease-in;
+}
+.opponent-attack-attacker {
+  animation: opponent-attack-attacker 1s ease-out;
+}
+.opponent-attack-target {
+  animation: opponent-attack-target 1s ease-in;
+}
+@keyframes my-attack-attacker {
+  /* move card up and add white box-shadow when attacking */
+
+  0% {
+    transform: translateY(0);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3);
+  }
+  50% {
+    transform: translateY(-10px);
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.3);
+  }
+  100% {
+    transform: translateY(0);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3);
+  }
+}
+
+@keyframes my-attack-target {
+  /* move card up and add red box-shadow when attacking */
+  0% {
+    transform: translateY(0);
+    box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.3);
+  }
+  50% {
+    transform: translateY(-10px);
+    box-shadow: 0 0 0 10px rgba(255, 0, 0, 0.3);
+  }
+  100% {
+    transform: translateY(0);
+    box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.3);
+  }
+}
+
+@keyframes opponent-attack-attacker {
+  /* move card down and add blue box-shadow when attacking */
+  0% {
+    transform: translateY(0);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3);
+  }
+  50% {
+    transform: translateY(10px);
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.3);
+  }
+  100% {
+    transform: translateY(0);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3);
+  }
+}
+
+@keyframes opponent-attack-target {
+  /* move card down and add red box-shadow when attacking */
+
+  0% {
+    transform: translateY(0);
+    box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.3);
+  }
+  50% {
+    transform: translateY(10px);
+    box-shadow: 0 0 0 10px rgba(255, 0, 0, 0.3);
+  }
+  100% {
+    transform: translateY(0);
+    box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.3);
+  }
+}
