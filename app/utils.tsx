@@ -1,8 +1,9 @@
 import { uuid } from "uuidv4";
-import { findEffectLogic} from "./cardEffects";
+import { findEffectLogic } from "./cardEffects";
 import { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { DieElementNameT } from "./global";
 import { subtractCost } from "./actions";
+import { useRef, useEffect } from "react";
 
 type CardBasicInfo = Database["public"]["Tables"]["card_basic_info"]["Row"];
 export const cardFromBasicInfo = (
@@ -1180,4 +1181,12 @@ export const calculateDeckCardCount = (
   deck: CardBasicInfoWithQuantityAndEffects[]
 ) => {
   return deck.reduce((acc, card) => acc + card.quantity, 0);
+};
+
+export const usePrevious = <T,>(value: T) => {
+  const ref = useRef<T>();
+  useEffect(() => {
+    ref.current = value;
+  });
+  return ref.current;
 };
