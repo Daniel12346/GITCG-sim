@@ -289,6 +289,10 @@ export const currentViewedCardState = atom<CardExt | null>({
   key: "currentViewedCardState",
   default: null,
 });
+export const currentHighlightedCardState = atom<CardExt | null>({
+  key: "currentHighlightedCardState",
+  default: null,
+});
 //TODO: use this
 export const gameState = atom<Database["public"]["Tables"]["game"]["Row"]>({
   key: "gameState",
@@ -478,4 +482,28 @@ export const summonsState = selector({
 export const errorMessageState = atom<string>({
   key: "errorMessageState",
   default: "",
+});
+
+// export const attackerCardIDState = atom<string | null>({
+//   key: "attackerCardIDState",
+//   default: null,
+// });
+// export const attackTargetCardIDState = atom<string | null>({
+//   key: "attackTargetCardIDState",
+//   default: null,
+// });
+// type Coordinates = { x: number; y: number };
+
+// export const attackerCardCoordinatesState = atom<Coordinates | null>({
+//   key: "attackerCardCoordinatesState",
+//   default: null,
+// });
+// export const targetCardCoordinatesState = atom<Coordinates | null>({
+//   key: "targetCardCoordinatesState",
+//   default: null,
+// });
+
+export const usedAttackState = atom<Attack | null>({
+  key: "usedAttackState",
+  default: null,
 });
