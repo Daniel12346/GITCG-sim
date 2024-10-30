@@ -195,7 +195,11 @@ type CheckIfEffectCanBeExecutedParamsT = ExecuteEffectParams;
 type CheckIfEffectCanBeExecutedT = (
   params: CheckIfEffectCanBeExecutedParams
 ) => { errorMessage?: string };
-
+type AttackT = {
+  attackerCardID: string | null;
+  targetCardID: string | null;
+  attackEffectBaseID: string;
+};
 declare global {
   type Database = DB;
   //extends Card with effects
@@ -229,4 +233,5 @@ declare global {
   type ExecuteEffectParams = ExecuteEffectParamsT;
   type TriggerEvents = TriggerEventsT;
   type EffectLogic = EffectLogicT;
+  type Attack = AttackT;
 }
