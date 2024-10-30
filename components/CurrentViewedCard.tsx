@@ -9,9 +9,9 @@ export default () => {
   const printCost = (cost: DiceT) =>
     Object.entries(cost)
       .sort()
-      .map(([element, amount]) => (
+      .map(([element, amount], index) => (
         //TODO: style according to element
-        <span key={element}>
+        <span key={element + index}>
           {element}:{amount}
         </span>
       ));
