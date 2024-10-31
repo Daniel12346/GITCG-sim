@@ -18,7 +18,15 @@ export default function LobbyInfo() {
           <span>Opponent found!</span>
         </div>
       ) : (
-        <span>Looking for opponent...</span>
+        <div className="flex flex-col gap-4">
+          <span>Looking for opponent...</span>
+          <div>
+            <img
+              src="/dice_spinner.svg"
+              className="w-48 h-48 slow-spin-and-fade"
+            />
+          </div>
+        </div>
       )}
     </div>
   );
