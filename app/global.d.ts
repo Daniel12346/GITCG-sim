@@ -57,7 +57,7 @@ type CostT = {
   [key in CostElementName]?: number;
 };
 
-type DamageElementT = "PHYSICAL" | "PIERCING" | Omit<DieElementNameT, "OMNI">;
+type DamageElementT = ElementName | "PHYSICAL" | "PIERCING";
 type ElementalReactionT =
   | "MELT"
   | "VAPORIZE"
