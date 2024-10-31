@@ -395,7 +395,9 @@ const addStatusToCard = (
   duration?: number,
   amount?: number
 ) => {
-  const alreadyHasStatus = card.statuses?.find((s) => s.name === status);
+  const alreadyHasStatus = card.statuses?.find(
+    (s: CardStatus) => s.name === status
+  );
   const statuses = alreadyHasStatus
     ? card.statuses?.map((s: CardStatus) => {
         if (s.name === status) {
@@ -407,7 +409,7 @@ const addStatusToCard = (
               s.turnsLeft === undefined || duration === undefined
                 ? undefined
                 : s.turnsLeft + duration,
-            amount,
+            amount: s?.amount && amount ? s.amount + amount : amount,
           };
         }
         return s;
@@ -599,7 +601,6 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
           attackBaseEffectID: "",
           currentRound,
         });
-        //TODO: handle better
         extraReactions &&
           reactions.forEach((reaction) => reactions.push(reaction));
         if (opponentCardsAfterReaction) {
@@ -744,14 +745,14 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
           return card;
         });
     } else {
-      if (!(damageElement === "PHYSICAL" || damageElement === "PIERCING")) {
+      if (
+        damageElement &&
+        !(damageElement === "PHYSICAL" || damageElement === "PIERCING")
+      ) {
         //adding the attacking element to the target's statuses if no other reaction happened
         opponentUpdatedCards = opponentCards.map((card) => {
           if (card.id === targetCardId) {
-            return {
-              ...card,
-              statuses: [...(card.statuses || []), { name: damageElement }],
-            } as CardExt;
+            return addStatusToCard(card, damageElement as ElementName);
           }
           return card;
         });
