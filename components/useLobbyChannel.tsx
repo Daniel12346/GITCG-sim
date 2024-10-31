@@ -19,7 +19,7 @@ import { useState, useEffect, use } from "react";
 import { useRecoilValue, useRecoilState, useSetRecoilState } from "recoil";
 import { cardFromBasicInfo } from "@/app/utils";
 
-export default function LobbyChannel() {
+export default function useLobbyChannel() {
   const myID = useRecoilValue(myIDState);
   const [usersInLobbyIDs, setUsersInLobbyIDs] =
     useRecoilState(usersInLobbyIDsState);
@@ -203,5 +203,5 @@ export default function LobbyChannel() {
     };
   }, []);
   //TODO: what should this return?
-  return <div>{}</div>;
+  return channel;
 }
