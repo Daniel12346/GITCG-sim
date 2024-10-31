@@ -1,5 +1,6 @@
 "use client";
 
+import useLobbyChannel from "@/components/useLobbyChannel";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 
@@ -7,11 +8,9 @@ export default function Lobby() {
   const LobbyInfoNoSSR = dynamic(() => import("@/components/LobbyInfo"), {
     ssr: false,
   });
-  const LobbyChannelNoSSR = dynamic(() => import("@/components/LobbyChannel"), {
-    ssr: false,
-  });
 
   const router = useRouter();
+  useLobbyChannel();
 
   return (
     <div className="pt-20 max-w-xl w-full">
@@ -24,7 +23,6 @@ export default function Lobby() {
         {"<"} cancel
       </button>
       <LobbyInfoNoSSR />
-      <LobbyChannelNoSSR />
     </div>
   );
 }
