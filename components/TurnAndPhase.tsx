@@ -287,16 +287,6 @@ export default ({}) => {
   }, [myCards, opponentCards]);
 
   useEffect(() => {
-    //TODO: redirect to home
-    if (!gameWinnerID) return;
-    if (gameWinnerID === myID) {
-      alert("You won!");
-    } else {
-      alert("You lost");
-    }
-  }, [gameWinnerID]);
-
-  useEffect(() => {
     if (amIReadyForNextPhase && isOpponentReadyForNextPhase) {
       if (currentPhase === "ACTION_PHASE") {
         console.log("currentPlayerID", currentPlayerID);
