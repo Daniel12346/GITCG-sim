@@ -4,11 +4,12 @@ import {
   myCurrentDeckCardsBasicInfoWithQuantitiesAndEffectsState,
   deckInDeckBuilderCardsBasicInfoWithQuantitiesAndEffectsState,
   myDecksState,
-  CardBasicInfoWithQuantityAndEffects,
   myCurrentDeckWithCardBasicInfoState,
+  myCurrentDeckIDState,
 } from "@/recoil/atoms";
 import { useEffect } from "react";
 import {
+  useRecoilRefresher_UNSTABLE,
   useRecoilState,
   useRecoilValue,
   useRecoilValueLoadable,
@@ -19,12 +20,16 @@ import SetCurrentDeck from "./SelectCurrentDeck";
 
 export default function DeckDisplay() {
   //TODO: view other players' decks
+  const myCurrentDeckID = useRecoilValue(myCurrentDeckIDState);
   const myDecks = useRecoilValue(myDecksState);
   const myCurrentDeck = useRecoilValue(myCurrentDeckWithCardBasicInfoState);
   const myCurrentDeckLoadable = useRecoilValueLoadable(
     myCurrentDeckWithCardBasicInfoState
   );
   const myCurrentDeckCardsLoadable = useRecoilValueLoadable(
+    myCurrentDeckCardsBasicInfoWithQuantitiesAndEffectsState
+  );
+  const refreshMyCurrentDeckCards = useRecoilRefresher_UNSTABLE(
     myCurrentDeckCardsBasicInfoWithQuantitiesAndEffectsState
   );
   const [
@@ -41,18 +46,24 @@ export default function DeckDisplay() {
   }, [myCurrentDeck]);
 
   useEffect(() => {
-    myCurrentDeckCardsLoadable.state === "hasValue" &&
-      myCurrentDeckCardsLoadable.contents &&
+    if (
+      myCurrentDeckCardsLoadable.state === "hasValue" &&
+      myCurrentDeckCardsLoadable.contents
+    ) {
       setDeckInDeckBuilderCardsBasicInfoWithQuantitiesAndEffects(
         myCurrentDeckCardsLoadable.contents
       );
-    console.log(myCurrentDeckCardsLoadable.contents);
+    }
   }, [myCurrentDeckCardsLoadable]);
   useEffect(() => {
-    myCurrentDeckLoadable &&
-      myCurrentDeckCardsLoadable.state === "hasValue" &&
+    if (myCurrentDeckLoadable && myCurrentDeckLoadable.state === "hasValue") {
       setDeckInDeckBuilderName(myCurrentDeckLoadable.contents?.name ?? "");
+    }
   }, [myCurrentDeckLoadable]);
+
+  useEffect(() => {
+    refreshMyCurrentDeckCards();
+  }, [myCurrentDeckID]);
 
   const sortDeckCards = (cards: CardBasicInfoWithQuantityAndEffects[]) =>
     cards?.toSorted((a, b) => {
