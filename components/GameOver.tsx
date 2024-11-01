@@ -6,9 +6,25 @@ export default function GameOver() {
   const amIGameWinner = useRecoilValue(amIGameWinnerState);
   return (
     gameWinnerID && (
-      <div>
-        <h1>Game Over</h1>
-        <h2>{amIGameWinner ? "You Win!" : "You Lose"}</h2>
+      <div
+        className="absolute top-[50%]
+    left-[50%] -translate-x-1/2 -translate-y-1/2
+      flex items-center justify-center z-[100] overflow-hidden pointer-events-none"
+      >
+        <div className="animate-in border-solid border-4 overflow-hidden pointer-events-auto bg-overlay border-yellow-300 p-4">
+          <div className="flex flex-row gap-4 p-3">
+            <span className="text-6xl font-extrabold">
+              {amIGameWinner ? (
+                <span className="text-green-300">YOU WIN</span>
+              ) : (
+                <span className="text-red-400">YOU LOSE</span>
+              )}
+            </span>
+          </div>
+          <div className="flex justify-between w-full ">
+            <button onClick={() => {}}>exit game</button>
+          </div>
+        </div>
       </div>
     )
   );
