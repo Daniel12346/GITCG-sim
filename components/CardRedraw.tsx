@@ -49,12 +49,12 @@ export default function CardRedraw({
   return (
     <div
       //TODO: center properly
-      className="absolute top-[50%]
+      className="absolute top-[50%] 
     left-[50%] -translate-x-1/2 -translate-y-1/2
       flex items-center justify-center z-[100] overflow-hidden pointer-events-none"
     >
       {amIRedrawing && (
-        <div className="animate-in border-solid border-4 overflow-hidden pointer-events-auto bg-blue-600 p-4">
+        <div className="animate-in border-solid border-4 overflow-hidden pointer-events-auto bg-overlay border-yellow-300 p-4">
           <div className="flex flex-row gap-4">
             {myCards
               .filter((c) => c.location === "HAND")
