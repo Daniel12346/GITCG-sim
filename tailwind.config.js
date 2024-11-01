@@ -16,6 +16,7 @@ module.exports = {
           background: "hsl(var(--btn-background))",
           "background-hover": "hsl(var(--btn-background-hover))",
         },
+        overlay: "hsl(var(--overlay-background))",
       },
     },
   },

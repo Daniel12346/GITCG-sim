@@ -11,6 +11,7 @@
     --field-background-main: 250 60% 40%;
     --field-background-hand: 250 60% 29%;
     --field-background-secondary: 250 30% 12%;
+    --overlay-background: 240 40% 45%;
   }
 
   @media (prefers-color-scheme: dark) {
