@@ -5,7 +5,10 @@ import {
   drawCards,
 } from "@/app/actions";
 import { CardExtended } from "@/app/global";
-import { executePhaseEffectsForBothPlayers } from "@/app/utils";
+import {
+  executePhaseEffectsForBothPlayers,
+  updateGameWinnerInDatabase,
+} from "@/app/utils";
 import {
   amIReadyForNextPhaseState,
   currentGameIDState,
@@ -24,6 +27,7 @@ import {
   opponentIDState,
   nextRoundFirstPlayerIDState,
   errorMessageState,
+  gameOverMessageState,
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -57,6 +61,7 @@ export default ({}) => {
   const [opponentDice, setOpponentDice] = useRecoilState(opponentDiceState);
   const [amIPlayer1, setamIPlayer1] = useRecoilState(amIPlayer1State);
   const isMyTurn = useRecoilValue(isMyTurnState);
+  const setGameOverMessage = useSetRecoilState(gameOverMessageState);
 
   useEffect(() => {
     const supabase = createClientComponentClient<Database>();
@@ -66,6 +71,27 @@ export default ({}) => {
     channel
       .on("presence", { event: "join" }, ({ key }) => {
         //TODO:
+      })
+      .on("presence", { event: "leave" }, async ({ key }) => {
+        console.log("opponent left", key, opponentID);
+        if (key === opponentID) {
+          //opponent left the game
+          const { data, errorMessage } = await updateGameWinnerInDatabase(
+            supabase,
+            gameID,
+            myID
+          );
+
+          setGameOverMessage("opponent disconnected");
+          setGameWinnerID(myID);
+          setTimeout(() => {
+            channel?.send({
+              type: "broadcast",
+              event: "game_over",
+              payload: { gameWinnerID: myID, message: "opponent disconnected" },
+            });
+          }, 400);
+        }
       })
       .on("broadcast", { event: "initialize_board" }, ({ payload }) => {
         setMyCards(payload.opponentCards);
@@ -100,6 +126,7 @@ export default ({}) => {
       })
       .on("broadcast", { event: "game_over" }, ({ payload }) => {
         setGameWinnerID(payload.gameWinnerID);
+        setGameOverMessage(payload.message);
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
@@ -128,8 +155,11 @@ export default ({}) => {
         break;
       case "ROLL_PHASE":
         setCurrentPlayerID(nextRoundFirstPlayerID);
-        myUpdatedDice = createRandomDice(8);
-        opponentUpdatedDice = createRandomDice(8);
+        //TODO: revert
+        myUpdatedDice = createOmniDice(18);
+        opponentUpdatedDice = createOmniDice(18);
+        // myUpdatedDice = createRandomDice(8);
+        // opponentUpdatedDice = createRandomDice(8);
         break;
       case "ACTION_PHASE":
         break;
@@ -250,28 +280,19 @@ export default ({}) => {
       return (
         cards.filter(
           (card) => card.location === "CHARACTER" && card.health === 0
-          //TODO: revert to 3
-        ).length === 1
+        ).length === 3
       );
     };
-    const updateGameWinnerInDatabase = async (gameWinnerID: string) => {
-      const supabase = createClientComponentClient<Database>();
-      const { data, error } = await supabase
-        .from("game")
-        .update({ winner_id: gameWinnerID })
-        .eq("id", gameID)
-        .single();
-      if (error) console.error("error", error);
-      console.log("updated game winner", data);
-    };
+
     const updateAndBroadcastGameWinner = async (gameWinnerID: string) => {
-      await updateGameWinnerInDatabase(gameWinnerID);
+      const client = createClientComponentClient<Database>();
+      await updateGameWinnerInDatabase(client, gameID, gameWinnerID);
       setGameWinnerID(gameWinnerID);
       setTimeout(() => {
         channel?.send({
           type: "broadcast",
           event: "game_over",
-          payload: { gameWinnerID },
+          payload: { gameWinnerID, message: "all characters defeated" },
         });
       }, 400);
     };
