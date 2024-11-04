@@ -1195,3 +1195,18 @@ export const usePrevious = <T,>(value: T) => {
   });
   return ref.current;
 };
+
+export const updateGameWinnerInDatabase = async (
+  client: SupabaseClient<Database>,
+  gameID: string,
+  gameWinnerID: string
+) => {
+  const { data, error } = await client
+    .from("game")
+    .update({ winner_id: gameWinnerID })
+    .eq("id", gameID)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  if (error) return { errorMessage: error.message };
+  return { data };
+};
