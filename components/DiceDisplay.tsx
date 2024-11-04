@@ -1,4 +1,4 @@
-import { mySelectedDiceState } from "@/recoil/atoms";
+import { currentPhaseState, mySelectedDiceState } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import ElementalTuning from "./ElementalTuning";
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -19,16 +19,16 @@ const Die = ({
   isMyBoard: boolean;
   isSelected: boolean;
 }) => {
-  let bgColors = {
-    ANEMO: "bg-cyan-300",
-    DENDRO: "bg-green-300",
-    PYRO: "bg-red-300",
-    HYDRO: "bg-blue-300",
-    ELECTRO: "bg-yellow-300",
-    CRYO: "bg-blue-300",
-    GEO: "bg-yellow-300",
-    OMNI: "bg-gray-300",
-  };
+  // let bgColors = {
+  //   ANEMO: "bg-cyan-300",
+  //   DENDRO: "bg-green-300",
+  //   PYRO: "bg-red-300",
+  //   HYDRO: "bg-blue-300",
+  //   ELECTRO: "bg-yellow-300",
+  //   CRYO: "bg-blue-300",
+  //   GEO: "bg-yellow-300",
+  //   OMNI: "bg-gray-300",
+  // };
   const [selectedDice, setSelectedDice] = useRecoilState(mySelectedDiceState);
   const handleSelectDie = () => {
     if (!isMyBoard) return;
@@ -49,14 +49,6 @@ const Die = ({
   };
 
   return (
-    //the dice itself
-    // <div
-    //   key={element + isMyBoard}
-    //   onClick={handleSelectDie}
-    //   className={`text-sm w-4 h-4 rotate-45 ${bgColors[element]} ${
-    //     isMyBoard && isSelected && " ring-2 ring-white "
-    //   }`}
-    // ></div>
     <img
       key={element + isMyBoard}
       onClick={handleSelectDie}
@@ -93,6 +85,7 @@ export default function DiceDisplay({
   channel,
   withElementalTuning,
 }: DiceDisplayProps) {
+  const currentPhase = useRecoilValue(currentPhaseState);
   return (
     <div className={`${!isMyBoard && "pt-3"}`}>
       <ul className="flex gap-2 p-3 flex-wrap">
@@ -106,7 +99,7 @@ export default function DiceDisplay({
             />
           ))}
       </ul>
-      {withElementalTuning && isMyBoard && (
+      {withElementalTuning && isMyBoard && currentPhase === "ACTION_PHASE" && (
         <ElementalTuning channel={channel || null} />
       )}
     </div>
