@@ -1,9 +1,10 @@
 "use client";
 
-import { myDecksState } from "@/recoil/atoms";
+import { myCurrentDeckIDState } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useState } from "react";
 import SelectCurrentDeck from "./SelectCurrentDeck";
+import { useRecoilValue } from "recoil";
 
 interface Props {
   userId: string;
@@ -13,6 +14,7 @@ type Deck = Database["public"]["Tables"]["deck"]["Row"];
 export default function ClientComponent({ userId }: Props) {
   const supabase = createClientComponentClient<Database>();
   const [decks, setDecks] = useState<Deck[]>();
+  const myCurrentDeckID = useRecoilValue(myCurrentDeckIDState);
   useEffect(() => {
     const getDecks = async () => {
       const { data } = await supabase
@@ -31,7 +33,7 @@ export default function ClientComponent({ userId }: Props) {
         return (
           <div key={deck.id}>
             <span>{deck.name}</span>
-            <SelectCurrentDeck deck={deck} />
+            {myCurrentDeckID !== deck.id && <SelectCurrentDeck deck={deck} />}
           </div>
         );
       })}
