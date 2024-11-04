@@ -207,7 +207,6 @@ const makeNormalAttackExecuteFunction = (
   return execute;
 };
 
-
 //only handles the execution, not the effect cost
 export const effects: {
   [key: string]: EffectLogic;
@@ -332,6 +331,7 @@ export const effects: {
   //Blessing of the Divine Relic's Installation
   "ce166d08-1be9-4937-a601-b34835c97dd2": {
     triggerOn: ["THIS_CARD_ACTIVATION"],
+    requiredTargets: 2,
     execute: ({ targetCards, myCards }) => {
       if (!targetCards || targetCards.length < 2) {
         return { errorMessage: "Two target cards are required" };
@@ -434,42 +434,39 @@ export const effects: {
     //is skill the same as attack?
     // trigger: "ATTACK",
     execute: ({ myCards }) => {
-      const myCharacters = myCards.filter(
-        (card) =>
-          card.location === "CHARACTER" && card.health && card.health > 0
+      let myCharacters = myCards.filter(
+        (card) => card.location === "CHARACTER"
       );
-      const myPreviousActiveCharacterIndexAmongCharacters =
-        myCharacters.findIndex((card) => card.is_active === true);
-
-      let newActiveCharacterIndexAmongCharacters = -1;
-      if (
-        myPreviousActiveCharacterIndexAmongCharacters ===
-        myCharacters.length - 1
-      ) {
-        newActiveCharacterIndexAmongCharacters = 0;
-      } else {
-        newActiveCharacterIndexAmongCharacters =
-          myPreviousActiveCharacterIndexAmongCharacters + 1;
+      let previousActiveCharacterIndex = myCharacters.findIndex(
+        (card) => card.is_active
+      );
+      if (previousActiveCharacterIndex === -1) {
+        //TODO: throw an error
+        previousActiveCharacterIndex = 0;
       }
-      const previousCharacter =
-        myCharacters[myPreviousActiveCharacterIndexAmongCharacters];
-      const newActiveCharacter =
-        myCharacters[newActiveCharacterIndexAmongCharacters];
-      const myPreviousActiveCharacterIndex = myCards.findIndex(
-        (card) => card.id === previousCharacter.id
-      );
-      const myNewActiveCharacterIndex = myCards.findIndex(
-        (card) => card.id === newActiveCharacter.id
-      );
-      const myUpdatedCards = [...myCards];
-      myUpdatedCards[myPreviousActiveCharacterIndex] = {
-        ...myUpdatedCards[myPreviousActiveCharacterIndex],
-        is_active: false,
-      };
-      myUpdatedCards[myNewActiveCharacterIndex] = {
-        ...myUpdatedCards[myNewActiveCharacterIndex],
-        is_active: true,
-      };
+      const nextActiveCharacterIndex =
+        previousActiveCharacterIndex === myCharacters.length - 1
+          ? 0
+          : previousActiveCharacterIndex + 1;
+      const previousActiveCharacter =
+        myCharacters[previousActiveCharacterIndex];
+      const nextActiveCharacter = myCharacters[nextActiveCharacterIndex];
+      const myUpdatedCards = myCards?.map((card) => {
+        if (card.location === "CHARACTER") {
+          if (card.id === previousActiveCharacter.id) {
+            return {
+              ...card,
+              is_active: false,
+            };
+          } else if (card.id === nextActiveCharacter.id) {
+            return {
+              ...card,
+              is_active: true,
+            };
+          }
+        }
+        return card;
+      });
       return { myUpdatedCards };
     },
   },
