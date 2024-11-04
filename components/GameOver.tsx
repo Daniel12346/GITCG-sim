@@ -1,4 +1,5 @@
 import { amIGameWinnerState, gameWinnerIDState } from "@/recoil/atoms";
+import Link from "next/link";
 import { useRecoilValue } from "recoil";
 
 export default function GameOver() {
@@ -22,7 +23,9 @@ export default function GameOver() {
             </span>
           </div>
           <div className="flex justify-between w-full ">
-            <button onClick={() => {}}>exit game</button>
+            <Link href="/">
+              <button onClick={() => {}}>exit game</button>
+            </Link>
           </div>
         </div>
       </div>
