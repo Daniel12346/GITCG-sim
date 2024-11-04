@@ -1,8 +1,6 @@
 import {
-  CardBasicInfoWithQuantityAndEffects,
   deckInDeckBuilderCardCountState,
   deckInDeckBuilderCardsBasicInfoWithQuantitiesAndEffectsState,
-  deckInDeckBuilderIDState,
   deckInDeckBuilderNameState,
   myCurrentDeckIDState,
   myDecksState,
@@ -81,11 +79,11 @@ export default () => {
 bg-green-200 ml-4 text-green-800 px-1 cursor-pointer font-semibold rounded-sm text-center
         ${
           isLoading &&
-          "opacity-50 pointer-events-none bg-gray-200 text-gray-800"
+          "opacity-50 pointer-events-none bg-gray-200 text-gray-800 cursor-not-allowed"
         }
       ${
         deckCardBasicInfoTotalCards !== 33 &&
-        "opacity-50 bg-red-100 text-red-900"
+        "opacity-50 bg-red-100 text-red-900 pointer-events-none cursor-not-allowed"
       }`}
       onClick={async () => {
         setIsLoading(true);
@@ -97,8 +95,7 @@ bg-green-200 ml-4 text-green-800 px-1 cursor-pointer font-semibold rounded-sm te
             playerID: myID,
             deckCardsBasicInfoWithQuantities,
           });
-          //TODO:
-          //   refreshMyDecks();
+          refreshMyDecks();
         } catch (e) {
           console.log("error", e);
         } finally {
