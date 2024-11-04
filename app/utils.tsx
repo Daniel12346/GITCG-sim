@@ -1175,7 +1175,11 @@ export const broadcastUpdatedCardsAndDice = ({
 };
 
 export const shuffleDeck = (deck: CardExt[]) => {
-  return deck.sort(() => Math.random() - 0.5);
+  const characterCards = deck.filter((card) => card.card_type === "CHARACTER");
+  const otherCards = deck.filter((card) => card.card_type !== "CHARACTER");
+  const shuffledCards = otherCards.toSorted(() => Math.random() - 0.5);
+  console.log("shuffledCards", shuffledCards);
+  return [...characterCards, ...shuffledCards];
 };
 
 export const calculateDeckCardCount = (
