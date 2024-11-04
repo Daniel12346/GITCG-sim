@@ -44,16 +44,16 @@ export default function DeckBuilder() {
         <div>
           <DeckDisplayNoSSR />
         </div>
-        <div className="border-x-2 md:border-indigo-400 flex flex-col px-4 gap-3">
-          <span className="text-lg text-slate-200">Add cards to deck</span>
+        <div className="border-x-2 md:border-indigo-400 flex flex-col px-4 gap-3 items-center">
+          <span className="text-lg text-slate-200 ">Add cards to deck</span>
           <div className="text-slate-300">
             <label>Card name</label>
             <input
               value={searchKey}
               onChange={(e) => setSearchKey(e.target.value)}
-              className="px-1 mb-3 bg-indigo-100 text-indigo-950"
+              className="px-1 mb-3 rounded-sm bg-indigo-100 text-indigo-950"
             ></input>
-            <div className="flex flex-wrap px-2 justify-evenly gap-3 overflow-y-scroll max-h-[25rem]">
+            <div className="flex flex-wrap px-2 justify-evenly gap-3 overflow-y-scroll max-h-[25rem">
               {searchResultCards
                 .filter((card) => card.card_type !== "SUMMON")
                 .map((card) => {
