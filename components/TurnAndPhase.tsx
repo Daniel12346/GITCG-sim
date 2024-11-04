@@ -23,6 +23,7 @@ import {
   gameWinnerIDState,
   opponentIDState,
   nextRoundFirstPlayerIDState,
+  errorMessageState,
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -50,6 +51,7 @@ export default ({}) => {
   const [opponentCards, setOpponentCards] = useRecoilState(
     opponentInGameCardsState
   );
+  const setErrorMessage = useSetRecoilState(errorMessageState);
   const [myCards, setMyCards] = useRecoilState(myInGameCardsState);
   const [myDice, setMyDice] = useRecoilState(myDiceState);
   const [opponentDice, setOpponentDice] = useRecoilState(opponentDiceState);
@@ -126,10 +128,8 @@ export default ({}) => {
         break;
       case "ROLL_PHASE":
         setCurrentPlayerID(nextRoundFirstPlayerID);
-        //TODO: revert to createRandomDice
-        myUpdatedDice = createOmniDice(8);
-        opponentUpdatedDice = createOmniDice(8);
-        //TODO: reset dice
+        myUpdatedDice = createRandomDice(8);
+        opponentUpdatedDice = createRandomDice(8);
         break;
       case "ACTION_PHASE":
         break;
@@ -310,11 +310,15 @@ export default ({}) => {
   }, [amIReadyForNextPhase, isOpponentReadyForNextPhase]);
 
   return (
-    <div className="py-2 flex justify-center">
+    <div className="py-1 flex justify-center">
       <div className="w-4/5 text-blue-100 bg-indigo-900 px-1 py-2 flex gap-4 justify-evenly">
         <span className="text-lg">Round {currentRound}</span>
         <button
           onClick={async () => {
+            if (!myCards.find((card) => card.is_active)) {
+              setErrorMessage("No active character");
+              return;
+            }
             await channel?.send({
               type: "broadcast",
               event: "ready_for_next_phase",
@@ -334,9 +338,11 @@ export default ({}) => {
           <span className="font-semibold text-lg">
             {currentPhase?.replace("_", " ")}
           </span>
-          <span className={`${isMyTurn ? "text-green-400" : "text-red-400"}`}>
-            {isMyTurn ? "your turn" : "opponent's turn"}
-          </span>
+          {currentPhase === "ACTION_PHASE" && (
+            <span className={`${isMyTurn ? "text-green-400" : "text-red-400"}`}>
+              {isMyTurn ? "your turn" : "opponent's turn"}
+            </span>
+          )}
           {/* {isMyTurn && <span>pass turn</span>} */}
         </div>
         <button
