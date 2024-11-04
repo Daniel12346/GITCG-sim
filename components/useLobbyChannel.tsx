@@ -17,7 +17,7 @@ import { RealtimeChannel } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, use } from "react";
 import { useRecoilValue, useRecoilState, useSetRecoilState } from "recoil";
-import { cardFromBasicInfo } from "@/app/utils";
+import { cardFromBasicInfo, shuffleDeck } from "@/app/utils";
 
 export default function useLobbyChannel() {
   const myID = useRecoilValue(myIDState);
@@ -118,12 +118,15 @@ export default function useLobbyChannel() {
                   cardsInGameInitial.push(card);
                 }
               });
-              return drawCards(cardsInGameInitial, 5);
+              return drawCards(shuffleDeck(cardsInGameInitial), 5);
             })
           );
 
           const myDice = createRandomDice(8);
           const opponentDice = createRandomDice(8);
+          const myShuffledCards = shuffleDeck(myCards!);
+          const opponentShuffledCards = shuffleDeck(opponentCards!);
+
           //decide who goes first
           const startingPlayerID =
             Math.random() > 0.5 ? data[0].player1_id : data[0].player2_id;
@@ -136,8 +139,8 @@ export default function useLobbyChannel() {
               player1ID: data[0].player1_id,
               player2ID: data[0].player2_id,
               startingPlayerID,
-              myCards,
-              opponentCards,
+              myCards: myShuffledCards,
+              opponentCards: opponentShuffledCards,
               myDice,
               opponentDice,
             },
