@@ -1,11 +1,14 @@
+import { usePrevious } from "@/app/utils";
 import {
   currentViewedCardState,
   mySelectedCardsState,
   myIDState,
-  currentGameIDState,
   isMyTurnState,
   currentPhaseState,
+  currentHighlightedCardState,
+  usedAttackState,
 } from "@/recoil/atoms";
+import { useEffect, useState } from "react";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 
 interface Props {
@@ -16,7 +19,7 @@ interface Props {
   creationDisplayElements?: (React.JSX.Element | null)[];
   overrideIsFaceDown?: boolean;
 }
-export default function Card({
+export default function CardInGame({
   card,
   handleClick,
   isInDeckDisplay,
@@ -28,26 +31,57 @@ export default function Card({
     useRecoilState(mySelectedCardsState);
   const setCurrentViewedCard = useSetRecoilState(currentViewedCardState);
   const myID = useRecoilValue(myIDState);
+  const highlightedCard = useRecoilValue(currentHighlightedCardState);
+
   const isMyCard = card.owner_id === myID;
   const isSelected = selectedTargets.find((target) => target.id === card.id);
   const isFaceDown =
     overrideIsFaceDown || (card.location === "HAND" && !isMyCard);
+  const isHighlighted = highlightedCard?.id === card.id;
   const isFrozen = card.statuses?.find((status) => status.name === "FROZEN");
   const isDefeated = card.location === "CHARACTER" && card.health === 0;
   const isSummon = card.location === "SUMMON";
   const isMyTurn = useRecoilValue(isMyTurnState);
   const currentPhase = useRecoilValue(currentPhaseState);
+  const usedAttack = useRecoilValue(usedAttackState);
+  let isAttacker = usedAttack?.attackerCardID === card.id;
+  let isAttackTarget = usedAttack?.targetCardID === card.id;
+  const previousCard = usePrevious(card);
+  const [healthChange, setHealthChange] = useState(0);
+  useEffect(() => {
+    if (
+      previousCard &&
+      previousCard.id === card.id &&
+      card.health !== null &&
+      previousCard.health !== null
+    ) {
+      const change = card.health - previousCard.health;
+      setHealthChange(change);
+      setTimeout(() => {
+        setHealthChange(0);
+      }, 200);
+    }
+  }, [card]);
 
   return (
     <div
-      className={`group bg-blue-200 flex flex-col items-center relative h-24 w-16 border-4
+      className={`
+       group  transition-transform bg-blue-200 flex flex-col items-center relative h-24 w-16 border-4
          border-orange-300 
          ${isDefeated && "border-gray-400"}
-         rounded-md transition-transform duration-300 ease-in-out
+         rounded-md duration-300 ease-in-out
         ${isSelected && "ring-4 ring-offset-2 ring-blue-300"}
         ${card && card.is_active && "scale-125"}
-        ${isInDeckDisplay && card.card_type === "CHARACTER" && "scale-125 mx-2"}
+        ${isHighlighted && "highlight-with-shadow"}
         ${overrideIsFaceDown && "pointer-events-none"}
+        ${
+          isAttacker &&
+          (isMyCard ? "my-attack-attacker" : "opponent-attack-attacker")
+        }
+        ${
+          isAttackTarget &&
+          (isMyCard ? "opponent-attack-target" : "my-attack-target")
+        }
         `}
       onMouseEnter={() => {
         if (isFaceDown) return;
@@ -65,7 +99,6 @@ export default function Card({
         {creationDisplayElements?.map((element) => element)}
       </div>
       {/* used for activating cards from hand */}
-      {/* {isMyTurn && ( */}
       <>
         {card.location === "HAND" && isMyCard && isMyTurn && (
           <span
@@ -79,8 +112,10 @@ export default function Card({
         {/* used for switching active character */}
         {card.location === "CHARACTER" &&
           isMyCard &&
-          !card.is_active &&
-          isMyTurn && (
+          !card.is_active && [
+            (currentPhase === "ACTION_PHASE" && isMyTurn) ||
+              currentPhase === "PREPARATION_PHASE",
+          ] && (
             <span
               className="z-30 cursor-pointer hidden group-hover:block absolute top-1 left-1 bg-green-200 text-green-800 p-1"
               onClick={handleClick}
@@ -110,12 +145,17 @@ export default function Card({
       {isSummon && (
         <div className="z-10 flex justify-between w-full">
           <span className="bg-blue-600 rounded-sm text-blue-100  -mr-1 ">
-            {card.usages}
+            {card.max_usages! - card.usages!}
           </span>
         </div>
       )}
       <div className="z-10 flex justify-between w-full">
-        <span className="bg-orange-300 rounded-sm text-orange-800 -ml-1 ">
+        <span
+          className={`bg-orange-300 transition-all rounded-sm text-orange-800 -ml-1 
+        ${healthChange > 0 && "scale-125 bg-green-800 text-green-200"}
+        ${healthChange < 0 && "scale-125 bg-red-800 text-red-200"}
+        `}
+        >
           {isInDeckDisplay ? card.base_health : card.health}
         </span>
       </div>
@@ -155,7 +195,7 @@ export default function Card({
 
       {/* //TODO: use Next.js Image component */}
       <img
-        src={!isFaceDown ? card.img_src : "../card_back_origin.webp"}
+        src={!isFaceDown ? card.img_src : "../card_back_origin.png"}
         className={`w-full absolute h-full object-cover object-center rounded-md`}
       />
       {equippedCards && equippedCards.length > 0 && (
@@ -163,7 +203,7 @@ export default function Card({
           {equippedCards.map((equippedCard) => (
             <div className="scale-50">
               {/* //TODO: use unique key */}
-              <Card key={equippedCard.id} card={equippedCard} />
+              <CardInGame key={equippedCard.id} card={equippedCard} />
             </div>
           ))}
         </div>
