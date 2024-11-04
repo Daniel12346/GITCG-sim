@@ -15,8 +15,12 @@ import {
   isMyTurnState,
   currentPhaseState,
   errorMessageState,
+  currentHighlightedCardState,
+  usedAttackState,
+  opponentProfileState,
+  myProfileState,
 } from "@/recoil/atoms";
-import { useRecoilState, useRecoilValue } from "recoil";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useState } from "react";
 import CardInGame from "./CardInGame";
@@ -41,11 +45,20 @@ import { findEffectLogic } from "@/app/cardEffects";
 import { getCreationDisplayComponentForCard } from "./CreationDisplay";
 import DiceReroll from "./DiceReroll";
 import CardRedraw from "./CardRedraw";
-import Card from "./CardInGame";
+import GameOver from "./GameOver";
+import PlayerInfoInGame from "./PlayerInfoInGame";
 
 //TODO: move to another file
 interface PlayerBoardProps {
   playerID?: string;
+}
+interface UpdatedCardsAndDicePayload {
+  myCards?: CardExtended[];
+  opponentCards?: CardExtended[];
+  myDice?: Dice;
+  opponentDice?: Dice;
+  highlightedCard?: CardExtended;
+  usedAttack?: Attack;
 }
 export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   const gameID = useRecoilValue(currentGameIDState);
@@ -78,6 +91,13 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   const attacks = useRecoilValue(currentActiveCharacterAttacksState);
   const isMyTurn = useRecoilValue(isMyTurnState);
   const cardsInDeck = playerCards.filter((card) => card.location === "DECK");
+  const setHighlightedCard = useSetRecoilState(currentHighlightedCardState);
+  const [usedAttack, setUsedAttack] = useRecoilState(usedAttackState);
+  //TODO: handle better
+  const myProfile = useRecoilValue(myProfileState);
+  const opponentProfile = useRecoilValue(opponentProfileState);
+  const playerProfile = isMyBoard ? myProfile : opponentProfile;
+ 
 
   useEffect(() => {
     const supabase = createClientComponentClient<Database>();
@@ -93,11 +113,25 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         setCurrentPlayerID(playerID);
       })
       .on("broadcast", { event: "updated_cards_and_dice" }, ({ payload }) => {
-        const { myCards, opponentCards, myDice, opponentDice } = payload;
+        const {
+          myCards,
+          opponentCards,
+          myDice,
+          opponentDice,
+          highlightedCard,
+          usedAttack,
+        } = payload as UpdatedCardsAndDicePayload;
         myCards && setOpponentInGameCards(myCards);
         opponentCards && setMyCards(opponentCards);
         myDice && setOpponentDice(myDice);
         opponentDice && setMyDice(opponentDice);
+        highlightedCard && setHighlightedCard(highlightedCard);
+        if (usedAttack) {
+          setUsedAttack(usedAttack);
+          setTimeout(() => {
+            setUsedAttack(null);
+          }, 1500);
+        }
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
@@ -130,14 +164,15 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         }
         return c;
       }) as CardExtended[];
-      console.log("channel", channel);
       const res = await channel?.send({
         type: "broadcast",
         event: "updated_cards_and_dice",
         payload: {
           myCards: myUpdatedCards,
+          highlightedCard: card,
         },
       });
+      setHighlightedCard(card);
       setMyCards(
         (prev) =>
           prev.map((c) => {
@@ -239,11 +274,13 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       }
       myUpdatedCards && setMyCards(myUpdatedCards);
       opponentUpdatedCards && setOpponentInGameCards(opponentUpdatedCards);
+      setHighlightedCard(card);
       channel
         ?.send({
           type: "broadcast",
           event: "updated_cards_and_dice",
           payload: {
+            highlightedCard: card,
             myCards: myUpdatedCards,
             myDice: diceAfterCost,
             opponentCards: opponentUpdatedCards,
@@ -271,66 +308,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         });
     }
   };
-
-  // const handleEquipCard = (cardToEquip: CardExt) => {
-  //   // setCurrentlyBeingEquipped(cardToEquip);
-  //   // setRequiredTargets(1);
-  //   // setSelectionPurpose("EQUIP");
-  //   // setAmSelectingTargets(true);
-  //   if (!myCards) return;
-  //   if (!mySelectedDice) return;
-  //   if (selectedTargetCards.length !== 1) {
-  //     setErrorMessage("Incorrect number of targets");
-  //     return;
-  //   }
-  //   const targetCard = selectedTargetCards[0];
-  //   let updatedDice = null;
-
-  //   //TODO: compare selectedDice to cardToEquip.cost
-  //   if (cardToEquip.cost) {
-  //     try {
-  //       //TODO: fix this
-  //       const difference = subtractCost(mySelectedDice, cardToEquip.cost);
-  //       if (
-  //         Object.keys(difference).length === 0 ||
-  //         Object.values(difference).every((val) => val === 0)
-  //       ) {
-  //         updatedDice = subtractCost(myDice, mySelectedDice);
-  //       }
-  //       setMySelectedDice({});
-  //     } catch (e) {
-  //       console.log(e);
-  //       setErrorMessage("Incorrect dice");
-  //       return;
-  //     }
-  //     updatedDice && setMyDice(updatedDice);
-  //   }
-
-  //   const updatedCards = myCards.map((card) => {
-  //     if (card.id === cardToEquip.id) {
-  //       return {
-  //         ...card,
-  //         location: card.subtype?.includes("EQUIPMENT")
-  //           ? "EQUIPPED"
-  //           : "DISCARDED",
-  //         equippedTo: targetCard.id,
-  //         wasActivatedThisTurn: true,
-  //       };
-  //     }
-  //     return card;
-  //   });
-  //   channel?.send({
-  //     type: "broadcast",
-  //     event: "updated_cards_and_dice",
-  //     payload: {
-  //       myCards: updatedCards,
-  //       myDice: updatedDice,
-  //     },
-  //   });
-  //   setMyCards(updatedCards as CardExtended[]);
-  //   setSelectionPurpose(null);
-  //   setSelectedTargets([]);
-  // };
 
   // //TODO: why is this not used?
   // const handleActivateEffect = (effect: Effect) => {
@@ -580,6 +557,8 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       opponentUpdatedCards,
       opponentUpdatedDice,
       errorMessage,
+      attackerCard,
+      targetCard: selectedTargetCards[0],
     };
   };
   //TODO: make equipping work with this
@@ -594,6 +573,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     let myUpdatedDice = myDice;
     let opponentUpdatedCards = opponentInGameCards;
     let opponentUpdatedDice = opponentDice;
+    let thisCardEffectsThatTriggerOnThisCardActivation: Effect[] = [];
 
     if ((isEquipment || isFood) && selectedTargetCards.length !== 1) {
       setErrorMessage("Incorrect number of targets");
@@ -610,6 +590,27 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         setErrorMessage("Target already has a relic equipped");
         return;
       }
+    }
+    try {
+      thisCardEffectsThatTriggerOnThisCardActivation = card.effects.filter(
+        (effect) => {
+          const effectLogic = findEffectLogic(effect);
+          return effectLogic.triggerOn?.includes("THIS_CARD_ACTIVATION");
+        }
+      );
+
+      thisCardEffectsThatTriggerOnThisCardActivation.forEach((effect) => {
+        const effectLogic = findEffectLogic(effect);
+        if (
+          effectLogic.requiredTargets &&
+          selectedTargetCards.length !== effectLogic.requiredTargets
+        ) {
+          throw new Error("Incorrect number of targets");
+        }
+      });
+    } catch (e: any) {
+      setErrorMessage(e.message);
+      return;
     }
 
     if (isSupport) {
@@ -635,80 +636,65 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         }
       }
     }
-    const thisCardEffectsThatTriggerOnActivation = card.effects.filter(
-      (effect) => {
-        const effectLogic = findEffectLogic(effect);
-        return effectLogic.triggerOn?.includes("THIS_CARD_ACTIVATION");
-      }
-    );
-
-    thisCardEffectsThatTriggerOnActivation.forEach((effect) => {
-      const effectLogic = findEffectLogic(effect);
-      if (
-        effectLogic.requiredTargets &&
-        selectedTargetCards.length !== effectLogic.requiredTargets
-      ) {
-        setErrorMessage("Incorrect number of targets");
-        return;
-      }
-    });
 
     let cost = card.cost;
-    if (cost) {
-      const costModifyingEffects = findCostModifyingEffects(myCards);
-      //execute all cost modifying effects
-      costModifyingEffects.forEach((effect) => {
-        const effectLogic = findEffectLogic(effect);
-        if (!effectLogic?.execute) return;
-        let {
-          modifiedCost,
-          errorMessage,
-          myUpdatedCards: myUpdatedCardsAfterCostModifyingEffect,
-        } = effectLogic.execute({
-          summons,
-          effect,
-          playerID: myID,
-          myCards: myUpdatedCards,
-          myDice,
-          opponentCards: opponentUpdatedCards,
-          opponentDice: opponentUpdatedDice,
-          triggerContext: {
-            eventType: "CARD_ACTIVATION",
-            cost,
-            activatedCard: card,
-          },
-          currentRound,
-        });
+    try {
+      if (cost) {
+        const costModifyingEffects = findCostModifyingEffects(myCards);
+        //execute all cost modifying effects
+        costModifyingEffects.forEach((effect) => {
+          const effectLogic = findEffectLogic(effect);
+          if (!effectLogic?.execute) return;
+          let {
+            modifiedCost,
+            errorMessage,
+            myUpdatedCards: myUpdatedCardsAfterCostModifyingEffect,
+          } = effectLogic.execute({
+            summons,
+            effect,
+            playerID: myID,
+            myCards: myUpdatedCards,
+            myDice,
+            opponentCards: opponentUpdatedCards,
+            opponentDice: opponentUpdatedDice,
+            triggerContext: {
+              eventType: "CARD_ACTIVATION",
+              cost,
+              activatedCard: card,
+            },
+            currentRound,
+          });
 
-        if (errorMessage) {
-          return { errorMessage };
+          if (errorMessage) {
+            throw new Error(errorMessage);
+          }
+          if (myUpdatedCardsAfterCostModifyingEffect) {
+            myUpdatedCards = myUpdatedCardsAfterCostModifyingEffect;
+          }
+          if (modifiedCost) {
+            cost = modifiedCost;
+          }
+        });
+        try {
+          //checking if there are enough dice among the selected dice
+          if (calculateTotalDice(mySelectedDice) !== calculateTotalDice(cost)) {
+            throw new Error("Incorrect number of dice");
+          }
+          //subtracting the cost from the selected dice to check if the dice are correct
+          subtractCost(mySelectedDice, cost);
+        } catch (e) {
+          throw new Error("Incorrect dice");
         }
-        if (myUpdatedCardsAfterCostModifyingEffect) {
-          myUpdatedCards = myUpdatedCardsAfterCostModifyingEffect;
+        //if there are enough dice, subtract the selected dice from the total dice
+        try {
+          myUpdatedDice = subtractCost(myUpdatedDice, mySelectedDice);
+        } catch (e) {
+          throw new Error("Not enough total dice");
         }
-        if (modifiedCost) {
-          cost = modifiedCost;
-        }
-      });
-      try {
-        //checking if there are enough dice among the selected dice
-        if (calculateTotalDice(mySelectedDice) !== calculateTotalDice(cost)) {
-          setErrorMessage("Incorrect number of dice");
-          return { errorMessage: "Incorrect number of dice" };
-        }
-        //subtracting the cost from the selected dice to check if the dice are correct
-        subtractCost(mySelectedDice, cost);
-      } catch (e) {
-        setErrorMessage("Incorrect dice");
-        return { errorMessage: "Incorrect dice" };
       }
-      //if there are enough dice, subtract the selected dice from the total dice
-      try {
-        myUpdatedDice = subtractCost(myUpdatedDice, mySelectedDice);
-      } catch (e) {
-        setErrorMessage("Not enough total dice");
-        return { errorMessage: "Not enough total dice" };
-      }
+    } catch (e: any) {
+      setErrorMessage(e.message);
+      return;
     }
 
     if (card.cost) {
@@ -766,115 +752,129 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       return c;
     });
 
-    const myOtherCardEffectsThatTriggerOnActivation = findEffectsThatTriggerOn(
-      "CARD_ACTIVATION",
-      myCards,
-      //cost modifers will be handled separately before the other effects are executed
-      { includeCostModifiers: false }
-    );
-    //TODO: how do I update the effect usage count on this and other cards?
-    if (
-      thisCardEffectsThatTriggerOnActivation.length !== 0 &&
-      myOtherCardEffectsThatTriggerOnActivation.length !== 0
-    ) {
-      //   setMyCards(myUpdatedCards);
-      //   setMyDice(myUpdatedDice);
-      //   channel?.send({
-      //     type: "broadcast",
-      //     event: "updated_cards_and_dice",
-      //     payload: {
-      //       myCards: myUpdatedCards,
-      //       myDice: myUpdatedDice,
-      //     },
-      //   });
-      //   return;
-      // } else {
-      //TODO: fix
-      // const { errorMessage, myUpdatedCards, myUpdatedDice } =
-      //   executeEffectsSequentially({
-      //     effects: [
-      //       ...thisCardEffectsThatTriggerOnActivation,
-      //       ...myOtherCardEffectsThatTriggerOnActivation,
-      //     ],
-      //     executeArgs: {
-      //       playerID: myID,
-      //       myCards: myUpdatedCards,
-      //       myDice: myUpdatedDice,
-      //       opponentCards: opponentUpdatedCards,
-      //       opponentDice: opponentUpdatedDice,
-      //       summons,
-      //       triggerContext: {
-      //         eventType: "CARD_ACTIVATION",
-      //       },
-      //       currentRound,
-      //     },
-      //   });
-      //TODO: check if this works
-      [
-        ...thisCardEffectsThatTriggerOnActivation,
-        ...myOtherCardEffectsThatTriggerOnActivation,
-      ].forEach((effect) => {
-        const effectLogic = findEffectLogic(effect);
+    const myOtherCardEffectsThatTriggerOnCardActivation =
+      findEffectsThatTriggerOn(
+        "CARD_ACTIVATION",
+        myCards,
+        //cost modifers will be handled separately before the other effects are executed
+        { includeCostModifiers: false }
+      );
 
-        if (!effectLogic.execute) return;
-        //   //TODO: is this necessary?
-        // if (effectLogic.checkIfCanBeExecuted) {
-        //   const { errorMessage } = effectLogic.checkIfCanBeExecuted({
-        //     playerID: myID,
-        //     myCards: myCardsAfterTriggeredEffects,
-        //     myDice: myDiceAfterTriggeredEffects,
-        //     opponentCards: opponentInGameCardsAfterTriggeredEffects,
-        //     opponentDice: opponentDiceAfterTriggeredEffects,
-        //     triggerContext: {
-        //       eventType: "CARD_ACTIVATION",
+    //TODO: how do I update the effect usage count on this and other cards?
+
+    try {
+      if (
+        thisCardEffectsThatTriggerOnThisCardActivation.length !== 0 ||
+        myOtherCardEffectsThatTriggerOnCardActivation.length !== 0
+      ) {
+        //   setMyCards(myUpdatedCards);
+        //   setMyDice(myUpdatedDice);
+        //   channel?.send({
+        //     type: "broadcast",
+        //     event: "updated_cards_and_dice",
+        //     payload: {
+        //       myCards: myUpdatedCards,
+        //       myDice: myUpdatedDice,
         //     },
         //   });
-        //   if (errorMessage) {
-        //     setErrorMessage(errorMessage);
-        //     return;
-        //   }
-        // }
-        const {
-          myUpdatedCards: myCardsAfterTriggeredEffects,
-          myUpdatedDice: myDiceAfterTriggeredEffects,
-          opponentUpdatedCards: opponentCardsAfterTriggeredEffects,
-          opponentUpdatedDice: opponentDiceAfterTriggeredEffects,
-          errorMessage,
-        } = effectLogic.execute({
-          effect,
-          playerID: myID,
-          summons,
-          myCards: myUpdatedCards,
-          myDice: myUpdatedDice,
-          opponentCards: opponentInGameCards,
-          opponentDice: opponentDice,
-          currentRound,
-          //TODO: add trigger context
+        //   return;
+        // } else {
+        //TODO: fix
+        // const { errorMessage, myUpdatedCards, myUpdatedDice } =
+        //   executeEffectsSequentially({
+        //     effects: [
+        //       ...thisCardEffectsThatTriggerOnThisCardActivation,
+        //       ...myOtherCardEffectsThatTriggerOnCardActivation,
+        //     ],
+        //     executeArgs: {
+        //       playerID: myID,
+        //       myCards: myUpdatedCards,
+        //       myDice: myUpdatedDice,
+        //       opponentCards: opponentUpdatedCards,
+        //       opponentDice: opponentUpdatedDice,
+        //       summons,
+        //       triggerContext: {
+        //         eventType: "CARD_ACTIVATION",
+        //       },
+        //       currentRound,
+        //     },
+        //   });
+        //TODO: check if this works
+        [
+          ...(thisCardEffectsThatTriggerOnThisCardActivation || []),
+          ...(myOtherCardEffectsThatTriggerOnCardActivation || []),
+        ].forEach((effect) => {
+          const effectLogic = findEffectLogic(effect);
+
+          if (!effectLogic.execute) return;
+          //   //TODO: is this necessary?
+          // if (effectLogic.checkIfCanBeExecuted) {
+          //   const { errorMessage } = effectLogic.checkIfCanBeExecuted({
+          //     playerID: myID,
+          //     myCards: myCardsAfterTriggeredEffects,
+          //     myDice: myDiceAfterTriggeredEffects,
+          //     opponentCards: opponentInGameCardsAfterTriggeredEffects,
+          //     opponentDice: opponentDiceAfterTriggeredEffects,
+          //     triggerContext: {
+          //       eventType: "CARD_ACTIVATION",
+          //     },
+          //   });
+          //   if (errorMessage) {
+          //     setErrorMessage(errorMessage);
+          //     return;
+          //   }
+          // }
+          const {
+            myUpdatedCards: myCardsAfterTriggeredEffects,
+            myUpdatedDice: myDiceAfterTriggeredEffects,
+            opponentUpdatedCards: opponentCardsAfterTriggeredEffects,
+            opponentUpdatedDice: opponentDiceAfterTriggeredEffects,
+            errorMessage,
+          } = effectLogic.execute({
+            effect,
+            playerID: myID,
+            summons,
+            myCards: myUpdatedCards,
+            myDice: myUpdatedDice,
+            opponentCards: opponentInGameCards,
+            opponentDice: opponentDice,
+            currentRound,
+            targetCards: selectedTargetCards,
+
+            //TODO: add trigger context
+          });
+          if (errorMessage) {
+            setErrorMessage(errorMessage);
+            throw new Error(errorMessage);
+          }
+          myCardsAfterTriggeredEffects &&
+            (myUpdatedCards = myCardsAfterTriggeredEffects);
+          myDiceAfterTriggeredEffects &&
+            (myUpdatedDice = myDiceAfterTriggeredEffects);
+          opponentCardsAfterTriggeredEffects &&
+            (opponentUpdatedCards = opponentCardsAfterTriggeredEffects);
+          opponentDiceAfterTriggeredEffects &&
+            (opponentUpdatedDice = opponentDiceAfterTriggeredEffects);
         });
-        if (errorMessage) {
-          setErrorMessage(errorMessage);
-          return;
-        }
-        myCardsAfterTriggeredEffects &&
-          (myUpdatedCards = myCardsAfterTriggeredEffects);
-        myDiceAfterTriggeredEffects &&
-          (myUpdatedDice = myDiceAfterTriggeredEffects);
-        opponentCardsAfterTriggeredEffects &&
-          (opponentUpdatedCards = opponentCardsAfterTriggeredEffects);
-        opponentDiceAfterTriggeredEffects &&
-          (opponentUpdatedDice = opponentDiceAfterTriggeredEffects);
-      });
+      }
+    } catch (e: any) {
+      setErrorMessage(e.message);
+      return;
     }
     channel?.send({
       type: "broadcast",
       event: "updated_cards_and_dice",
       payload: {
+        //the card that was activated is displayed on the opponent's board to highlight its activation
+        //only used on cards that were activated from hand
+        highlightedCard: card,
         myCards: myUpdatedCards,
         myDice: myUpdatedDice,
         opponentCards: opponentUpdatedCards,
         opponentDice: opponentUpdatedDice,
       },
     });
+    setHighlightedCard(card);
     setMyCards(myUpdatedCards);
     setMyDice(myUpdatedDice);
     setOpponentInGameCards(opponentUpdatedCards);
@@ -886,7 +886,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   return (
     <div
       className={`bg-fieldSecondary grid grid-cols-[10%_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)_10%] 
-    gap-2 w-100% text-slate-100 p-2 overflow-x-hidden border-x-4 transition-colors duration-300 ${
+    gap-2 w-100% text-slate-100 p-2 overflow-x-hidden border-x-4  transition-colors duration-300 ${
       isMyBoard
         ? isMyTurn && currentPhase !== "PREPARATION_PHASE" && "border-green-500"
         : !isMyTurn && currentPhase !== "PREPARATION_PHASE" && "border-red-500"
@@ -894,9 +894,25 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     >
       <div
         className={`${isMyBoard && "order-2"} 
-        bg-fieldHand col-span-full h-32 p-2 grid grid-cols-[4fr_8fr_4fr] `}
+        bg-fieldHand col-span-full h-32 py-2 grid grid-cols-[4fr_1fr_8fr_5fr] `}
       >
-        <div className="text-red-700">{errorMessage || ""}</div>
+        {/* <div className="text-red-700">{errorMessage || ""}</div> */}
+        <div
+          className={`h-full flex ${isMyBoard ? "items-end" : "items-start"}`}
+        >
+          <PlayerInfoInGame
+            playerProfile={playerProfile}
+            isMyProfile={isMyBoard}
+          />
+        </div>
+        {isMyBoard ? (
+          <div className="flex justify-center items-center">
+            <span className="text-red-500">{errorMessage}</span>
+          </div>
+        ) : (
+          <div></div>
+        )}
+
         <div className="flex flex-row justify-center items-center gap-2 ">
           {playerCards
             ?.filter((card) => card.location === "HAND")
@@ -908,6 +924,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
               />
             ))}
         </div>
+
         {/* //TODO: display dice, move to new component, fix overflow */}
         <div className="flex justify-between gap-2 overflow-hidden">
           {isMyBoard && (
@@ -936,10 +953,21 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                               opponentUpdatedCards,
                               opponentUpdatedDice,
                               errorMessage,
+                              targetCard,
                             } = res;
                             if (errorMessage) {
                               setErrorMessage(errorMessage);
                               return;
+                            }
+                            if (attack.effect_basic_info_id) {
+                              setUsedAttack({
+                                attackerCardID: attack.card_id,
+                                targetCardID: targetCard?.id || null,
+                                attackEffectBaseID: attack.effect_basic_info_id,
+                              });
+                              setTimeout(() => {
+                                setUsedAttack(null);
+                              }, 1500);
                             }
                             myUpdatedCards && setMyCards(myUpdatedCards);
                             myUpdatedDice && setMyDice(myUpdatedDice);
@@ -954,11 +982,16 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                                 //TODO: use this event or delete it
                                 event: "updated_cards_and_dice",
                                 payload: {
-                                  // effect: attackEffect,
                                   myCards: myUpdatedCards,
                                   myDice: myUpdatedDice,
                                   opponentCards: opponentUpdatedCards,
                                   opponentDice: opponentUpdatedDice,
+                                  usedAttack: {
+                                    attackerCardID: attack.card_id,
+                                    targetCardID: targetCard?.id || null,
+                                    attackEffectBaseID:
+                                      attack.effect_basic_info_id,
+                                  },
                                 },
                               })
                               .then(() => {
@@ -1048,28 +1081,17 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             return <CardInGame key={card.id} card={card} />;
           })}
       </div>
-      {/* //TODO: display on cards */}
-      {/* <div className="bg-yellow-50 h-full">
-        creations:{" "}
-        {playerCards
-          ?.filter((card) => card.subtype === "CREATION")
-          .map((creation) => {
-            return (
-              <div>
-                {creation.name}
-                usages: {creation.usages}
-              </div>
-            );
-          })}
-      </div> */}
-      <DiceDisplay
-        channel={channel}
-        dice={playerDice}
-        isMyBoard={isMyBoard}
-        withElementalTuning
-      ></DiceDisplay>
+      <div className="h-full">
+        <DiceDisplay
+          channel={channel}
+          dice={playerDice}
+          isMyBoard={isMyBoard}
+          withElementalTuning
+        ></DiceDisplay>
+      </div>
       {isMyBoard && <DiceReroll channel={channel} />}
       {isMyBoard && <CardRedraw channel={channel} />}
+      {isMyBoard && <GameOver />}
     </div>
   );
 }
