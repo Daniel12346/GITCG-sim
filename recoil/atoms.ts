@@ -403,8 +403,16 @@ export const isMyTurnState = selector<boolean>({
   key: "isMyTurnState",
   get: ({ get }) => {
     const currentPlayerID = get(currentPlayerIDState);
+    //TODO: only use in action phase
     const myID = get(myIDState);
     return currentPlayerID === myID;
+  },
+});
+export const isActionPhaseState = selector<boolean>({
+  key: "isActionPhaseState",
+  get: ({ get }) => {
+    const currentPhase = get(currentPhaseState);
+    return currentPhase === "ACTION_PHASE";
   },
 });
 
