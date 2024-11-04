@@ -16,7 +16,7 @@ import {
   useSetRecoilState,
 } from "recoil";
 import CardInDeckDisplay from "./CardInDeckDisplay";
-import SetCurrentDeck from "./SelectCurrentDeck";
+import SelectCurrentDeck from "./SelectCurrentDeck";
 
 export default function DeckDisplay() {
   //TODO: view other players' decks
@@ -76,7 +76,7 @@ export default function DeckDisplay() {
     <>
       <ul>
         {myDecks?.map((deck) => {
-          return <SetCurrentDeck key={deck.id} deck={deck} />;
+          return <SelectCurrentDeck key={deck.id} deck={deck} />;
         })}
       </ul>
       {myCurrentDeckCardsLoadable.state === "loading" && (
