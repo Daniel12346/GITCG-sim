@@ -1,20 +1,10 @@
-import {
-  cardFromBasicInfo,
-} from "@/app/utils";
+import { cardFromBasicInfo } from "@/app/utils";
 import {
   currentViewedCardState,
-  myCurrentDeckIDState,
   deckInDeckBuilderCardCountState,
   deckInDeckBuilderCardsBasicInfoWithQuantitiesAndEffectsState,
-  CardBasicInfo,
-  EffectBasicInfo,
 } from "@/recoil/atoms";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import {
-  useRecoilState,
-  useRecoilValue,
-  useSetRecoilState,
-} from "recoil";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 
 interface Props {
   card: CardBasicInfo & {
@@ -27,10 +17,7 @@ interface Props {
 export default function CardInDeckDisplay({ card, isInDeck }: Props) {
   const setCurrentViewedCard = useSetRecoilState(currentViewedCardState);
   // const deckInDeckBuilderCards = useRecoilValue(deckInDeckBuilderCardsState);
-  const [
-    deckInDeckBuilderCardsBasicInfoExtended,
-    setDeckInDeckBuilderCardsBasicInfoExtended,
-  ] = useRecoilState(
+  const setDeckInDeckBuilderCardsBasicInfoExtended = useSetRecoilState(
     deckInDeckBuilderCardsBasicInfoWithQuantitiesAndEffectsState
   );
   const deckInDeckBuilderCardCount = useRecoilValue(
@@ -88,6 +75,7 @@ export default function CardInDeckDisplay({ card, isInDeck }: Props) {
               }
               `}
             onClick={() => {
+              //increase quantity of card in deck
               setDeckInDeckBuilderCardsBasicInfoExtended((prev) => {
                 const deckIncludesCard = prev.find(
                   (cardInDeck) => cardInDeck.id === card.id
@@ -105,45 +93,28 @@ export default function CardInDeckDisplay({ card, isInDeck }: Props) {
                   : [...prev, { ...card, quantity: 1 }];
               });
             }}
-            // onClick={async () => {
-            //   await addCardBasicInfoToDeck(
-            //     client,
-            //     card.card_basic_info_id,
-            //     currentDeckID
-            //   );
-            //   refreshDeck();
-            // }}
           >
             +
           </span>
         )}
         <span
           className="bg-slate-200 px-0.5 text-red-800 h-fit font-extrabold cursor-pointer"
-          onClick={
-            () => {
-              setDeckInDeckBuilderCardsBasicInfoExtended((prev) => {
-                return prev
-                  .map((cardInDeck) => {
-                    const newQuantity = cardInDeck.quantity - 1;
-                    if (cardInDeck.id === card.id) {
-                      return { ...cardInDeck, quantity: newQuantity };
-                    }
-                    return cardInDeck;
-                  })
-                  .filter((cardInDeck) => {
-                    return cardInDeck.quantity > 0;
-                  });
-              });
-            }
-            //   async () => {
-            //   await removeBasicInfoFromDeck(
-            //     client,
-            //     card.card_basic_info_id,
-            //     currentDeckID
-            //   );
-            //   refreshDeck();
-            // }
-          }
+          onClick={() => {
+            //decrease quantity of card in deck
+            setDeckInDeckBuilderCardsBasicInfoExtended((prev) => {
+              return prev
+                .map((cardInDeck) => {
+                  const newQuantity = cardInDeck.quantity - 1;
+                  if (cardInDeck.id === card.id) {
+                    return { ...cardInDeck, quantity: newQuantity };
+                  }
+                  return cardInDeck;
+                })
+                .filter((cardInDeck) => {
+                  return cardInDeck.quantity > 0;
+                });
+            });
+          }}
         >
           -
         </span>
