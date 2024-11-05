@@ -184,12 +184,19 @@ export default function CardInGame({
         )}
       </div>
       {/* statuses */}
-      <div className="bg-orange-100 rounded-sm text-blue-800">
-        {card.statuses?.map((status) => (
-          //TODO: use unique key
-          <span key={status.name}>
-            {status.name}: {status.turnsLeft}
-          </span>
+      <div className="rounded-sm text-blue-800 z-10 absolute left-0 flex gap-1">
+        {card.statuses?.map((status, i) => (
+          <div key={status.name + i}>
+            <span>
+              <img
+                className="w-4 h-4"
+                src={`/${status.name.toLowerCase()}.svg`}
+              ></img>
+            </span>
+            {status.turnsLeft !== undefined && status.turnsLeft !== null && (
+              <span>: {status.turnsLeft}</span>
+            )}
+          </div>
         ))}
       </div>
 
