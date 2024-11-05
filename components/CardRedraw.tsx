@@ -72,6 +72,7 @@ export default function CardRedraw({
                     event: "updated_cards_and_dice",
                     payload: { myCards: myUpdatedCards },
                   });
+                setAmIRedrawing(false);
                 setMyCards(myUpdatedCards);
                 setSelectedCards([]);
               }}
