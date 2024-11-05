@@ -19,6 +19,7 @@ import {
   usedAttackState,
   opponentProfileState,
   myProfileState,
+  isOpponentReadyForNextPhaseState,
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
@@ -97,8 +98,9 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   const myProfile = useRecoilValue(myProfileState);
   const opponentProfile = useRecoilValue(opponentProfileState);
   const playerProfile = isMyBoard ? myProfile : opponentProfile;
- 
-
+  const isOpponentReadyForNextPhase = useRecoilValue(
+    isOpponentReadyForNextPhaseState
+  );
   useEffect(() => {
     const supabase = createClientComponentClient<Database>();
     const channel = supabase.channel("game-updates:" + gameID, {
@@ -156,8 +158,11 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     );
     let myUpdatedCards = myCards;
     let opponentUpdatedCards = opponentInGameCards;
-    //if there is no active character, the card can be switched to active without a cost
-    if (!hasActiveCharacter) {
+    //if there is no active character or the active character was defeated, the card can be switched to active without a cost
+    const activeCharacter = myUpdatedCards.find(
+      (card) => card.location === "CHARACTER" && card.is_active
+    );
+    if (!hasActiveCharacter || activeCharacter?.health === 0) {
       myUpdatedCards = myCards.map((c) => {
         if (c.id === card.id) {
           return { ...c, is_active: true };
@@ -289,7 +294,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         //TODO: combine into one broadcast
         .then(() => {
           //passing the turn to the opponent if the switch was not a fast action
-          if (!isSwitchFastAction) {
+          if (!isSwitchFastAction && !isOpponentReadyForNextPhase) {
             setCurrentPlayerID(opponentID);
             setTimeout(() => {
               channel
@@ -740,9 +745,8 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       if (c.id === card.id) {
         const location: CardExt["location"] = isEquipment
           ? "EQUIPPED"
-          : isFood
-          ? //TODO: other types that should be discarded
-            "DISCARDED"
+          : card.subtype === "EVENT_FOOD" || card.subtype === "EVENT_BASIC"
+          ? "DISCARDED"
           : "ACTION";
         const equippedTo =
           isEquipment || isFood ? selectedTargetCards[0].id : null;
@@ -997,10 +1001,11 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                               .then(() => {
                                 setCurrentPlayerID(opponentID);
                                 setMySelectedDice({});
-                                broadcastSwitchPlayer({
-                                  channel,
-                                  playerID: opponentID,
-                                });
+                                !isOpponentReadyForNextPhase &&
+                                  broadcastSwitchPlayer({
+                                    channel,
+                                    playerID: opponentID,
+                                  });
                               });
                           }
                         }}
