@@ -823,7 +823,6 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       //TODO: handle opponent's effects
       [...myUpdatedCards]
     );
-    console.log("effectsThatTriggerOnReaction", effectsThatTriggerOnReaction);
     //TODO!: create an effectChain function
     if (effectsThatTriggerOnReaction.length > 0) {
       effectsThatTriggerOnReaction.forEach((effect) => {
@@ -1036,8 +1035,6 @@ const executePhaseEffectsForOnePlayer = ({
     phaseName,
     myUpdatedCards
   );
-  //TODO: handle opponent's effects
-  console.log("myEffectsThatTriggeOnPhase", myEffectsThatTriggeOnPhase);
   const {
     myUpdatedCards: myCardsAfterTriggeredEffects,
     myUpdatedDice: myDiceAfterTriggeredEffects,
@@ -1174,7 +1171,6 @@ export const shuffleDeck = (deck: CardExt[]) => {
   const characterCards = deck.filter((card) => card.card_type === "CHARACTER");
   const otherCards = deck.filter((card) => card.card_type !== "CHARACTER");
   const shuffledCards = otherCards.toSorted(() => Math.random() - 0.5);
-  console.log("shuffledCards", shuffledCards);
   return [...characterCards, ...shuffledCards];
 };
 
