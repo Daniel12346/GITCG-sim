@@ -1339,18 +1339,26 @@ export const effects: {
         currentRound,
       });
 
-      const thisEffect = thisCard.effects.find(
-        (effect) => effect.id === "0f9f109f-3310-46df-a18a-3a659181c23e"
-      );
+      if (!myUpdatedCards) {
+        //TODO: throw an error?
+        return { errorMessage: "No cards found" };
+      }
       if (thisCard.max_usages !== undefined && thisCard.max_usages !== null) {
-        if (myUpdatedCards && thisCard.usages === thisCard.max_usages) {
+        //TODO: should this be max_usages-1?
+        if (thisCard.usages === thisCard.max_usages) {
           //removing the summon
           myUpdatedCards = myUpdatedCards.filter(
             (card) => card.id !== thisCard.id
           );
+        } else {
+          myUpdatedCards = myUpdatedCards.map((card) => {
+            if (card.id === thisCard.id) {
+              return { ...card, usages: (card.usages || 0) + 1 };
+            }
+            return card;
+          });
         }
       }
-      console.log("wind Spirit end phase effect", myUpdatedCards);
 
       return {
         myUpdatedCards,
