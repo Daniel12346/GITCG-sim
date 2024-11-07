@@ -897,12 +897,8 @@ export const createSummon = ({
   summonBasicInfoID,
   isCreation = false,
   myCards,
-  summonerCard,
-  myDice,
   summons,
   maxUsages,
-  opponentCards,
-  opponentDice,
 }: {
   summonBasicInfoID: string;
   //creations have effects and usages like summons but are not visible on the board as cards
@@ -1036,12 +1032,12 @@ const executePhaseEffectsForOnePlayer = ({
   let myUpdatedDice = executeArgs.myDice;
   let opponentUpdatedCards = executeArgs.opponentCards;
   let opponentUpdatedDice = executeArgs.opponentDice;
-  console.log("myUpdatedCards in execute phase effects", myUpdatedCards);
   const myEffectsThatTriggeOnPhase = findEffectsThatTriggerOn(
     phaseName,
     myUpdatedCards
   );
   //TODO: handle opponent's effects
+  console.log("myEffectsThatTriggeOnPhase", myEffectsThatTriggeOnPhase);
   const {
     myUpdatedCards: myCardsAfterTriggeredEffects,
     myUpdatedDice: myDiceAfterTriggeredEffects,
