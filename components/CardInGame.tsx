@@ -189,7 +189,7 @@ export default function CardInGame({
           <div key={status.name + i}>
             <span>
               <img
-                className="w-4 h-4"
+                className="w-4 h-4 ml-2"
                 src={`/${status.name.toLowerCase()}.svg`}
               ></img>
             </span>
