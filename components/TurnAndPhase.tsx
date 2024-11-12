@@ -76,10 +76,11 @@ export default ({}) => {
         console.log("opponent left", key, opponentID);
         if (key === opponentID) {
           //opponent left the game
-          const { data, errorMessage } = await updateGameWinnerInDatabase(
+          const { errorMessage } = await updateGameWinnerInDatabase(
             supabase,
             gameID,
-            myID
+            myID,
+            currentRound
           );
 
           setGameOverMessage("opponent disconnected");
@@ -286,7 +287,12 @@ export default ({}) => {
 
     const updateAndBroadcastGameWinner = async (gameWinnerID: string) => {
       const client = createClientComponentClient<Database>();
-      await updateGameWinnerInDatabase(client, gameID, gameWinnerID);
+      await updateGameWinnerInDatabase(
+        client,
+        gameID,
+        gameWinnerID,
+        currentRound
+      );
       setGameWinnerID(gameWinnerID);
       setTimeout(() => {
         channel?.send({
@@ -350,10 +356,17 @@ export default ({}) => {
             setAmIReadyForNextPhase((prev) => !prev);
           }}
         >
-          Move to next phase:
-          <span className="underline">
-            {amIReadyForNextPhase ? "ready" : "not ready"}
-          </span>
+          {!amIReadyForNextPhase ? (
+            <button className="btn bg-amber-700">
+              Finish phase
+              {/* TODO: use forward icon */}
+              <span className="text-xl font-extrabold">{">>"}</span>
+            </button>
+          ) : (
+            currentPhase === "ACTION_PHASE" && (
+              <span>waiting for opponent to finish phase...</span>
+            )
+          )}
         </button>
         <div className="flex gap-2">
           <span className="font-semibold text-lg">
