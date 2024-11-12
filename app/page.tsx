@@ -48,6 +48,23 @@ export default async function Index() {
               </span>
             </Link>
           </div>
+          <div className="flex h-full  flex-col gap-3 items-center group cursor-pointer">
+            <Link
+              href="/logs"
+              className="flex flex-col h-full gap-3 items-center"
+            >
+              <Image
+                className="flex h-full flex-col gap-3 justify-end items-center"
+                src="logs_icon.svg"
+                alt="logs icon"
+                width={100}
+                height={100}
+              />
+              <span className="text-center group-hover:underline underline-offset-4">
+                battle logs
+              </span>
+            </Link>
+          </div>
         </div>
       </div>
     </div>
