@@ -11,7 +11,7 @@ export default async function Index() {
     <div className="flex w-full flex-col pt-12">
       <MyIDNoSSR />
       <div className="flex justify-center">
-        <h1 className="text-slate-300 font-semibold text-3xl mb-10 text-center">
+        <h1 className="text-slate-200 font-semibold text-4xl mb-10 text-center">
           Genshin Impact TCG simulator
         </h1>
       </div>
@@ -37,7 +37,7 @@ export default async function Index() {
           <div className="flex flex-col gap-3 items-center group cursor-pointer">
             <Link href="/lobby" className="flex flex-col gap-3 items-center">
               <Image
-                className="flex h-full flex-col gap-3 justify-end items-center"
+                className="flex h-full flex-col gap-3 justify-end items-center group-hover:scale-105 transition-transform"
                 src="swords_icon1.svg"
                 alt="battle icon"
                 width={100}
@@ -54,7 +54,7 @@ export default async function Index() {
               className="flex flex-col h-full gap-3 items-center"
             >
               <Image
-                className="flex h-full flex-col gap-3 justify-end items-center"
+                className="flex h-full flex-col gap-3 justify-end items-center group-hover:scale-105 transition-transform"
                 src="logs_icon.svg"
                 alt="logs icon"
                 width={100}
