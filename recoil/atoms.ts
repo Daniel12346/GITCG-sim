@@ -7,6 +7,7 @@ import { recoilPersist } from "recoil-persist";
 
 import { cardFromBasicInfo, calculateDeckCardCount } from "@/app/utils";
 import { CardExtended } from "@/app/global";
+import { Tables } from "@/lib/database.types";
 const { persistAtom } = recoilPersist();
 type Profile = Database["public"]["Tables"]["profile"]["Row"];
 
@@ -496,26 +497,33 @@ export const errorMessageState = atom<string>({
   default: "",
 });
 
-// export const attackerCardIDState = atom<string | null>({
-//   key: "attackerCardIDState",
-//   default: null,
-// });
-// export const attackTargetCardIDState = atom<string | null>({
-//   key: "attackTargetCardIDState",
-//   default: null,
-// });
-// type Coordinates = { x: number; y: number };
-
-// export const attackerCardCoordinatesState = atom<Coordinates | null>({
-//   key: "attackerCardCoordinatesState",
-//   default: null,
-// });
-// export const targetCardCoordinatesState = atom<Coordinates | null>({
-//   key: "targetCardCoordinatesState",
-//   default: null,
-// });
-
 export const usedAttackState = atom<Attack | null>({
   key: "usedAttackState",
   default: null,
+});
+
+type BattleLog = Tables<"game"> & {
+  player1: Tables<"profile">;
+  player2: Tables<"profile">;
+};
+
+export const battleLogsState = selector<BattleLog[] | null>({
+  key: "battleLogsState",
+  get: async ({ get }) => {
+    //find games where current player is player1 or player2
+    const supabase = createClientComponentClient<Database>();
+    const myID = get(myIDState);
+    const { data, error } = await supabase
+      .from("game")
+      .select("*, player1:player1_id(*), player2:player2_id(*)")
+      .order("created_at", { ascending: false })
+      .or(`player1_id.eq.${myID},player2_id.eq.${myID}`);
+
+    if (error) {
+      console.log("error", error);
+      return null;
+    }
+    ///@ts-ignore
+    return data as BattleLog[];
+  },
 });
