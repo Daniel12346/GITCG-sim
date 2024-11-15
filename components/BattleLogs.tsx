@@ -1,13 +1,21 @@
 "use client";
-import { battleLogsState, myIDState } from "@/recoil/atoms";
+import {
+  myIDState,
+  playerBattleLogsState,
+  playerBattleStatsState,
+} from "@/recoil/atoms";
 import { useRecoilValue } from "recoil";
+import PlayerBattleStats from "./PlayerBattleStats";
 
 export default function BattleLogs() {
-  const battleLogs = useRecoilValue(battleLogsState);
   const myID = useRecoilValue(myIDState);
+  const battleLogs = useRecoilValue(playerBattleLogsState(myID));
+  const battleStats = useRecoilValue(playerBattleStatsState(myID));
+
   return (
-    <div className="w-full flex justify-center">
-      <div className="text-slate-100 flex flex-col gap-6">
+    <div className="w-full flex flex-col items-center">
+      <div className="text-slate-100 flex flex-col gap-6 max-w-lg">
+        <PlayerBattleStats playerID={myID}></PlayerBattleStats>
         {battleLogs?.map(
           ({ created_at, turn_count, player1, player2, winner_id }) => (
             <div
@@ -26,7 +34,7 @@ export default function BattleLogs() {
                     className="rounded-sm w-14 h-14 object-cover object-center"
                     src={player1?.avatar_url || "/card_back_origin.png"}
                   />
-                  <span>{player1.username} </span>
+                  <span>{player1?.username} </span>
                 </div>
                 <span className="font-semibold flex items-end text-blue-300">
                   VS
@@ -36,7 +44,7 @@ export default function BattleLogs() {
                     className="rounded-sm w-14 h-14 object-cover object-center"
                     src={player2?.avatar_url || "/card_back_origin.png"}
                   />
-                  <span>{player2.username}</span>
+                  <span>{player2?.username}</span>
                 </div>
                 <div
                   className={`
