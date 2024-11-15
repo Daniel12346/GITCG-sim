@@ -999,13 +999,16 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                                 },
                               })
                               .then(() => {
-                                setCurrentPlayerID(opponentID);
                                 setMySelectedDice({});
-                                !isOpponentReadyForNextPhase &&
+                                //passing the turn to the opponent
+                                //the attacker continues their turn if the attack was a fast action or if the opponent finished their actions for the phase
+                                if (!isOpponentReadyForNextPhase) {
+                                  setCurrentPlayerID(opponentID);
                                   broadcastSwitchPlayer({
                                     channel,
                                     playerID: opponentID,
                                   });
+                                }
                               });
                           }
                         }}
