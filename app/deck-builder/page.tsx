@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { Suspense, useEffect, useState } from "react";
 import CardInDeckDisplay from "@/components/CardInDeckDisplay";
 import { CardBasicInfoWithEffects } from "../global";
-const DeckDisplayNoSSR = dynamic(() => import("@/components/DeckDisplay"), {
+const DeckDisplayNoSSR = dynamic(() => import("@/components/MyDecksDisplay"), {
   ssr: false,
 });
 const DeckInfoNoSSR = dynamic(() => import("@/components/DeckInfo"), {
