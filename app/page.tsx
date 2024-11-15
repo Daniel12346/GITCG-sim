@@ -1,4 +1,3 @@
-import MyID from "@/components/MyID";
 import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -50,7 +49,7 @@ export default async function Index() {
           </div>
           <div className="flex h-full  flex-col gap-3 items-center group cursor-pointer">
             <Link
-              href="/logs"
+              href="/battle-log"
               className="flex flex-col h-full gap-3 items-center"
             >
               <Image
@@ -61,7 +60,7 @@ export default async function Index() {
                 height={100}
               />
               <span className="text-center group-hover:underline underline-offset-4">
-                battle logs
+                battle log
               </span>
             </Link>
           </div>
