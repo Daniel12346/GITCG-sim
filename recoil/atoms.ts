@@ -2,7 +2,7 @@ import {
   Session,
   createClientComponentClient,
 } from "@supabase/auth-helpers-nextjs";
-import { atom, selector } from "recoil";
+import { atom, selector, selectorFamily } from "recoil";
 import { recoilPersist } from "recoil-persist";
 
 import { cardFromBasicInfo, calculateDeckCardCount } from "@/app/utils";
@@ -507,23 +507,37 @@ type BattleLog = Tables<"game"> & {
   player2: Tables<"profile">;
 };
 
-export const battleLogsState = selector<BattleLog[] | null>({
-  key: "battleLogsState",
-  get: async ({ get }) => {
-    //find games where current player is player1 or player2
-    const supabase = createClientComponentClient<Database>();
-    const myID = get(myIDState);
-    const { data, error } = await supabase
-      .from("game")
-      .select("*, player1:player1_id(*), player2:player2_id(*)")
-      .order("created_at", { ascending: false })
-      .or(`player1_id.eq.${myID},player2_id.eq.${myID}`);
 
-    if (error) {
-      console.log("error", error);
-      return null;
-    }
-    ///@ts-ignore
-    return data as BattleLog[];
-  },
+export const playerBattleLogsState = selectorFamily({
+  key: "playerBattleData",
+  get:
+    (playerID: string) =>
+    async ({ get }) => {
+      const supabase = createClientComponentClient<Database>();
+      const { data, error } = await supabase
+        .from("game")
+        .select("*, player1:player1_id(*), player2:player2_id(*)")
+        .order("created_at", { ascending: false })
+        .or(`player1_id.eq.${playerID},player2_id.eq.${playerID}`);
+      if (error) {
+        console.log("error", error);
+        return null;
+      }
+      ///@ts-ignore
+      return data as BattleLog[];
+    },
+});
+
+export const playerBattleStatsState = selectorFamily({
+  key: "playerBattleStatsState",
+  get:
+    (playerID: string) =>
+    async ({ get }) => {
+      const supabase = createClientComponentClient<Database>();
+      const data = get(playerBattleLogsState(playerID));
+      if (!data) return null;
+      const wins = data.filter((game) => game.winner_id === playerID).length;
+      const losses = data.length - wins;
+      return { wins, losses, total: data.length };
+    },
 });
