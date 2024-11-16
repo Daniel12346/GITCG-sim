@@ -5,9 +5,12 @@ import dynamic from "next/dynamic";
 import { Suspense, useEffect, useState } from "react";
 import CardInDeckDisplay from "@/components/CardInDeckDisplay";
 import { CardBasicInfoWithEffects } from "../global";
-const DeckDisplayNoSSR = dynamic(() => import("@/components/MyDecksDisplay"), {
-  ssr: false,
-});
+const MyDecksDisplayNoSSR = dynamic(
+  () => import("@/components/MyDecksDisplay"),
+  {
+    ssr: false,
+  }
+);
 const DeckInfoNoSSR = dynamic(() => import("@/components/DeckInfo"), {
   ssr: false,
 });
@@ -42,7 +45,7 @@ export default function DeckBuilder() {
           <DeckInfoNoSSR />
         </div>
         <div>
-          <DeckDisplayNoSSR />
+          <MyDecksDisplayNoSSR />
         </div>
         <div className="border-x-2 md:border-indigo-400 flex flex-col px-4 gap-3 items-center">
           <span className="text-lg text-slate-200 ">Add cards to deck</span>
@@ -57,7 +60,13 @@ export default function DeckBuilder() {
               {searchResultCards
                 .filter((card) => card.card_type !== "SUMMON")
                 .map((card) => {
-                  return <CardInDeckDisplay key={card.id} card={card} />;
+                  return (
+                    <CardInDeckDisplay
+                      key={card.id}
+                      card={card}
+                      isQuantityEditable
+                    />
+                  );
                 })}
             </div>
           </div>
