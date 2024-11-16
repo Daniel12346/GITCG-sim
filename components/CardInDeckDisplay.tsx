@@ -13,8 +13,13 @@ interface Props {
     effect_basic_info: EffectBasicInfo[];
   };
   isInDeck?: boolean;
+  isQuantityEditable?: boolean;
 }
-export default function CardInDeckDisplay({ card, isInDeck }: Props) {
+export default function CardInDeckDisplay({
+  card,
+  isInDeck,
+  isQuantityEditable = false,
+}: Props) {
   const setCurrentViewedCard = useSetRecoilState(currentViewedCardState);
   // const deckInDeckBuilderCards = useRecoilValue(deckInDeckBuilderCardsState);
   const setDeckInDeckBuilderCardsBasicInfoExtended = useSetRecoilState(
@@ -66,58 +71,62 @@ export default function CardInDeckDisplay({ card, isInDeck }: Props) {
         )}
       </div>
       <div className="z-10 flex justify-center w-full bottom-[-10px] absolute ">
-        {(isInDeck ? card.card_type !== "CHARACTER" : true) && (
-          <span
-            className={`bg-slate-200 px-0.5 text-blue-800 h-fit font-extrabold cursor-pointer
+        {isQuantityEditable && (
+          <>
+            {(isInDeck ? card.card_type !== "CHARACTER" : true) && (
+              <span
+                className={`bg-slate-200 px-0.5 text-blue-800 h-fit font-extrabold cursor-pointer
               ${
                 (isDeckFull || card.quantity === 4) &&
                 "opacity-50 pointer-events-none"
               }
               `}
-            onClick={() => {
-              //increase quantity of card in deck
-              setDeckInDeckBuilderCardsBasicInfoExtended((prev) => {
-                const deckIncludesCard = prev.find(
-                  (cardInDeck) => cardInDeck.id === card.id
-                );
-                return deckIncludesCard
-                  ? prev.map((cardInDeck) => {
+                onClick={() => {
+                  //increase quantity of card in deck
+                  setDeckInDeckBuilderCardsBasicInfoExtended((prev) => {
+                    const deckIncludesCard = prev.find(
+                      (cardInDeck) => cardInDeck.id === card.id
+                    );
+                    return deckIncludesCard
+                      ? prev.map((cardInDeck) => {
+                          if (cardInDeck.id === card.id) {
+                            return {
+                              ...cardInDeck,
+                              quantity: cardInDeck.quantity + 1,
+                            };
+                          }
+                          return cardInDeck;
+                        })
+                      : [...prev, { ...card, quantity: 1 }];
+                  });
+                }}
+              >
+                +
+              </span>
+            )}
+            <span
+              className="bg-slate-200 px-0.5 text-red-800 h-fit font-extrabold cursor-pointer"
+              onClick={() => {
+                //decrease quantity of card in deck
+                setDeckInDeckBuilderCardsBasicInfoExtended((prev) => {
+                  return prev
+                    .map((cardInDeck) => {
+                      const newQuantity = cardInDeck.quantity - 1;
                       if (cardInDeck.id === card.id) {
-                        return {
-                          ...cardInDeck,
-                          quantity: cardInDeck.quantity + 1,
-                        };
+                        return { ...cardInDeck, quantity: newQuantity };
                       }
                       return cardInDeck;
                     })
-                  : [...prev, { ...card, quantity: 1 }];
-              });
-            }}
-          >
-            +
-          </span>
-        )}
-        <span
-          className="bg-slate-200 px-0.5 text-red-800 h-fit font-extrabold cursor-pointer"
-          onClick={() => {
-            //decrease quantity of card in deck
-            setDeckInDeckBuilderCardsBasicInfoExtended((prev) => {
-              return prev
-                .map((cardInDeck) => {
-                  const newQuantity = cardInDeck.quantity - 1;
-                  if (cardInDeck.id === card.id) {
-                    return { ...cardInDeck, quantity: newQuantity };
-                  }
-                  return cardInDeck;
-                })
-                .filter((cardInDeck) => {
-                  return cardInDeck.quantity > 0;
+                    .filter((cardInDeck) => {
+                      return cardInDeck.quantity > 0;
+                    });
                 });
-            });
-          }}
-        >
-          -
-        </span>
+              }}
+            >
+              -
+            </span>
+          </>
+        )}
         <span className="bg-slate-200 px-0.5 text-indigo-900 font-semibold">
           {card.quantity}
         </span>
