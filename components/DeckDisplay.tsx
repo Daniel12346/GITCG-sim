@@ -2,8 +2,9 @@ import CardInDeckDisplay from "./CardInDeckDisplay";
 
 type Props = {
   deckCards: CardBasicInfoWithQuantityAndEffects[];
+  isEditable?: boolean;
 };
-export default function DeckDisplay({ deckCards }: Props) {
+export default function DeckDisplay({ deckCards, isEditable }: Props) {
   const sortDeckCards = (cards: CardBasicInfoWithQuantityAndEffects[]) =>
     cards?.toSorted((a, b) => {
       if (a.card_type === "CHARACTER" && b.card_type !== "CHARACTER") return -1;
@@ -13,7 +14,14 @@ export default function DeckDisplay({ deckCards }: Props) {
   return (
     <div className="flex bg-slate-600 flex-row gap-4 justify-evenly flex-wrap rounded-md p-4">
       {sortDeckCards(deckCards).map((card) => {
-        return <CardInDeckDisplay key={card.id} card={card} isInDeck={true} />;
+        return (
+          <CardInDeckDisplay
+            key={card.id}
+            card={card}
+            isInDeck={true}
+            isQuantityEditable={isEditable}
+          />
+        );
       })}
     </div>
   );
