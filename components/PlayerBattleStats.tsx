@@ -1,4 +1,4 @@
-import { playerBattleLogsState, playerBattleStatsState } from "@/recoil/atoms";
+import { playerBattleStatsState } from "@/recoil/atoms";
 import { useRecoilValue } from "recoil";
 
 type Props = {
