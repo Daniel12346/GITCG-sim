@@ -70,6 +70,54 @@ export const opponentProfileState = selector<Profile | null>({
     return data;
   },
 });
+
+export const userProfileState = selectorFamily<Profile | null, string>({
+  key: "userProfileState",
+  get:
+    (id) =>
+    async ({ get }) => {
+      const supabase = createClientComponentClient<Database>();
+      const { data, error } = await supabase
+        .from("profile")
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (error) console.log("error", error);
+      return data;
+    },
+});
+
+export const userDecksState = selectorFamily({
+  key: "userDecksState",
+  get:
+    (id: string) =>
+    async ({ get }) => {
+      const supabase = createClientComponentClient<Database>();
+      const { data, error } = await supabase
+        .from("deck")
+        .select("*")
+        .eq("player_id", id);
+      if (error) console.log("error", error);
+      return data;
+    },
+});
+
+export const userCurrentDeckIDState = selectorFamily<string | null, string>({
+  key: "userCurrentDeckIDState",
+  get:
+    (id) =>
+    async ({ get }) => {
+      const supabase = createClientComponentClient<Database>();
+      const { data, error } = await supabase
+        .from("profile")
+        .select("current_deck_id")
+        .eq("id", id)
+        .single();
+      if (error) console.log("error", error);
+      return data?.current_deck_id ?? null;
+    },
+});
+
 export const myDecksState = selector({
   key: "myDecksState",
   get: async ({ get }) => {
@@ -119,6 +167,59 @@ export const myCurrentDeckWithCardBasicInfoState =
       if (error) console.log("error", error);
       return data;
     },
+  });
+
+export const userCurrentDeckWithCardBasicInfoState = selectorFamily<
+  DeckWithCardBasicInfo | null,
+  string
+>({
+  key: "userCurrentDeckWithCardBasicInfoState",
+  get:
+    (id) =>
+    async ({ get }) => {
+      const supabase = createClientComponentClient<Database>();
+      const currentDeckID = get(userCurrentDeckIDState(id));
+      const { data, error } = await supabase
+        .from("deck")
+        .select("*, deck_card_basic_info(*)")
+        .eq("id", currentDeckID)
+        .single();
+      if (error) console.log("error", error);
+      return data;
+    },
+});
+export const userCurrentDeckCardsBasicInfoWithQuantitiesAndEffectsState =
+  selectorFamily<CardBasicInfoWithQuantityAndEffects[] | null, string>({
+    key: "userCurrentDeckCardsBasicInfoWithQuantitiesAndEffectsState",
+    get:
+      (id) =>
+      async ({ get }) => {
+        const supabase = createClientComponentClient<Database>();
+        const currentDeck = get(userCurrentDeckWithCardBasicInfoState(id));
+        if (!currentDeck) return null;
+        const myCardsBasicInfoIDs = currentDeck.deck_card_basic_info.map(
+          ({ card_basic_info_id }) => card_basic_info_id
+        );
+        console.log("cardsBasicInfoIDs", myCardsBasicInfoIDs);
+        const { data, error } = await supabase
+          .from("card_basic_info")
+          .select("* , effect_basic_info(*)")
+          .in("id", myCardsBasicInfoIDs);
+        console.log("data", data);
+        if (error) console.log("error", error);
+        if (!data) return null;
+        const cardsBasicInfoWithQuantitiesAndEffects = data.map(
+          (cardBasicInfo) => ({
+            ...cardBasicInfo,
+            quantity:
+              currentDeck.deck_card_basic_info.find(
+                (deckCardInfo) =>
+                  deckCardInfo.card_basic_info_id === cardBasicInfo.id
+              )?.quantity ?? 0,
+          })
+        );
+        return cardsBasicInfoWithQuantitiesAndEffects;
+      },
   });
 
 //gets the basic info of all the cards in the deck along with their quantities in deck
@@ -507,7 +608,6 @@ type BattleLog = Tables<"game"> & {
   player2: Tables<"profile">;
 };
 
-
 export const playerBattleLogsState = selectorFamily({
   key: "playerBattleData",
   get:
@@ -533,7 +633,6 @@ export const playerBattleStatsState = selectorFamily({
   get:
     (playerID: string) =>
     async ({ get }) => {
-      const supabase = createClientComponentClient<Database>();
       const data = get(playerBattleLogsState(playerID));
       if (!data) return null;
       const wins = data.filter((game) => game.winner_id === playerID).length;
