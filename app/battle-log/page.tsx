@@ -6,7 +6,7 @@ const MyIDNoSSR = dynamic(() => import("@/components/MyID"), {
 const BattleLogsNoSSR = dynamic(() => import("@/components/BattleLogs"), {
   ssr: false,
 });
-export default async function Logs() {
+export default async function BattleLog() {
   return (
     <div className="flex w-full flex-col pt-12">
       <MyIDNoSSR />
