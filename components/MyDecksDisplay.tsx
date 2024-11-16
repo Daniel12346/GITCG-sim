@@ -15,7 +15,6 @@ import {
   useRecoilValueLoadable,
   useSetRecoilState,
 } from "recoil";
-import CardInDeckDisplay from "./CardInDeckDisplay";
 import SelectCurrentDeck from "./SelectCurrentDeck";
 import DeckDisplay from "./DeckDisplay";
 
@@ -81,6 +80,7 @@ export default function MyDecksDisplay() {
       )}
 
       <DeckDisplay
+        isEditable
         deckCards={deckInDeckBuilderCardsBasicInfoWithQuantitiesAndEffects}
       />
     </>
