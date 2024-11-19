@@ -7,7 +7,7 @@ type Props = {
 export default function PlayerBattleStats({ playerID }: Props) {
   const battleStats = useRecoilValue(playerBattleStatsState(playerID));
   return (
-    <div className="self-center text-xl flex gap-3">
+    <div className="self-center text-lg flex gap-3">
       <span>
         Wins:
         <span className="ml-1 text-green-400">{battleStats?.wins}</span>
