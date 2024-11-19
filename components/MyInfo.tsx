@@ -2,7 +2,7 @@
 
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useState } from "react";
-import PlayerInfoInGame from "./PlayerInfoInGame";
+import PlayerInfoInGame from "./PlayerBannerInGame";
 import { myProfileState } from "@/recoil/atoms";
 import { useRecoilValue } from "recoil";
 
