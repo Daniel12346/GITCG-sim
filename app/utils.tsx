@@ -1203,3 +1203,65 @@ export const updateGameWinnerInDatabase = async (
   if (error) return { errorMessage: error.message };
   return { data };
 };
+
+export const updateMyCurrentDeckInDatabase = async (
+  client: SupabaseClient<Database>,
+  myID: string,
+  deckID: string
+) => {
+  await client
+    .from("profile")
+    .update({ current_deck_id: deckID })
+    .eq("id", myID);
+};
+
+export const copyDeck = async ({
+  client,
+  deckCards,
+  deckName,
+  myID,
+}: {
+  client: SupabaseClient<Database>;
+  deckCards: CardBasicInfoWithQuantityAndEffects[];
+  deckName: string;
+  myID: string;
+}) => {
+  const { data: deck, error: deckError } = await client
+    .from("deck")
+    .insert({ name: deckName, player_id: myID })
+    .select("*")
+    .single();
+  if (deckError) {
+    console.log("Error creating deck", deckError);
+    throw new Error("Error creating deck");
+  }
+  const cardIdsWithQuantities = deckCards.map((cardBasicInfo) => ({
+    card_basic_info_id: cardBasicInfo.id,
+    quantity: cardBasicInfo.quantity,
+    deck_id: deck.id,
+  }));
+  const { error: deckCardsInsertError } = await client
+    .from("deck_card_basic_info")
+    .insert(cardIdsWithQuantities)
+    .eq("deck_id", deck.id);
+  if (deckCardsInsertError) {
+    throw new Error("Error copying deck cards");
+  }
+};
+
+export const deleteDeck = async ({
+  client,
+  deckID,
+}: {
+  client: SupabaseClient<Database>;
+  deckID: string;
+}) => {
+  console.log("Deleting deck", deckID);
+  //TODO: cascade delete
+  try {
+  await client.from("deck").delete().eq("id", deckID);
+  }
+  catch (e) {
+    console.log("Error deleting deck", e);
+  }
+};
