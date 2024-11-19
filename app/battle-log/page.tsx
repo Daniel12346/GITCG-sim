@@ -9,7 +9,9 @@ const BattleLogsNoSSR = dynamic(() => import("@/components/BattleLogs"), {
 export default async function BattleLog() {
   return (
     <div className="flex w-full flex-col pt-12">
-      <MyIDNoSSR />
+      <div className="h-12">
+        <MyIDNoSSR />
+      </div>
       <div className="flex justify-center">
         <h2 className="text-slate-300  text-3xl mb-10 text-center">
           Battle history

@@ -8,7 +8,9 @@ const MyIDNoSSR = dynamic(() => import("@/components/MyID"), {
 export default async function Index() {
   return (
     <div className="flex w-full flex-col pt-12">
-      <MyIDNoSSR />
+      <div className="h-12">
+        <MyIDNoSSR />
+      </div>
       <div className="flex justify-center">
         <h1 className="text-slate-200 font-semibold text-4xl mb-10 text-center">
           Genshin Impact TCG simulator
