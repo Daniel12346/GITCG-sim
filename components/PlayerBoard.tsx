@@ -47,7 +47,7 @@ import { getCreationDisplayComponentForCard } from "./CreationDisplay";
 import DiceReroll from "./DiceReroll";
 import CardRedraw from "./CardRedraw";
 import GameOver from "./GameOver";
-import PlayerInfoInGame from "./PlayerInfoInGame";
+import PlayerBannerInGame from "./PlayerBannerInGame";
 
 //TODO: move to another file
 interface PlayerBoardProps {
@@ -904,7 +904,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         <div
           className={`h-full flex ${isMyBoard ? "items-end" : "items-start"}`}
         >
-          <PlayerInfoInGame
+          <PlayerBannerInGame
             playerProfile={playerProfile}
             isMyProfile={isMyBoard}
           />
