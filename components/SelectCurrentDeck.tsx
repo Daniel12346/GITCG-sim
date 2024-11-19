@@ -4,12 +4,12 @@ import {
   deckInDeckBuilderNameState,
   myCurrentDeckIDState,
 } from "@/recoil/atoms";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 
 interface Props {
   deck: Tables<"deck">;
 }
-export default function SetCurrentDeck({ deck }: Props) {
+export default function SelectCurrentDeck({ deck }: Props) {
   const [myCurrentDeckID, setMyCurrentDeckID] =
     useRecoilState(myCurrentDeckIDState);
   const setDeckInDeckBuilderName = useSetRecoilState(
@@ -17,10 +17,10 @@ export default function SetCurrentDeck({ deck }: Props) {
   );
 
   return deck.id === myCurrentDeckID ? null : (
-    <div className="flex gap-2 items-center mb-2">
+    <div className="flex gap-2 items-center mb-2 font-semibold">
       <span>{deck.name}</span>
       <button
-        className="bg-blue-600 hover:bg-blue-400 text-blue-100  px-1 rounded"
+        className="bg-blue-300 hover:bg-blue-400 text-blue-700  px-1 rounded-sm"
         onClick={() => {
           setMyCurrentDeckID(deck.id);
           setDeckInDeckBuilderName(deck.name ?? "");
