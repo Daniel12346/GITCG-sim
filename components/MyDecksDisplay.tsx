@@ -6,6 +6,7 @@ import {
   myDecksState,
   myCurrentDeckWithCardBasicInfoState,
   myCurrentDeckIDState,
+  myIDState,
 } from "@/recoil/atoms";
 import { useEffect } from "react";
 import {
@@ -17,9 +18,14 @@ import {
 } from "recoil";
 import SelectCurrentDeck from "./SelectCurrentDeck";
 import DeckDisplay from "./DeckDisplay";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { updateMyCurrentDeckInDatabase } from "@/app/utils";
+import DeleteDeck from "./DeleteDeckButton";
 
 export default function MyDecksDisplay() {
-  //TODO: view other players' decks
+  const supabase = createClientComponentClient<Database>();
+  const myID = useRecoilValue(myIDState);
   const myCurrentDeckID = useRecoilValue(myCurrentDeckIDState);
   const myDecks = useRecoilValue(myDecksState);
   const myCurrentDeck = useRecoilValue(myCurrentDeckWithCardBasicInfoState);
@@ -62,14 +68,21 @@ export default function MyDecksDisplay() {
   }, [myCurrentDeckLoadable]);
 
   useEffect(() => {
-    refreshMyCurrentDeckCards();
+    updateMyCurrentDeckInDatabase(supabase, myID, myCurrentDeckID).then(() => {
+      refreshMyCurrentDeckCards();
+    });
   }, [myCurrentDeckID]);
 
   return (
     <>
       <ul>
         {myDecks?.map((deck) => {
-          return <SelectCurrentDeck key={deck.id} deck={deck} />;
+          return (
+            <div className="flex gap-1">
+              <SelectCurrentDeck key={deck.id} deck={deck} />
+              <DeleteDeck key={deck.id} deck={deck} />
+            </div>
+          );
         })}
       </ul>
       {myCurrentDeckCardsLoadable.state === "loading" && (
