@@ -20,7 +20,7 @@ export default function BattleLogs() {
           ({ created_at, turn_count, player1, player2, winner_id }) => (
             <div
               key={created_at}
-              className="flex flex-col gap-1 border-amber-300 border-solid border-4 px-6 py-4"
+              className="flex flex-col gap-1 bg-slate-200 bg-opacity-10 border-solid border-4 px-6 py-4"
             >
               <div className="flex justify-between text-blue-100 font-light">
                 {created_at && (
