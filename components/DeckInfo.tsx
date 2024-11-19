@@ -1,13 +1,10 @@
-import { Tables } from "@/lib/database.types";
 import {
-  CardBasicInfoWithQuantityAndEffects,
   deckInDeckBuilderCardCountState,
   deckInDeckBuilderNameState,
   deckInDeckBuilderWithCardBasicInfoState,
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue, useRecoilValueLoadable } from "recoil";
 import DeckSaveButton from "./DeckSaveButton";
-
 
 export default function DeckInfo() {
   const deckLoadable = useRecoilValueLoadable(
@@ -38,7 +35,7 @@ export default function DeckInfo() {
             value={deckName}
             onChange={(e) => setDeckName(e.target.value)}
           ></input>
-          <DeckSaveButton></DeckSaveButton>
+          <DeckSaveButton />
         </div>
       );
 
