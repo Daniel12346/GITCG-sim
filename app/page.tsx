@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import TextWithSlideInUnderline from "@/components/TextWithSlideInUnderline";
 const MyIDNoSSR = dynamic(() => import("@/components/MyID"), {
   ssr: false,
 });
@@ -30,9 +31,7 @@ export default async function Index() {
                 width={100}
                 height={100}
               />
-              <span className="text-center group-hover:underline underline-offset-4">
-                deck builder
-              </span>
+              <TextWithSlideInUnderline>deck builder</TextWithSlideInUnderline>
             </Link>
           </div>
           <div className="flex flex-col gap-3 items-center group cursor-pointer">
@@ -44,9 +43,7 @@ export default async function Index() {
                 width={100}
                 height={100}
               />
-              <span className="text-center group-hover:underline underline-offset-4">
-                match
-              </span>
+              <TextWithSlideInUnderline>lobby</TextWithSlideInUnderline>
             </Link>
           </div>
           <div className="flex h-full  flex-col gap-3 items-center group cursor-pointer">
@@ -61,9 +58,7 @@ export default async function Index() {
                 width={100}
                 height={100}
               />
-              <span className="text-center group-hover:underline underline-offset-4">
-                battle log
-              </span>
+              <TextWithSlideInUnderline>battle log</TextWithSlideInUnderline>
             </Link>
           </div>
         </div>
