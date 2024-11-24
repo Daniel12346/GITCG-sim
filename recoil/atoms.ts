@@ -640,3 +640,67 @@ export const playerBattleStatsState = selectorFamily({
       return { wins, losses, total: data.length };
     },
 });
+
+export const userAvatarState = selectorFamily({
+  key: "userAvatarState",
+  get:
+    (id: string | undefined) =>
+    async ({ get }) => {
+      if (!id) return null;
+      try {
+        const supabase = createClientComponentClient<Database>();
+        const { data, error } = await supabase.storage
+          .from("avatars")
+          .createSignedUrl(`${id}/avatar.png`, 600);
+        if (error) {
+          console.log("error", error);
+          return null;
+        }
+        return data?.signedUrl;
+      } catch (e) {
+        console.log("error", e);
+        return null;
+      }
+    },
+});
+
+export const myAvatarState = selector({
+  key: "myAvatarState",
+  get: async ({ get }) => {
+    const myID = get(myIDState);
+    const avatar = get(userAvatarState(myID));
+    return avatar;
+  },
+});
+
+export const userBannerState = selectorFamily({
+  key: "userBannerState",
+  get:
+    (id: string | undefined) =>
+    async ({ get }) => {
+      if (!id) return null;
+      try {
+        const supabase = createClientComponentClient<Database>();
+        const { data, error } = await supabase.storage
+          .from("banners")
+          .createSignedUrl(`${id}/banner.png`, 600);
+        if (error) {
+          console.log("error", error);
+          return null;
+        }
+        return data?.signedUrl;
+      } catch (e) {
+        console.log("error", e);
+        return null;
+      }
+    },
+});
+
+export const myBannerState = selector({
+  key: "myBannerState",
+  get: async ({ get }) => {
+    const myID = get(myIDState);
+    const banner = get(userBannerState(myID));
+    return banner;
+  },
+});
