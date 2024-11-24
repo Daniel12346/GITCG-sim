@@ -1259,9 +1259,29 @@ export const deleteDeck = async ({
   console.log("Deleting deck", deckID);
   //TODO: cascade delete
   try {
-  await client.from("deck").delete().eq("id", deckID);
-  }
-  catch (e) {
+    await client.from("deck").delete().eq("id", deckID);
+  } catch (e) {
     console.log("Error deleting deck", e);
   }
+};
+
+export const uploadToSupabaseBucket = async ({
+  client,
+  file,
+  bucketName,
+  uploadPath,
+}: {
+  client: SupabaseClient<Database>;
+  file: File;
+  bucketName: string;
+  uploadPath: string;
+}) => {
+  const { data, error } = await client.storage
+    .from(bucketName)
+    .upload(uploadPath, file, { upsert: true });
+  if (error) {
+    console.log("Error uploading file", error);
+    throw new Error("Error uploading file");
+  }
+  return data;
 };
