@@ -33,10 +33,13 @@ export default function PlayerProfileBanner({
          flex flex-col  lg:flex-row lg:items-center pl-2 pr-3 gap-6 min-w-fit`}
     >
       {userBanner && (
-        <img
-          src={userBanner}
-          className="absolute object-cover top-0 left-0 border-inherit w-full h-full bg-red-100 z-10"
-        ></img>
+        <>
+          <img
+            src={userBanner}
+            className="absolute object-cover top-0 left-0 border-inherit w-full h-full z-10"
+          ></img>
+          <div className="absolute object-cover top-0 left-0 border-inherit w-full h-full bg-gradient-to-r from-slate-800/60 to-slate-800/10 z-10"></div>
+        </>
       )}
 
       <img
