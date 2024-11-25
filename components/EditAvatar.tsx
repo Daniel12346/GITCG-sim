@@ -10,7 +10,7 @@ export default function EditAvatar() {
     <ImageUpload
       uploadPath={`${myID}/avatar.png`}
       bucketName="avatars"
-      labelText="Change avatar"
+      iconSrc="edit_icon.svg"
       afterUpload={() => {
         refreshMyAvatar();
       }}
