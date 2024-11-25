@@ -20,7 +20,7 @@ export default function DeleteDeck({ deck }: Props) {
   return deck.id === myCurrentDeckID ? null : (
     <div className="flex gap-2 items-center mb-2">
       <button
-        className="bg-red-100 hover:bg-red-200 text-red-700  px-1 rounded font-bold"
+        className="bg-red-600/40 hover:bg-red-600 text-red-200  px-1 rounded font-bold"
         onClick={() => {
           //TODO: icon
           deleteDeck({
