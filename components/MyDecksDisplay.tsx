@@ -18,7 +18,6 @@ import {
 } from "recoil";
 import SelectCurrentDeck from "./SelectCurrentDeck";
 import DeckDisplay from "./DeckDisplay";
-import { SupabaseClient } from "@supabase/supabase-js";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { updateMyCurrentDeckInDatabase } from "@/app/utils";
 import DeleteDeck from "./DeleteDeckButton";
