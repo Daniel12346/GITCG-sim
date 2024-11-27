@@ -32,7 +32,7 @@ export default function CardInDeckDisplay({
 
   return (
     <div
-      className={`group bg-blue-200 flex flex-col items-center relative h-24 w-16 border-4
+      className={`group bg-blue-200 rounded-md flex flex-col items-center relative h-24 w-16 border-4
          border-orange-300 
    
       ${card.card_type === "CHARACTER" && isInDeck && "scale-125 mx-2"}`}
