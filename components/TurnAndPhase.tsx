@@ -357,7 +357,7 @@ export default ({}) => {
           }}
         >
           {!amIReadyForNextPhase ? (
-            <button className="btn bg-amber-700">
+            <button className="btn bg-amber-800 hover:bg-amber-700 px-1 rounded-sm flex items-center">
               Finish phase
               {/* TODO: use forward icon */}
               <span className="text-xl font-extrabold">{">>"}</span>
