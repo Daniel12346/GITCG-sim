@@ -1036,7 +1036,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         </span>
       </div>
       <div className="bg-fieldMain">
-        action zone
+        {/* action zone */}
         <div className="grid grid-cols-2">
           {playerCards
             ?.filter(
@@ -1050,9 +1050,13 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             ))}
         </div>
       </div>
-      <div className={`bg-fieldMain h-40  ${!isMyBoard && "self-end"}`}>
-        character zone
-        <div className="flex flex-row justify-evenly gap-2 px-2">
+      <div
+        className={`bg-fieldMain h-40 flex items-center justify-center  ${
+          !isMyBoard && "self-end"
+        }`}
+      >
+        {/* character zone */}
+        <div className="flex flex-row justify-evenly px-2 w-full max-w-md">
           {playerCards
             ?.filter((card) => card.card_type === "CHARACTER")
             .map((card) => {
