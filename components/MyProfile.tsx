@@ -3,8 +3,6 @@ import { useRecoilValue } from "recoil";
 import PlayerProfileBanner from "./PlayerProfileBanner";
 import PlayerCurrentDeckDisplay from "./PlayerCurrentDeckDisplay";
 import PlayerBattleStats from "./PlayerBattleStats";
-import SelectAvatar from "./SelectAvatar";
-import SelectBanner from "./SelectBanner";
 
 export default function MyProfile() {
   const myProfile = useRecoilValue(myProfileState);
@@ -14,8 +12,8 @@ export default function MyProfile() {
       <PlayerProfileBanner isMyProfile={true} playerProfile={myProfile} />
       <div className="flex flex-col">
         <span className="text-blue-300 uppercase font-semibold">settings</span>
-        <SelectAvatar />
-        <SelectBanner />
+        {/* <SelectAvatar />
+        <SelectBanner /> */}
       </div>
       <div className="text-slate-200">
         <PlayerBattleStats playerID={myID} />
