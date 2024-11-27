@@ -77,7 +77,7 @@ export default function CardRedraw({
                 setSelectedCards([]);
               }}
             >
-              Redraw
+              redraw
             </button>
             <button
               onClick={() => {
