@@ -35,25 +35,25 @@ export default function DeckCopyButton({
 
   return (
     <>
-      <button
-        onClick={handleCopyDeck}
-        // relative after:absolute after:w-full after:bottom-0 after:left-0  after:bg-orange-950 after:transition-all after:duration-300 after:rounded-sm after:transform after:scale-x-0 after:origin-left
-        // after:block hover:after:scale-x-100 after:z-100 after:h-1
-        className={` w-fit bg-slate-100 mb-1  text-orange-950 px-1 cursor-pointer font-semibold rounded-sm text-center hover:bg-orange-950 hover:text-slate-100 hover:transition-all hover:duration-200 hover:rounded-sm  
-        `}
-      >
-        copy deck
-      </button>
-      <span className="text-blue-200">
+      <span className="text-blue-200 mx-1">
         {copyingState === "LOADING" && "Copying..."}
         {copyingState === "COMPLETED" && (
           <span>
-            Deck copied!
+            <span className="mx-1">Deck copied!</span>
             <Link href="/deck-builder">Go to deck builder</Link>
           </span>
         )}
         {copyingState === "ERROR" && "Error copying deck"}
       </span>
+      <button
+        onClick={handleCopyDeck}
+        // relative after:absolute after:w-full after:bottom-0 after:left-0  after:bg-orange-950 after:transition-all after:duration-300 after:rounded-sm after:transform after:scale-x-0 after:origin-left
+        // after:block hover:after:scale-x-100 after:z-100 after:h-1
+        className={` w-fit bg-yellow-100/80 mb-1  text-orange-950 px-1 cursor-pointer font-semibold rounded-sm text-center hover:bg-yellow-100 hover:transition-all hover:duration-200 hover:rounded-sm  
+        `}
+      >
+        copy deck
+      </button>
     </>
   );
 }
