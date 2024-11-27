@@ -4,13 +4,15 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 type Props = {
   uploadPath: string;
   bucketName: string;
-  labelText: string;
+  labelText?: string;
+  iconSrc?: string;
   afterUpload?: () => void;
 };
 export default function ImageUpload({
   uploadPath,
   bucketName,
   labelText,
+  iconSrc,
   afterUpload,
 }: Props) {
   const client = createClientComponentClient();
@@ -42,6 +44,12 @@ export default function ImageUpload({
         }}
       />
       <label htmlFor={bucketName} className="text-slate-300 cursor-pointer">
+        {iconSrc && (
+          <img
+            className=" w-5 hover:scale-125 transition-transform"
+            src={iconSrc}
+          ></img>
+        )}
         {labelText}
       </label>
     </span>
