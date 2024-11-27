@@ -43,7 +43,7 @@ export default async function Index() {
                 width={100}
                 height={100}
               />
-              <TextWithSlideInUnderline>lobby</TextWithSlideInUnderline>
+              <TextWithSlideInUnderline>match</TextWithSlideInUnderline>
             </Link>
           </div>
           <div className="flex h-full  flex-col gap-3 items-center group cursor-pointer">
