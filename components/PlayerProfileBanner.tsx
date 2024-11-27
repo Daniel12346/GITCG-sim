@@ -32,22 +32,22 @@ export default function PlayerProfileBanner({
             className="absolute object-cover top-0 left-0 border-inherit w-full h-full z-10"
           ></img>
           {isMyProfile && (
-            <div className="absolute object-cover top-0 left-0 border-inherit w-full h-full bg-gradient-to-r from-slate-800/60 to-slate-800/10 z-10">
+            <div className="absolute object-cover top-0 left-0 border-inherit w-full h-full bg-gradient-to-r from-slate-800/80 to-slate-800/10 z-10">
               <EditBanner />
             </div>
           )}
         </>
       )}
-      <div className="flex relative">
-        <img
-          className="rounded-sm w-14 h-14 object-cover z-10 object-center"
-          src={userAvatar || "/card_back_origin.png"}
-        />
+      <div className="flex relative w-fit">
         {isMyProfile && (
           <div className="absolute top-0 right-0 w-fit h-fit z-30">
             <EditAvatar />
           </div>
         )}
+        <img
+          className="rounded-sm w-14 h-14 object-cover z-10 object-center"
+          src={userAvatar || "/card_back_origin.png"}
+        />
       </div>
       <span className="font-bold text-xl text-blue-100 z-10">
         {playerProfile?.username}
