@@ -10,7 +10,7 @@ export default function EditBanner() {
     <ImageUpload
       uploadPath={`${myID}/banner.png`}
       bucketName="banners"
-      iconSrc="edit_icon.svg"
+      iconSrc="/edit_icon.svg"
       afterUpload={() => {
         refreshMyBanner();
       }}
