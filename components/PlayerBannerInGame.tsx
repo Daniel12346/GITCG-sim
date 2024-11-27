@@ -39,11 +39,11 @@ export default function PlayerBannerInGame({
       {userBanner && (
         <img
           src={userBanner}
-          className="absolute object-cover top-0 left-0 border-inherit w-full h-full bg-red-100 z-10"
+          className="absolute  object-cover top-0 left-0 border-inherit w-full h-full bg-red-100 z-10"
         ></img>
       )}
       <img
-        className="rounded-sm z-10 w-14 h-14 object-cover object-center"
+        className="rounded-sm  z-10 w-14 h-14 object-cover object-center"
         src={userAvatar || "/card_back_origin.png"}
       />
       <span className="font-bold z-10 text-xl text-blue-100">
