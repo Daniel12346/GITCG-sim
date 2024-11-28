@@ -2,6 +2,7 @@ import { currentPhaseState, mySelectedDiceState } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue } from "recoil";
 import ElementalTuning from "./ElementalTuning";
 import { RealtimeChannel } from "@supabase/supabase-js";
+import RequiredEnergyDisplay from "./RequiredEnergyDisplay";
 
 type DiceDisplayProps = {
   dice: Dice;
@@ -14,21 +15,13 @@ const Die = ({
   element,
   isMyBoard,
   isSelected,
+  size,
 }: {
   element: DieElementName;
   isMyBoard: boolean;
   isSelected: boolean;
+  size?: number;
 }) => {
-  // let bgColors = {
-  //   ANEMO: "bg-cyan-300",
-  //   DENDRO: "bg-green-300",
-  //   PYRO: "bg-red-300",
-  //   HYDRO: "bg-blue-300",
-  //   ELECTRO: "bg-yellow-300",
-  //   CRYO: "bg-blue-300",
-  //   GEO: "bg-yellow-300",
-  //   OMNI: "bg-gray-300",
-  // };
   const [selectedDice, setSelectedDice] = useRecoilState(mySelectedDiceState);
   const handleSelectDie = () => {
     if (!isMyBoard) return;
@@ -52,7 +45,7 @@ const Die = ({
     <img
       key={element + isMyBoard}
       onClick={handleSelectDie}
-      className={`w-8 h-8 cursor-pointer ${
+      className={`w-${size} h-${size} cursor-pointer ${
         isMyBoard && isSelected && "ring-2 ring-yellow-200 stroke-none"
       }`}
       src={`/${element.toLowerCase()}_die.svg`}
@@ -60,21 +53,28 @@ const Die = ({
   );
 };
 
-const DiceOfElement = ({
+export const DiceOfElement = ({
   element,
   amount,
   isMyBoard,
+  dieSize,
 }: {
   element: DieElementName;
   amount: number;
   isMyBoard: boolean;
+  dieSize: number;
 }) => {
   const selectedDice = useRecoilValue(mySelectedDiceState);
   const amountSelected = selectedDice[element] || 0;
   return Array.from({ length: amount }).map((_, i) => {
     const isSelected = i < amountSelected;
     return (
-      <Die element={element} isMyBoard={isMyBoard} isSelected={isSelected} />
+      <Die
+        size={dieSize}
+        element={element}
+        isMyBoard={isMyBoard}
+        isSelected={isSelected}
+      />
     );
   });
 };
@@ -90,12 +90,13 @@ export default function DiceDisplay({
     <div className={`${!isMyBoard && "pt-3"}`}>
       <ul className="flex gap-2 p-3 flex-wrap">
         {Object.entries(dice)
-          .sort()
+          .toSorted()
           .map(([element, amount]) => (
             <DiceOfElement
               element={element as DieElementName}
               amount={amount}
               isMyBoard={isMyBoard}
+              dieSize={8}
             />
           ))}
       </ul>
@@ -105,3 +106,38 @@ export default function DiceDisplay({
     </div>
   );
 }
+
+export const AttackDiceDisplay = ({
+  dice,
+  isMyBoard,
+  channel,
+  withElementalTuning,
+}: DiceDisplayProps) => {
+  const currentPhase = useRecoilValue(currentPhaseState);
+  return (
+    <div>
+      <ul className="flex flex-row gap-1 flex-wrap justify-center">
+        {Object.entries(dice)
+          .toSorted()
+          .map(([element, amount]) =>
+            element !== "ENERGY" ? (
+              <DiceOfElement
+                element={element as DieElementName}
+                amount={amount}
+                isMyBoard={isMyBoard}
+                dieSize={4}
+              />
+            ) : (
+              <RequiredEnergyDisplay
+                energySize={4}
+                energy={amount}
+              ></RequiredEnergyDisplay>
+            )
+          )}
+      </ul>
+      {withElementalTuning && isMyBoard && currentPhase === "ACTION_PHASE" && (
+        <ElementalTuning channel={channel || null} />
+      )}
+    </div>
+  );
+};
