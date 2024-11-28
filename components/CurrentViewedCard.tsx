@@ -4,6 +4,7 @@ import { currentViewedCardState } from "@/recoil/atoms";
 import { useRecoilValue } from "recoil";
 import DiceDisplay from "./DiceDisplay";
 import { calculateTotalDice } from "@/app/utils";
+import RequiredEnergyDisplay from "./RequiredEnergyDisplay";
 
 export default () => {
   const currentCard = useRecoilValue(currentViewedCardState);
@@ -68,19 +69,11 @@ export default () => {
                           />
                           {effect.effectType === "ELEMENTAL_BURST" &&
                             currentCard.max_energy && (
-                              <div className="flex items-center px-4">
-                                {/* <span>energy:</span> */}
-                                <ul className="flex gap-3">
-                                  {Array.from({
-                                    length: currentCard.max_energy,
-                                  }).map((_, i) => (
-                                    <img
-                                      key={"energy" + i}
-                                      src="/energy_icon.svg"
-                                      className="w-6 h-6"
-                                    />
-                                  ))}
-                                </ul>
+                              <div className="px-4">
+                                <RequiredEnergyDisplay
+                                  energy={currentCard.max_energy}
+                                  energySize={6}
+                                />
                               </div>
                             )}
                         </div>
