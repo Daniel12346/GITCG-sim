@@ -154,7 +154,7 @@ export const findCostModifyingEffectsOfCardsEquippedTo = (
   return findCostModifyingEffects(equippedCards);
 };
 
-export const calculateCostAfterModifiers = ({
+export const subtractCostAfterModifiers = ({
   baseCost,
   executeArgs,
   selectedDice,
@@ -216,6 +216,41 @@ export const calculateCostAfterModifiers = ({
     return { errorMessage: "Not enough total dice" };
   }
   return { modifiedCost, myUpdatedDice, myUpdatedCards };
+};
+export const calculateCostAfterModifiers = ({
+  baseCost,
+  executeArgs,
+}: {
+  baseCost: Cost;
+  executeArgs: Omit<ExecuteEffectParams, "effect">;
+}) => {
+  let modifiedCost = baseCost;
+  const triggerContext = executeArgs.triggerContext;
+
+  if (!triggerContext) {
+    return { errorMessage: "No trigger context" };
+  }
+  const costModifyingEffects = findCostModifyingEffects(executeArgs.myCards);
+  //execute all cost modifying effects
+  costModifyingEffects.forEach((effect) => {
+    const effectLogic = findEffectLogic(effect);
+    if (!effectLogic?.execute) return;
+    let { modifiedCost: modifiedCostAfterCostModyfingEffect } =
+      effectLogic.execute({
+        ...executeArgs,
+        effect,
+        triggerContext: {
+          ...triggerContext,
+          cost: modifiedCost,
+        },
+      });
+
+    if (modifiedCostAfterCostModyfingEffect) {
+      modifiedCost = modifiedCostAfterCostModyfingEffect;
+    }
+  });
+
+  return { modifiedCost };
 };
 
 export const findDamageModifyingEffects = (
@@ -820,10 +855,9 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
 
     const effectsThatTriggerOnReaction = findEffectsThatTriggerOn(
       "REACTION",
-      //TODO: handle opponent's effects
+      //TODO!: handle opponent's effects
       [...myUpdatedCards]
     );
-    //TODO!: create an effectChain function
     if (effectsThatTriggerOnReaction.length > 0) {
       effectsThatTriggerOnReaction.forEach((effect) => {
         const effectLogic = findEffectLogic(effect);
