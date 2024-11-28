@@ -5,6 +5,7 @@ import {
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue, useRecoilValueLoadable } from "recoil";
 import DeckSaveButton from "./DeckSaveButton";
+import DeckDeleteButton from "./DeckDeleteButton";
 
 export default function DeckInfo() {
   const deckLoadable = useRecoilValueLoadable(
@@ -35,7 +36,11 @@ export default function DeckInfo() {
             value={deckName}
             onChange={(e) => setDeckName(e.target.value)}
           ></input>
-          <DeckSaveButton />
+          <div className="flex items-center gap-2">
+            <DeckSaveButton />
+            {/* TODO: check if deleting current deck works */}
+            <DeckDeleteButton deckID={deckLoadable.contents?.id} />
+          </div>
         </div>
       );
 
