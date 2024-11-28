@@ -17,7 +17,7 @@ export default function SelectCurrentDeck({ deck }: Props) {
   );
 
   return deck.id === myCurrentDeckID ? null : (
-    <div className="flex gap-2 items-center mb-2 font-semibold">
+    <div className="flex gap-2 items-center  font-semibold">
       <span>{deck.name}</span>
       <button
         className="bg-indigo-400/50 hover:bg-indigo-500 text-white-700  px-1 rounded-sm"
