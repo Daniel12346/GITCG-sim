@@ -34,7 +34,7 @@ import {
 import { CardExtended, CostT } from "@/app/global";
 import {
   broadcastSwitchPlayer,
-  calculateCostAfterModifiers,
+  subtractCostAfterModifiers,
   calculateTotalDice,
   findCostModifyingEffects,
   findEffectsThatTriggerOn,
@@ -151,7 +151,14 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       supabase.removeChannel(channel);
     };
   }, []);
-  const handleSwitchCharacter = async (card: CardExt) => {
+  const handleSwitchCharacter = async (
+    card: CardExt,
+    {
+      phase,
+    }: {
+      phase: PhaseName | null;
+    }
+  ) => {
     if (!myCards) return;
     const hasActiveCharacter = myCards.find(
       (card) => card.location === "CHARACTER" && card.is_active
@@ -189,6 +196,10 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       );
     } else {
       //the default cost of switching a character is 1 UNALIGNED die
+      if (phase === "PREPARATION_PHASE") {
+        setErrorMessage("Cannot switch character in preparation phase");
+        return;
+      }
       let cost: CostT = { UNALIGNED: 1 };
       const {
         errorMessage,
@@ -708,7 +719,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         myUpdatedCards: myUpdatedCardsAfterCostModifiers,
         myUpdatedDice: myUpdatedDiceAfterCostModifiers,
         errorMessage,
-      } = calculateCostAfterModifiers({
+      } = subtractCostAfterModifiers({
         baseCost: card.cost,
         selectedDice: mySelectedDice,
         executeArgs: {
@@ -1077,8 +1088,8 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                   equippedCards={equippedCards}
                   creationDisplayElements={creationDisplayElements}
                   handleClick={() => {
-                    //TODO: only enable in certain phases
-                    isMyBoard && handleSwitchCharacter(card);
+                    isMyBoard &&
+                      handleSwitchCharacter(card, { phase: currentPhase });
                   }}
                 />
               );
