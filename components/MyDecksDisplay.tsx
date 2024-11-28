@@ -20,7 +20,7 @@ import SelectCurrentDeck from "./SelectCurrentDeck";
 import DeckDisplay from "./DeckDisplay";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { updateMyCurrentDeckInDatabase } from "@/app/utils";
-import DeleteDeck from "./DeleteDeckButton";
+import DeleteDeck from "./DeckDeleteButton";
 
 export default function MyDecksDisplay() {
   const supabase = createClientComponentClient<Database>();
@@ -77,9 +77,9 @@ export default function MyDecksDisplay() {
       <ul>
         {myDecks?.map((deck) => {
           return (
-            <div className="flex gap-1">
+            <div className="flex gap-1 py-1 items-center">
               <SelectCurrentDeck key={deck.id} deck={deck} />
-              <DeleteDeck key={deck.id} deck={deck} />
+              <DeleteDeck key={deck.id} deckID={deck.id} />
             </div>
           );
         })}
