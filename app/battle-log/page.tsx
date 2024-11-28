@@ -14,7 +14,7 @@ export default async function BattleLog() {
       </div>
       <div className="flex justify-center">
         <h2 className="text-slate-300  text-3xl mb-10 text-center">
-          Battle history
+          Battle log
         </h2>
       </div>
       <div className="flex justify-center w-full">
