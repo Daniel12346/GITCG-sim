@@ -1466,7 +1466,6 @@ export const effects: {
       if (errorMessage) {
         return { errorMessage };
       }
-      //TODO!: update summon usages in the attack execution
       const thisCardAfterAttack = (myUpdatedCards || myCards).find(
         (card) => card.id === thisCard.id
       );

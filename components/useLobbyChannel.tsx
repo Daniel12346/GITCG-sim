@@ -155,7 +155,6 @@ export default function useLobbyChannel() {
           setOpponentDice(opponentDice);
           router.push("/game/" + data[0].id);
         } catch (error) {
-          //TODO!: handle error
           console.log("error", error);
         }
         //TODO: get game ID, send to both players
