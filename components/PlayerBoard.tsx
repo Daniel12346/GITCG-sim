@@ -930,7 +930,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         </div>
 
         {/* //TODO: display dice, move to new component, fix overflow */}
-        <div className="flex justify-between gap-2 overflow-hidden">
+        <div className="flex justify-between overflow-hidden px-4 items-center">
           {isMyBoard && (
             <>
               {
