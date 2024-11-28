@@ -3,6 +3,7 @@
 import { currentViewedCardState } from "@/recoil/atoms";
 import { useRecoilValue } from "recoil";
 import DiceDisplay from "./DiceDisplay";
+import { calculateTotalDice } from "@/app/utils";
 
 export default () => {
   const currentCard = useRecoilValue(currentViewedCardState);
@@ -12,14 +13,18 @@ export default () => {
         <span className="text-xl">{currentCard?.name}</span>
         <img src={currentCard?.img_src} className="h-80" />
         {currentCard?.cost && (
-          <span>
-            <span>COST:</span>
-            <DiceDisplay dice={currentCard?.cost} isMyBoard={false} />
-          </span>
+          <div className="w-full flex flex-col">
+            {/* <span className="w-full">COST:</span> */}
+            {calculateTotalDice(currentCard.cost) !== 0 && (
+              <div className="w-full flex justify-center">
+                <DiceDisplay dice={currentCard?.cost} isMyBoard={false} />
+              </div>
+            )}
+          </div>
         )}
-        {currentCard?.statuses && (
+        {currentCard?.statuses?.length !== 0 && (
           <div className="flex flex-col gap-1">
-            {currentCard.statuses.map((status) => (
+            {currentCard?.statuses?.map((status) => (
               <span
                 //TODO: use a unique key
                 key={status.name}
@@ -27,7 +32,7 @@ export default () => {
             ))}
           </div>
         )}
-        <div className="flex flex-col gap-1 max-h-[10rem] overflow-y-scroll translate-x-0">
+        <div className="flex flex-col gap-1  max-h-[10rem] overflow-y-scroll translate-x-0">
           {currentCard?.effects &&
             currentCard.effects
               //TODO: fix sorting
@@ -40,11 +45,18 @@ export default () => {
               .map((effect) => {
                 return (
                   <div className="w-full p-2" key={effect.id}>
+                    {(effect.effectType === "ELEMENTAL_BURST" ||
+                      effect.effectType === "ELEMENTAL_SKILL" ||
+                      effect.effectType === "NORMAL_ATTACK") && (
+                      <span className="text-blue-200/90">
+                        {effect.effectType.replace(/_/g, " ")}
+                      </span>
+                    )}
                     <p className="w-full text-slate-200">
                       {effect.description}
                     </p>
                     <div className="flex gap-[0.5rem]">
-                      {effect.cost && (
+                      {effect.cost && calculateTotalDice(effect.cost) !== 0 && (
                         <div>
                           <DiceDisplay
                             dice={Object.fromEntries(
