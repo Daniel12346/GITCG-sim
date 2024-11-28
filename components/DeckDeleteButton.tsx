@@ -10,25 +10,28 @@ import {
 } from "recoil";
 
 interface Props {
-  deck: Tables<"deck">;
+  deckID: string | undefined;
 }
-export default function DeleteDeck({ deck }: Props) {
+export default function DeleteDeck({ deckID }: Props) {
   const myCurrentDeckID = useRecoilValue(myCurrentDeckIDState);
   const client = createClientComponentClient<Database>();
-  const refresheDecks = useRecoilRefresher_UNSTABLE(myDecksState);
+  const refreshDecks = useRecoilRefresher_UNSTABLE(myDecksState);
 
-  return deck.id === myCurrentDeckID ? null : (
-    <div className="flex gap-2 items-center mb-2">
+  return deckID === myCurrentDeckID ? null : (
+    <div className="flex gap-2 items-center">
       <button
         className="bg-red-600/40 hover:bg-red-600 text-red-200  px-1 rounded font-bold"
         onClick={() => {
+          if (deckID === undefined) {
+            return;
+          }
           //TODO: icon
           deleteDeck({
             client,
-            deckID: deck.id,
+            deckID,
           })
             .then(() => {
-              refresheDecks();
+              refreshDecks();
             })
             .catch((error) => {
               console.error("Error deleting deck", error);
