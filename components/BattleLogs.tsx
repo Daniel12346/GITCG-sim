@@ -6,6 +6,7 @@ import {
 } from "@/recoil/atoms";
 import { useRecoilValue } from "recoil";
 import PlayerBattleStats from "./PlayerBattleStats";
+import Link from "next/link";
 
 export default function BattleLogs() {
   const myID = useRecoilValue(myIDState);
@@ -30,21 +31,26 @@ export default function BattleLogs() {
               </div>
               <div className="flex gap-3 text-xl">
                 <div>
-                  <img
-                    className="rounded-sm w-14 h-14 object-cover object-center"
-                    src={player1?.avatar_url || "/card_back_origin.png"}
-                  />
-                  <span>{player1?.username} </span>
+                  <Link href={`/player/${player1?.id}`}>
+                    <img
+                      className="rounded-sm w-14 h-14 object-cover object-center"
+                      src={player1?.avatar_url || "/card_back_origin.png"}
+                    />
+
+                    <span>{player1?.username} </span>
+                  </Link>
                 </div>
                 <span className="font-semibold flex items-end text-blue-300">
                   VS
                 </span>
                 <div>
-                  <img
-                    className="rounded-sm w-14 h-14 object-cover object-center"
-                    src={player2?.avatar_url || "/card_back_origin.png"}
-                  />
-                  <span>{player2?.username}</span>
+                  <Link href={`/player/${player2?.id}`}>
+                    <img
+                      className="rounded-sm w-14 h-14 object-cover object-center"
+                      src={player2?.avatar_url || "/card_back_origin.png"}
+                    />
+                    <span>{player2?.username}</span>
+                  </Link>
                 </div>
                 <div
                   className={`
