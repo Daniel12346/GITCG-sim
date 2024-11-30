@@ -1,6 +1,6 @@
 "use client";
 
-import { currentViewedCardState } from "@/recoil/atoms";
+import { currentGameIDState, currentViewedCardState } from "@/recoil/atoms";
 import { useRecoilValue } from "recoil";
 import DiceDisplay from "./DiceDisplay";
 import { calculateTotalDice } from "@/app/utils";
@@ -8,6 +8,7 @@ import RequiredEnergyDisplay from "./RequiredEnergyDisplay";
 
 export default () => {
   const currentCard = useRecoilValue(currentViewedCardState);
+  const currentGameID = useRecoilValue(currentGameIDState);
   return (
     <div className="w-full flex justify-center text-slate-200 relative pt-2">
       <div className="flex flex-col items-center gap-3">
@@ -23,8 +24,10 @@ export default () => {
             )}
           </div>
         )}
-        {currentCard?.statuses?.length !== 0 && (
+        {/* statuses are only displayed in game */}
+        {currentGameID && currentCard?.statuses?.length !== 0 && (
           <div className="flex flex-col gap-1">
+            <span>STATUSES</span>
             {currentCard?.statuses?.map((status) => (
               <span
                 //TODO: use a unique key
@@ -38,9 +41,9 @@ export default () => {
             currentCard.effects
               //TODO: fix sorting
               ?.toSorted((a, b) => {
-                if (a.effectType === "NORMAL_ATTACK") return -1;
-                if (a.effectType === "ELEMENTAL_SKILL") return 0;
-                if (a.effectType === "ELEMENTAL_BURST") return 1;
+                if (a.effectType === "NORMAL_ATTACK") return 0;
+                if (a.effectType === "ELEMENTAL_SKILL") return 1;
+                if (a.effectType === "ELEMENTAL_BURST") return 2;
                 return 0;
               })
               .map((effect) => {
@@ -72,7 +75,7 @@ export default () => {
                               <div className="px-4">
                                 <RequiredEnergyDisplay
                                   energy={currentCard.max_energy}
-                                  energySize={6}
+                                  energySize={4}
                                 />
                               </div>
                             )}
@@ -86,27 +89,4 @@ export default () => {
       </div>
     </div>
   );
-  // <div className="relative hidden group-hover:flex top-[50%] left-[90%] bg-blue-300 bg-opacity-90 p-1 w-44 z-20  flex-col">
-  //   {/* <span className="font-bold mb-2">{card.name}</span>
-
-  //   {card.effects &&
-  //     card.effects.map((effect) => {
-  //       return (
-  //         <div className="mb-3">
-  //           <p className="w-full">{effect.description}</p>
-  //           <div className="flex gap-1">
-  //             {effect.cost &&
-  //               Object.entries(effect.cost)
-  //                 .sort()
-  //                 .map(([element, amount]) => (
-  //                   //TODO: color according to element
-  //                   <span key={card.id + element + amount.toString()}>
-  //                     {element}:{amount}
-  //                   </span>
-  //                 ))}
-  //           </div>
-  //         </div>
-  //       );
-  //     })} */}
-  // </div>;
 };
