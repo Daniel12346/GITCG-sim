@@ -1,6 +1,6 @@
 export default function RequiredEnergyDisplay({
   energy,
-  energySize = 6,
+  energySize = 4,
 }: {
   energy: number;
   energySize: number;
