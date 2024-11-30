@@ -1,19 +1,34 @@
 import { myAvatarState, myIDState } from "@/recoil/atoms";
 import { useRecoilRefresher_UNSTABLE, useRecoilValue } from "recoil";
 import ImageUpload from "./ImageUpload";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 //TODO: default avatar selection
 export default function EditAvatar() {
   const myID = useRecoilValue(myIDState);
   //TODO: does this work?
   const refreshMyAvatar = useRecoilRefresher_UNSTABLE(myAvatarState);
   return (
-    <ImageUpload
-      uploadPath={`${myID}/avatar.png`}
-      bucketName="avatars"
-      iconSrc="/edit_icon.svg"
-      afterUpload={() => {
-        refreshMyAvatar();
-      }}
-    />
+    <TooltipProvider>
+      <Tooltip delayDuration={100}>
+        <TooltipTrigger>
+          <ImageUpload
+            uploadPath={`${myID}/avatar.png`}
+            bucketName="avatars"
+            iconSrc="/edit_icon.svg"
+            afterUpload={() => {
+              refreshMyAvatar();
+            }}
+          />
+        </TooltipTrigger>
+        <TooltipContent className="bg-opacity-90">
+          Edit Avatar
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
