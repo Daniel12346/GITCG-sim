@@ -112,10 +112,9 @@ export default function CardInGame({
         {/* used for switching active character */}
         {card.location === "CHARACTER" &&
           isMyCard &&
-          !card.is_active && [
-            (currentPhase === "ACTION_PHASE" && isMyTurn) ||
-              currentPhase === "PREPARATION_PHASE",
-          ] && (
+          !card.is_active &&
+          ((currentPhase === "ACTION_PHASE" && isMyTurn) ||
+            currentPhase === "PREPARATION_PHASE") && (
             <span
               className="z-30 cursor-pointer hidden group-hover:block absolute top-1 left-1 bg-green-200 text-green-800 p-1"
               onClick={handleClick}
