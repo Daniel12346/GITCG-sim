@@ -13,7 +13,7 @@ export default async function BattleLog() {
         <MyIDNoSSR />
       </div>
       <div className="flex justify-center">
-        <h2 className="text-slate-300  text-3xl mb-10 text-center">
+        <h2 className="text-slate-300  text-3xl mb-8 text-center">
           Battle log
         </h2>
       </div>
