@@ -9,6 +9,7 @@ type DiceDisplayProps = {
   channel?: RealtimeChannel | null;
   isMyBoard: boolean;
   withElementalTuning?: boolean;
+  isMain?: boolean;
 };
 
 const Die = ({
@@ -84,11 +85,15 @@ export default function DiceDisplay({
   isMyBoard,
   channel,
   withElementalTuning,
+  isMain,
 }: DiceDisplayProps) {
   const currentPhase = useRecoilValue(currentPhaseState);
   return (
-    <div className={`${!isMyBoard && "pt-3"}`}>
-      <ul className="flex gap-2 p-3 flex-wrap">
+    <div className={`${!isMyBoard && "pt-3"} h-full`}>
+      <ul
+        className={`flex gap-2 flex-wrap p-3 h-full
+        ${isMain && "p-0 h-full overflow-y-scroll"}`}
+      >
         {Object.entries(dice)
           .toSorted()
           .map(([element, amount]) => (
