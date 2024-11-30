@@ -12,7 +12,7 @@ export default function DeckDisplay({ deckCards, isEditable }: Props) {
       return 0;
     });
   return (
-    <div className="flex bg-slate-600 flex-row gap-4 justify-evenly flex-wrap rounded-md p-4">
+    <div className="flex bg-blue-300/30 flex-row gap-4 justify-evenly flex-wrap rounded-md p-4">
       {sortDeckCards(deckCards).map((card) => {
         return (
           <CardInDeckDisplay
