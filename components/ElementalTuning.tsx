@@ -21,11 +21,18 @@ export default function ElementalTuning({
     useRecoilState(mySelectedCardsState);
   const [selectedDice, setSelectedDice] = useRecoilState(mySelectedDiceState);
   const setErrorMessage = useSetRecoilState(errorMessageState);
+  const myActiveCharacter = myCards.find(
+    (card) => card.location === "CHARACTER" && card.is_active
+  );
+  const resultingDiceElement = myActiveCharacter?.element;
   const performElementalTuning = () => {
     if (selectedCards.length === 0)
       return { errorMessage: "No cards selected to discard" };
     if (!myCards) return { errorMessage: "No cards" };
     if (!myDice) return { errorMessage: "No dice" };
+    if (!resultingDiceElement) {
+      return { errorMessage: "No active character element" };
+    }
     //TODO: check the amount of dice
     if (!selectedDice) return { errorMessage: "No dice to tune" };
     //TODO: discarding multiple cards
@@ -35,17 +42,16 @@ export default function ElementalTuning({
     if (selectedCards.some((card) => card.location !== "HAND")) {
       return { errorMessage: "Card not in hand" };
     }
-    if (selectedDice["OMNI"]) {
-      alert("Cannot tune OMNI die");
-      return { errorMessage: "Cannot tune OMNI die" };
-    }
+
     try {
       let myUpdatedDice = subtractCost(myDice, selectedDice);
       myUpdatedDice = {
         ...myUpdatedDice,
-        OMNI: myUpdatedDice.OMNI
-          ? myUpdatedDice.OMNI + selectedCards.length
-          : selectedCards.length,
+        // OMNI: myUpdatedDice.OMNI
+        //   ? myUpdatedDice.OMNI + selectedCards.length
+        //   : selectedCards.length,
+        [resultingDiceElement]:
+          selectedCards.length + (myUpdatedDice[resultingDiceElement] || 0),
       };
       const myUpdatedCards = myCards.map((card) => {
         if (selectedCards.find((selectedCard) => selectedCard.id === card.id)) {
