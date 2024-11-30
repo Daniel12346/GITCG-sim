@@ -32,13 +32,14 @@ export default function PlayerProfileBanner({
             className="absolute object-cover top-0 left-0 border-inherit w-full h-full z-10"
           ></img>
           {isMyProfile && (
-            <div className="absolute object-cover top-0 left-0 border-inherit w-full h-full bg-gradient-to-r from-slate-800/80 to-slate-800/10 z-10">
-              <EditBanner />
-            </div>
+            <div className="absolute object-cover top-0 left-0 border-inherit w-full h-full bg-gradient-to-r from-slate-800/80 to-slate-800/10 z-10"></div>
           )}
+          <div className="z-50 absolute top-1 left-1">
+            <EditBanner />
+          </div>
         </>
       )}
-      <div className="flex relative w-fit">
+      <div className="flex relative w-fit z-10">
         {isMyProfile && (
           <div className="absolute top-0 right-0 w-fit h-fit z-30">
             <EditAvatar />
