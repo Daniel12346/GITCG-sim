@@ -8,7 +8,7 @@ import {
   myCurrentDeckIDState,
   myIDState,
 } from "@/recoil/atoms";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   useRecoilRefresher_UNSTABLE,
   useRecoilState,
@@ -46,6 +46,7 @@ export default function MyDecksDisplay() {
   const setDeckInDeckBuilderName = useSetRecoilState(
     deckInDeckBuilderNameState
   );
+  const [isDropwdownOpen, setIsDropdownOpen] = useState(false);
   useEffect(() => {
     setDeckInDeckBuilderName(myCurrentDeck?.name ?? "");
   }, [myCurrentDeck]);
@@ -74,15 +75,26 @@ export default function MyDecksDisplay() {
 
   return (
     <>
-      <ul>
-        {myDecks?.map((deck) => {
-          return (
-            <div className="flex gap-1 py-1 items-center">
-              <SelectCurrentDeck key={deck.id} deck={deck} />
-              <DeleteDeck key={deck.id} deckID={deck.id} />
-            </div>
-          );
-        })}
+      <ul className="mb-6">
+        <span
+          className="text-blue-200 cursor-pointer"
+          onClick={() => setIsDropdownOpen((prev) => !prev)}
+        >
+          select deck{" "}
+          <span className="font-extrabold text-xl">
+            {!isDropwdownOpen ? ">" : "v"}
+          </span>
+        </span>
+        <div className={`${isDropwdownOpen ? "" : "hidden "}`}>
+          {myDecks?.map((deck) => {
+            return (
+              <div className="flex gap-1 py-1 items-center border-b-2 border-slate-400/60">
+                <SelectCurrentDeck key={deck.id} deck={deck} />
+                <DeleteDeck key={deck.id} deckID={deck.id} />
+              </div>
+            );
+          })}
+        </div>
       </ul>
       {myCurrentDeckCardsLoadable.state === "loading" && (
         <div className="text-slate-300">
