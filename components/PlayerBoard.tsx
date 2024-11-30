@@ -451,16 +451,24 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         return;
       }
     }
-
-    const effectLogic = findEffectLogic(attackEffect);
-    if (effectLogic.requiredTargets) {
-      if (!selectedTargetCards) {
-        return { errorMessage: "No target selected" };
-      }
-      if (selectedTargetCards.length !== effectLogic.requiredTargets) {
-        return { errorMessage: "Incorrect number of targets" };
-      }
+    //the target of the attack is the opponent's active character
+    const opponentActiveCharacter = opponentInGameCards.find(
+      (c) => c.location === "CHARACTER" && c.is_active
+    );
+    if (!opponentActiveCharacter) {
+      return { errorMessage: "No target found" };
     }
+
+    //TODO!: remove this if all attacks always attack the active character
+    // const attackEffectLogic = findEffectLogic(attackEffect);
+    // if (attackEffectLogic.requiredTargets) {
+    //   if (!selectedTargetCards) {
+    //     return { errorMessage: "No target selected" };
+    //   }
+    //   if (selectedTargetCards.length !== attackEffectLogic.requiredTargets) {
+    //     return { errorMessage: "Incorrect number of targets" };
+    //   }
+    // }
     //attack effects have a cost
     //TODO: remove energy from cost in db
     let cost =
@@ -528,7 +536,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         return { errorMessage: "Not enough total dice" };
       }
     }
-
     //execute the attack effect
     let {
       myUpdatedCards: myUpdatedCardsAfterAttackEffect,
@@ -544,7 +551,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       myDice: myDiceAfterCost,
       opponentCards: opponentInGameCards,
       opponentDice: opponentDice,
-      targetCards: selectedTargetCards,
+      targetCards: [opponentActiveCharacter],
       currentRound,
     });
     if (myUpdatedCardsAfterAttackEffect) {
@@ -574,7 +581,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       opponentUpdatedDice,
       errorMessage,
       attackerCard,
-      targetCard: selectedTargetCards[0],
+      targetCard: opponentActiveCharacter,
     };
   };
   //TODO: make equipping work with this
@@ -949,9 +956,9 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                 attacks?.length &&
                   attacks
                     ?.toSorted((a, b) => {
-                      if (a.effectType === "NORMAL_ATTACK") return -1;
-                      if (a.effectType === "ELEMENTAL_SKILL") return 0;
-                      if (a.effectType === "ELEMENTAL_BURST") return 1;
+                      if (a.effectType === "NORMAL_ATTACK") return 0;
+                      if (a.effectType === "ELEMENTAL_SKILL") return 1;
+                      if (a.effectType === "ELEMENTAL_BURST") return 2;
                       return 0;
                     })
                     ?.map((attack) => (
@@ -1104,12 +1111,13 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             return <CardInGame key={card.id} card={card} />;
           })}
       </div>
-      <div className="h-full">
+      <div className="h-40">
         <DiceDisplay
           channel={channel}
           dice={playerDice}
           isMyBoard={isMyBoard}
           withElementalTuning
+          isMain
         ></DiceDisplay>
       </div>
       {isMyBoard && <DiceReroll channel={channel} />}
