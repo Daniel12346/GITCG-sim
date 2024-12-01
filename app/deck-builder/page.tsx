@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Suspense, useEffect, useState } from "react";
 import CardInDeckDisplay from "@/components/CardInDeckDisplay";
 import { CardBasicInfoWithEffects } from "../global";
+import ReturnHome from "@/components/ReturnHome";
 const MyDecksDisplayNoSSR = dynamic(
   () => import("@/components/MyDecksDisplay"),
   {
@@ -40,6 +41,7 @@ export default function DeckBuilder() {
 
   return (
     <div className="pt-12 flex flex-col text-slate-200 md:max-w-6xl w-full md:grid md:grid-cols-[6fr_3fr_3fr] gap-6">
+      <ReturnHome />
       <Suspense fallback={<div>Loading deck...</div>}>
         <div className="col-span-3">
           <DeckInfoNoSSR />
