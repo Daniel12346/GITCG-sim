@@ -1,8 +1,8 @@
 "use client";
 import { deleteDeck } from "@/app/utils";
-import { Tables } from "@/lib/database.types";
 import { myCurrentDeckIDState, myDecksState } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { Trash2 } from "lucide-react";
 import {
   useRecoilRefresher_UNSTABLE,
   useRecoilState,
@@ -18,9 +18,9 @@ export default function DeleteDeck({ deckID }: Props) {
   const refreshDecks = useRecoilRefresher_UNSTABLE(myDecksState);
 
   return deckID === myCurrentDeckID ? null : (
-    <div className="flex gap-2 items-center">
+    <div className="flex items-center h-full">
       <button
-        className="bg-red-600/40 hover:bg-red-600 text-red-200  px-1 rounded font-bold"
+        className="h-full bg-red-600/40 hover:bg-red-600 text-red-200  px-1 rounded font-bold"
         onClick={() => {
           if (deckID === undefined) {
             return;
@@ -38,7 +38,7 @@ export default function DeleteDeck({ deckID }: Props) {
             });
         }}
       >
-        X
+        <Trash2 size={20} />
       </button>
     </div>
   );
