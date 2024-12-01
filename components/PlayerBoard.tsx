@@ -955,11 +955,16 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                 /* sort so the attack with effect type NORMAL_ATTACK is first, ELEMENTAL_SKILL is second and ELEMENTAL_BURST is last */
                 attacks?.length &&
                   attacks
-                    ?.toSorted((a, b) => {
-                      if (a.effectType === "NORMAL_ATTACK") return 0;
-                      if (a.effectType === "ELEMENTAL_SKILL") return 1;
-                      if (a.effectType === "ELEMENTAL_BURST") return 2;
-                      return 0;
+                    ?.toSorted((a: Effect, b: Effect) => {
+                      const order = [
+                        "NORMAL_ATTACK",
+                        "ELEMENTAL_SKILL",
+                        "ELEMENTAL_BURST",
+                      ];
+                      return (
+                        order.indexOf(a.effectType!) -
+                        order.indexOf(b.effectType!)
+                      );
                     })
                     ?.map((attack) => (
                       <CardAttack
