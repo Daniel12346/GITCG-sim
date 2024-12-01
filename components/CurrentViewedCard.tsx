@@ -26,25 +26,38 @@ export default () => {
         )}
         {/* statuses are only displayed in game */}
         {currentGameID && currentCard?.statuses?.length !== 0 && (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col w-full p-2 gap-1">
             <span>STATUSES</span>
             {currentCard?.statuses?.map((status) => (
-              <span
-                //TODO: use a unique key
-                key={status.name}
-              >{`${status.name}  ${status.turnsLeft ?? ""}`}</span>
+              <div className="flex items-center gap-1">
+                <span>
+                  <img
+                    className="w-6 h-6"
+                    src={`/${status.name.toLowerCase()}.svg`}
+                  ></img>
+                </span>
+                <span
+                  //TODO: use a unique key
+                  key={status.name}
+                >{`${status.name.replace("_", " ")}  ${
+                  status.turnsLeft ?? ""
+                }`}</span>
+              </div>
             ))}
           </div>
         )}
         <div className="flex flex-col gap-1  max-h-[10rem] overflow-y-scroll translate-x-0">
           {currentCard?.effects &&
             currentCard.effects
-              //TODO: fix sorting
-              ?.toSorted((a, b) => {
-                if (a.effectType === "NORMAL_ATTACK") return 0;
-                if (a.effectType === "ELEMENTAL_SKILL") return 1;
-                if (a.effectType === "ELEMENTAL_BURST") return 2;
-                return 0;
+              ?.toSorted((a: Effect, b: Effect) => {
+                const order = [
+                  "NORMAL_ATTACK",
+                  "ELEMENTAL_SKILL",
+                  "ELEMENTAL_BURST",
+                ];
+                return (
+                  order.indexOf(a.effectType!) - order.indexOf(b.effectType!)
+                );
               })
               .map((effect) => {
                 return (
