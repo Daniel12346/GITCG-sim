@@ -59,11 +59,13 @@ export const DiceOfElement = ({
   amount,
   isMyBoard,
   dieSize,
+  displayDiceSelection = false,
 }: {
   element: DieElementName;
   amount: number;
   isMyBoard: boolean;
   dieSize: number;
+  displayDiceSelection: boolean;
 }) => {
   const selectedDice = useRecoilValue(mySelectedDiceState);
   const amountSelected = selectedDice[element] || 0;
@@ -74,7 +76,7 @@ export const DiceOfElement = ({
         size={dieSize}
         element={element}
         isMyBoard={isMyBoard}
-        isSelected={isSelected}
+        isSelected={displayDiceSelection && isSelected}
       />
     );
   });
@@ -102,6 +104,7 @@ export default function DiceDisplay({
               amount={amount}
               isMyBoard={isMyBoard}
               dieSize={8}
+              displayDiceSelection={!!isMain}
             />
           ))}
       </ul>
@@ -131,6 +134,7 @@ export const AttackDiceDisplay = ({
                 amount={amount}
                 isMyBoard={isMyBoard}
                 dieSize={4}
+                displayDiceSelection={false}
               />
             ) : (
               <RequiredEnergyDisplay
