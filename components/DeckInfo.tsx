@@ -38,8 +38,6 @@ export default function DeckInfo() {
           ></input>
           <div className="flex items-center gap-2">
             <DeckSaveButton />
-            {/* TODO: check if deleting current deck works */}
-            <DeckDeleteButton deckID={deckLoadable.contents?.id} />
           </div>
         </div>
       );
