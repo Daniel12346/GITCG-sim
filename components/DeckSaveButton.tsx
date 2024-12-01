@@ -76,14 +76,14 @@ export default () => {
   return (
     <button
       className={`
-bg-green-200/80  hover:bg-green-200 ml-4 text-green-800 px-1 cursor-pointer font-semibold rounded-sm text-center
+text-slate-100  hover:bg-green-600 ml-4 bg-green-700 px-1 cursor-pointer rounded-sm text-center
         ${
           isLoading &&
           "opacity-50 pointer-events-none bg-gray-200 text-gray-800 cursor-not-allowed"
         }
       ${
         deckCardBasicInfoTotalCards !== 33 &&
-        "opacity-50 bg-red-100 text-red-900 pointer-events-none cursor-not-allowed"
+        "opacity-60  bg-red-900 pointer-events-none cursor-not-allowed"
       }`}
       onClick={async () => {
         setIsLoading(true);
