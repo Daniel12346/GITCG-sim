@@ -55,7 +55,7 @@ export default function BattleLogs() {
                 <div
                   className={`
                     w-full
-                    flex items-center  font-bold
+                    flex items-center  font-bold justify-end
                     ${winner_id === myID ? "text-green-400" : "text-red-400"}`}
                 >
                   <span className="ml-3">
