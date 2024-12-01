@@ -21,6 +21,7 @@ import DeckDisplay from "./DeckDisplay";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { updateMyCurrentDeckInDatabase } from "@/app/utils";
 import DeleteDeck from "./DeckDeleteButton";
+import { ChevronRight, ChevronUp } from "lucide-react";
 
 export default function MyDecksDisplay() {
   const supabase = createClientComponentClient<Database>();
@@ -76,15 +77,19 @@ export default function MyDecksDisplay() {
   return (
     <>
       <ul className="mb-6">
-        <span
-          className="text-blue-200 cursor-pointer"
+        <div
+          className="flex text-blue-200 cursor-pointer text-semibold items-center"
           onClick={() => setIsDropdownOpen((prev) => !prev)}
         >
           select deck{" "}
-          <span className="font-extrabold text-xl">
-            {!isDropwdownOpen ? ">" : "v"}
-          </span>
-        </span>
+          <div className="flex font-extrabold items-center ml-1">
+            {!isDropwdownOpen ? (
+              <ChevronRight size={20} strokeWidth={3} />
+            ) : (
+              <ChevronUp size={20} strokeWidth={3} />
+            )}
+          </div>
+        </div>
         <div className={`${isDropwdownOpen ? "" : "hidden "}`}>
           {myDecks?.map((deck) => {
             return (
