@@ -17,13 +17,13 @@ export default function SelectCurrentDeck({ deck }: Props) {
   );
 
   return (
-    <div className="flex gap-2 items-center  font-semibold">
+    <div className="flex gap-2 items-center  ">
       <span>{deck.name}</span>
       {deck.id === myCurrentDeckID ? (
         <span className="text-amber-200/90">active</span>
       ) : (
         <button
-          className="bg-indigo-400/50 hover:bg-indigo-500 text-white-700  px-1 rounded-sm"
+          className="bg-indigo-400/50 hover:bg-indigo-500 text-indigo-100  px-1 rounded-sm"
           onClick={() => {
             setMyCurrentDeckID(deck.id);
             setDeckInDeckBuilderName(deck.name ?? "");
