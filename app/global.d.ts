@@ -160,7 +160,7 @@ type TriggerContextT = {
   //will be used with cost reduction effects
   eventType: EventType;
   //can be used both for attacks and equips
-  targetCard?: CardExt;
+  targetCards?: CardExt[];
   cost?: Cost;
   activatedCard?: CardExt;
   attack?: {
