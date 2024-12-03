@@ -6,6 +6,7 @@ import {
 } from "@/app/actions";
 import { CardExtended } from "@/app/global";
 import {
+  broadcastSwitchPlayer,
   executePhaseEffectsForBothPlayers,
   updateGameWinnerInDatabase,
 } from "@/app/utils";
@@ -346,13 +347,23 @@ export default ({}) => {
               setErrorMessage("No active character");
               return;
             }
-            await channel?.send({
-              type: "broadcast",
-              event: "ready_for_next_phase",
-              payload: {
-                isReadyForNextPhase: !amIReadyForNextPhase,
-              },
-            });
+            await channel
+              ?.send({
+                type: "broadcast",
+                event: "ready_for_next_phase",
+                payload: {
+                  isReadyForNextPhase: !amIReadyForNextPhase,
+                },
+              })
+              .then(() => {
+                if (!isOpponentReadyForNextPhase) {
+                  setCurrentPlayerID(opponentID);
+                  broadcastSwitchPlayer({
+                    channel,
+                    playerID: opponentID,
+                  });
+                }
+              });
             setAmIReadyForNextPhase((prev) => !prev);
           }}
         >
@@ -373,7 +384,11 @@ export default ({}) => {
             {currentPhase?.replace("_", " ")}
           </span>
           {currentPhase === "ACTION_PHASE" && (
-            <span className={`${isMyTurn ? "text-green-400" : "text-red-400"}`}>
+            <span
+              className={`
+                flex items-center
+                ${isMyTurn ? "text-green-400" : "text-red-400"} uppercase`}
+            >
               {isMyTurn ? "your turn" : "opponent's turn"}
             </span>
           )}
