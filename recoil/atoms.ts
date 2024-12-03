@@ -704,3 +704,23 @@ export const myBannerState = selector({
     return banner;
   },
 });
+
+export const doIHaveAnActiveCharacterState = selector({
+  key: "doIHaveAnActiveCharacterState",
+  get: ({ get }) => {
+    const myInGameCards = get(myInGameCardsState);
+    return myInGameCards.some(
+      (card) => card.is_active && card.card_type === "CHARACTER"
+    );
+  },
+});
+
+export const doesOpponentHaveAnActiveCharacterState = selector({
+  key: "doesOpponentHaveAnActiveCharacterState",
+  get: ({ get }) => {
+    const opponentInGameCards = get(opponentInGameCardsState);
+    return opponentInGameCards.some(
+      (card) => card.is_active && card.card_type === "CHARACTER"
+    );
+  },
+});
