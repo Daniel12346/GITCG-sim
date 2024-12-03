@@ -7,6 +7,8 @@ import {
   currentPhaseState,
   currentHighlightedCardState,
   usedAttackState,
+  amIReadyForNextPhaseState,
+  currentActiveCharacterState,
 } from "@/recoil/atoms";
 import { useEffect, useState } from "react";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
@@ -48,6 +50,9 @@ export default function CardInGame({
   let isAttackTarget = usedAttack?.targetCardID === card.id;
   const previousCard = usePrevious(card);
   const [healthChange, setHealthChange] = useState(0);
+  const amIReadyForNextPhase = useRecoilValue(amIReadyForNextPhaseState);
+  const myActiveCharacter = useRecoilValue(currentActiveCharacterState);
+
   useEffect(() => {
     if (
       previousCard &&
@@ -68,7 +73,7 @@ export default function CardInGame({
       className={`
        group  transition-transform bg-blue-200 flex flex-col items-center relative h-24 w-16 border-4
          border-orange-300 
-         ${isDefeated && "border-gray-400"}
+         ${isDefeated && "border-gray-400 scale-100"}
          rounded-md duration-300 ease-in-out
         ${isSelected && "ring-4 ring-offset-2 ring-blue-300"}
         ${card && card.is_active && "scale-125"}
@@ -100,21 +105,29 @@ export default function CardInGame({
       </div>
       {/* used for activating cards from hand */}
       <>
-        {card.location === "HAND" && isMyCard && isMyTurn && (
-          <span
-            className="z-30 cursor-pointer hidden group-hover:block absolute top-1 left-1 bg-green-200 text-green-800 p-1"
-            onClick={handleClick}
-          >
-            activate
-          </span>
-        )}
+        {card.location === "HAND" &&
+          isMyCard &&
+          isMyTurn &&
+          !amIReadyForNextPhase &&
+          //if a player does not control an active character, the only action they can perform is to switch to a new active character
+          (!myActiveCharacter || myActiveCharacter.health === 0) && (
+            <span
+              className="z-30 cursor-pointer hidden group-hover:block absolute top-1 left-1 bg-green-200 text-green-800 p-1"
+              onClick={handleClick}
+            >
+              activate
+            </span>
+          )}
 
         {/* used for switching active character */}
         {card.location === "CHARACTER" &&
           isMyCard &&
+          (!amIReadyForNextPhase ||
+            !myActiveCharacter ||
+            myActiveCharacter.health === 0) &&
           !card.is_active &&
           ((currentPhase === "ACTION_PHASE" && isMyTurn) ||
-            currentPhase === "PREPARATION_PHASE") && (
+            (currentPhase === "PREPARATION_PHASE" && !myActiveCharacter)) && (
             <span
               className="z-30 cursor-pointer hidden group-hover:block absolute top-1 left-1 bg-green-200 text-green-800 p-1"
               onClick={handleClick}
