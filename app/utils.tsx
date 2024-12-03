@@ -357,7 +357,7 @@ export const calculateDamageAfterModifiers = ({
               attackerCard: thisCard,
               attackBaseEffectID: effect.effect_basic_info_id,
             },
-            targetCard: targetCards[0],
+            targetCards,
           },
           currentRound,
         });
@@ -1163,9 +1163,11 @@ ExecutePhaseEffectsParams) => {
 export const broadcastSwitchPlayer = ({
   channel,
   playerID,
+  delay = 400,
 }: {
   channel: RealtimeChannel;
   playerID: string;
+  delay?: number;
 }) => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
@@ -1177,7 +1179,7 @@ export const broadcastSwitchPlayer = ({
         })
         .then(resolve)
         .catch(reject);
-    }, 400);
+    }, delay);
   });
 };
 
