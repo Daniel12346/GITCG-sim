@@ -20,6 +20,7 @@ import {
   opponentProfileState,
   myProfileState,
   isOpponentReadyForNextPhaseState,
+  amIReadyForNextPhaseState,
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
@@ -101,6 +102,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   const isOpponentReadyForNextPhase = useRecoilValue(
     isOpponentReadyForNextPhaseState
   );
+  const amIReadyForNextPhase = useRecoilValue(amIReadyForNextPhaseState);
   useEffect(() => {
     const supabase = createClientComponentClient<Database>();
     const channel = supabase.channel("game-updates:" + gameID, {
@@ -155,8 +157,10 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     card: CardExt,
     {
       phase,
+      amIReadyForNextPhase,
     }: {
       phase: PhaseName | null;
+      amIReadyForNextPhase: boolean;
     }
   ) => {
     if (!myCards) return;
@@ -194,6 +198,15 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             return c;
           }) as CardExtended[]
       );
+      if (amIReadyForNextPhase) {
+        //if the player is ready for the next phase, the turn is passed back to the opponent
+        setCurrentPlayerID(opponentID);
+        channel &&
+          broadcastSwitchPlayer({
+            channel,
+            playerID: opponentID,
+          });
+      }
     } else {
       //the default cost of switching a character is 1 UNALIGNED die
       if (phase === "PREPARATION_PHASE") {
@@ -740,6 +753,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             eventType: "CARD_ACTIVATION",
             cost,
             activatedCard: card,
+            targetCards: selectedTargetCards,
           },
           currentRound,
         },
@@ -1003,6 +1017,13 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                             opponentUpdatedDice &&
                               setOpponentDice(opponentUpdatedDice);
                             setSelectedTargets([]);
+                            const opponentsActiveCharacterIsDefeated =
+                              opponentUpdatedCards?.find(
+                                (c) =>
+                                  c.location === "CHARACTER" &&
+                                  c.is_active &&
+                                  c.health === 0
+                              );
                             channel
                               ?.send({
                                 type: "broadcast",
@@ -1025,7 +1046,11 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                                 setMySelectedDice({});
                                 //passing the turn to the opponent
                                 //the attacker continues their turn if the attack was a fast action or if the opponent finished their actions for the phase
-                                if (!isOpponentReadyForNextPhase) {
+                                if (
+                                  !isOpponentReadyForNextPhase ||
+                                  //if the opponent's active character was defeated, they switch to another character, even if they have finished their actions in this phase
+                                  opponentsActiveCharacterIsDefeated
+                                ) {
                                   setCurrentPlayerID(opponentID);
                                   broadcastSwitchPlayer({
                                     channel,
@@ -1101,7 +1126,10 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                   creationDisplayElements={creationDisplayElements}
                   handleClick={() => {
                     isMyBoard &&
-                      handleSwitchCharacter(card, { phase: currentPhase });
+                      handleSwitchCharacter(card, {
+                        phase: currentPhase,
+                        amIReadyForNextPhase,
+                      });
                   }}
                 />
               );
