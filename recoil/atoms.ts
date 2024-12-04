@@ -724,3 +724,12 @@ export const doesOpponentHaveAnActiveCharacterState = selector({
     );
   },
 });
+
+export const myCurrentActiveCharacterEnergyState = selector({
+  key: "myCurrentActiveCharacterEnergyState",
+  get: ({ get }) => {
+    const myActiveCharacter = get(currentActiveCharacterState);
+    if (!myActiveCharacter) return 0;
+    return myActiveCharacter.energy;
+  },
+});
