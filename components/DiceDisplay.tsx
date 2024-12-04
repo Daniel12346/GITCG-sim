@@ -1,4 +1,8 @@
-import { currentPhaseState, mySelectedDiceState } from "@/recoil/atoms";
+import {
+  currentActiveCharacterState,
+  currentPhaseState,
+  mySelectedDiceState,
+} from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue } from "recoil";
 import ElementalTuning from "./ElementalTuning";
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -92,6 +96,9 @@ export default function DiceDisplay({
   const currentPhase = useRecoilValue(currentPhaseState);
   return (
     <div className={`${!isMyBoard && "pt-3"} h-full`}>
+      {withElementalTuning && isMyBoard && currentPhase === "ACTION_PHASE" && (
+        <ElementalTuning channel={channel || null} />
+      )}
       <ul
         className={`flex gap-2 flex-wrap p-3 h-full
         ${isMain && "p-0 h-full overflow-y-scroll"}`}
@@ -108,9 +115,6 @@ export default function DiceDisplay({
             />
           ))}
       </ul>
-      {withElementalTuning && isMyBoard && currentPhase === "ACTION_PHASE" && (
-        <ElementalTuning channel={channel || null} />
-      )}
     </div>
   );
 }
@@ -122,6 +126,8 @@ export const AttackDiceDisplay = ({
   withElementalTuning,
 }: DiceDisplayProps) => {
   const currentPhase = useRecoilValue(currentPhaseState);
+  const myCurrentActiveCharacter = useRecoilValue(currentActiveCharacterState);
+  const currentEnergy = myCurrentActiveCharacter?.energy || 0;
   return (
     <div>
       <ul className="flex flex-row gap-1 flex-wrap justify-center">
@@ -138,8 +144,10 @@ export const AttackDiceDisplay = ({
               />
             ) : (
               <RequiredEnergyDisplay
-                energySize={4}
                 energy={amount}
+                energySize={4}
+                currentEnergy={currentEnergy}
+                showCurrentEnergy
               ></RequiredEnergyDisplay>
             )
           )}
