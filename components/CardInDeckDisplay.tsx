@@ -46,7 +46,7 @@ export default function CardInDeckDisplay({
           `}
       ></div>
 
-      <div className="z-10 flex justify-between w-full">
+      <div className="z-10 flex justify-between w-full absolute">
         <span className="bg-orange-300 rounded-sm text-orange-800 -ml-1 ">
           {card.base_health}
         </span>

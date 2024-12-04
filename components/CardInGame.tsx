@@ -110,7 +110,8 @@ export default function CardInGame({
           isMyTurn &&
           !amIReadyForNextPhase &&
           //if a player does not control an active character, the only action they can perform is to switch to a new active character
-          (!myActiveCharacter || myActiveCharacter.health === 0) && (
+          myActiveCharacter &&
+          myActiveCharacter.health !== 0 && (
             <span
               className="z-30 cursor-pointer hidden group-hover:block absolute top-1 left-1 bg-green-200 text-green-800 p-1"
               onClick={handleClick}
@@ -161,7 +162,7 @@ export default function CardInGame({
           </span>
         </div>
       )}
-      <div className="z-10 flex justify-between w-full">
+      <div className="z-10 flex justify-between w-full absolute top-0 left-0">
         <span
           className={`bg-orange-300 transition-all rounded-sm text-orange-800 -ml-1 
         ${healthChange > 0 && "scale-125 bg-green-800 text-green-200"}
