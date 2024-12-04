@@ -133,10 +133,10 @@ type ExecuteEffectParamsT = {
   opponentCards: CardExt[];
   myDice: Dice;
   effect: Effect;
+  thisCardID: string;
   opponentDice: Dice;
   playerID?: string;
   triggerContext?: TriggerContext;
-  thisCard?: CardExt;
   //the card that is being targeted by the activated card
   targetCards?: CardExt[];
   summons?: CardExt[];

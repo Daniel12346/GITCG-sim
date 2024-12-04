@@ -37,8 +37,8 @@ import {
   broadcastSwitchPlayer,
   subtractCostAfterModifiers,
   calculateTotalDice,
-  findCostModifyingEffects,
-  findEffectsThatTriggerOn,
+  findCostModifyingEffectsWithCardIDs,
+  findEffectsThatTriggerOnWithCardIDs,
   findEquippedCards,
 } from "@/app/utils";
 import DiceDisplay from "./DiceDisplay";
@@ -178,6 +178,9 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         if (c.id === card.id) {
           return { ...c, is_active: true };
         }
+        if (c.id === activeCharacter?.id) {
+          return { ...c, is_active: false };
+        }
         return c;
       }) as CardExtended[];
       const res = await channel?.send({
@@ -194,6 +197,10 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           prev.map((c) => {
             if (c.id === card.id) {
               return { ...c, is_active: true };
+            } else {
+              if (c.location === "CHARACTER" && c.is_active) {
+                return { ...c, is_active: false };
+              }
             }
             return c;
           }) as CardExtended[]
@@ -229,20 +236,21 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         myUpdatedCards = myUpdatedCardsAfterSwitch;
       }
 
-      const effectsThatTriggerOnSwitch = findEffectsThatTriggerOn(
-        "SWITCH_CHARACTER",
-        myUpdatedCards,
-        {
-          includeCostModifiers: true,
-        }
-      );
+      const effectsThatTriggerOnSwitchWithCardIDs =
+        findEffectsThatTriggerOnWithCardIDs(
+          "SWITCH_CHARACTER",
+          myUpdatedCards,
+          {
+            includeCostModifiers: true,
+          }
+        );
       //switching character is not a fast action by default
       let isSwitchFastAction = false;
       if (switchedFrom?.health === 0) {
         //switching from a defeated character is a fast action
         isSwitchFastAction = true;
       }
-      effectsThatTriggerOnSwitch.forEach((effect) => {
+      effectsThatTriggerOnSwitchWithCardIDs.forEach(({ effect, cardID }) => {
         const effectLogic = findEffectLogic(effect);
         if (!effectLogic?.execute) return;
         const {
@@ -254,6 +262,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           isFastAction,
         } = effectLogic.execute({
           effect,
+          thisCardID: cardID,
           playerID: myID,
           myCards: myUpdatedCards || myCards,
           myDice,
@@ -494,9 +503,9 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     let myDiceAfterCost = myDice;
     let myUpdatedCards = myCards;
     if (cost) {
-      const costModifyingEffects = findCostModifyingEffects(myCards);
+      const costModifyingEffectsWithCardIDs = findCostModifyingEffectsWithCardIDs(myCards);
       //execute all cost modifying effects
-      costModifyingEffects.forEach((effect) => {
+      costModifyingEffectsWithCardIDs.forEach(({ effect, cardID }) => {
         const effectLogic = findEffectLogic(effect);
         if (!effectLogic?.execute) return;
         let {
@@ -509,6 +518,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           playerID: myID,
           myCards: myUpdatedCards,
           myDice,
+          thisCardID: cardID,
           opponentCards: opponentInGameCards,
           opponentDice: opponentDice,
           triggerContext: {
@@ -557,6 +567,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       opponentUpdatedDice,
       errorMessage,
     } = activateEffect({
+      thisCardID: attackerCard!.id,
       playerID: myID,
       effect: attackEffect,
       myCards: myUpdatedCards,
@@ -676,9 +687,10 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     let cost = card.cost;
     try {
       if (cost) {
-        const costModifyingEffects = findCostModifyingEffects(myCards);
+        const costModifyingEffectsWithCardIDs =
+          findCostModifyingEffectsWithCardIDs(myCards);
         //execute all cost modifying effects
-        costModifyingEffects.forEach((effect) => {
+        costModifyingEffectsWithCardIDs.forEach(({ effect, cardID }) => {
           const effectLogic = findEffectLogic(effect);
           if (!effectLogic?.execute) return;
           let {
@@ -687,12 +699,14 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             myUpdatedCards: myUpdatedCardsAfterCostModifyingEffect,
           } = effectLogic.execute({
             summons,
+            thisCardID: cardID,
             effect,
             playerID: myID,
             myCards: myUpdatedCards,
             myDice,
             opponentCards: opponentUpdatedCards,
             opponentDice: opponentUpdatedDice,
+            targetCards: selectedTargetCards,
             triggerContext: {
               eventType: "CARD_ACTIVATION",
               cost,
@@ -788,8 +802,8 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       return c;
     });
 
-    const myOtherCardEffectsThatTriggerOnCardActivation =
-      findEffectsThatTriggerOn(
+    const myOtherCardEffectsThatTriggerOnCardActivationWithCardIDs =
+      findEffectsThatTriggerOnWithCardIDs(
         "CARD_ACTIVATION",
         myCards,
         //cost modifers will be handled separately before the other effects are executed
@@ -801,65 +815,26 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     try {
       if (
         thisCardEffectsThatTriggerOnThisCardActivation.length !== 0 ||
-        myOtherCardEffectsThatTriggerOnCardActivation.length !== 0
+        myOtherCardEffectsThatTriggerOnCardActivationWithCardIDs.length !== 0
       ) {
-        //   setMyCards(myUpdatedCards);
-        //   setMyDice(myUpdatedDice);
-        //   channel?.send({
-        //     type: "broadcast",
-        //     event: "updated_cards_and_dice",
-        //     payload: {
-        //       myCards: myUpdatedCards,
-        //       myDice: myUpdatedDice,
-        //     },
-        //   });
-        //   return;
-        // } else {
-        //TODO: fix
-        // const { errorMessage, myUpdatedCards, myUpdatedDice } =
-        //   executeEffectsSequentially({
-        //     effects: [
-        //       ...thisCardEffectsThatTriggerOnThisCardActivation,
-        //       ...myOtherCardEffectsThatTriggerOnCardActivation,
-        //     ],
-        //     executeArgs: {
-        //       playerID: myID,
-        //       myCards: myUpdatedCards,
-        //       myDice: myUpdatedDice,
-        //       opponentCards: opponentUpdatedCards,
-        //       opponentDice: opponentUpdatedDice,
-        //       summons,
-        //       triggerContext: {
-        //         eventType: "CARD_ACTIVATION",
-        //       },
-        //       currentRound,
-        //     },
-        //   });
-        //TODO: check if this works
-        [
-          ...(thisCardEffectsThatTriggerOnThisCardActivation || []),
-          ...(myOtherCardEffectsThatTriggerOnCardActivation || []),
-        ].forEach((effect) => {
-          const effectLogic = findEffectLogic(effect);
+        //execute all effects that trigger on this card activation
 
+        [
+          ...(thisCardEffectsThatTriggerOnThisCardActivation.map(
+            (cardEffect) => ({
+              effect: cardEffect,
+              cardID: card.id,
+            })
+          ) || []),
+          ...(myOtherCardEffectsThatTriggerOnCardActivationWithCardIDs || []),
+        ].forEach(({ effect, cardID }, idx) => {
+          const effectLogic = findEffectLogic(effect);
+          const eventType =
+            idx < thisCardEffectsThatTriggerOnThisCardActivation.length
+              ? "THIS_CARD_ACTIVATION"
+              : "CARD_ACTIVATION";
           if (!effectLogic.execute) return;
-          //   //TODO: is this necessary?
-          // if (effectLogic.checkIfCanBeExecuted) {
-          //   const { errorMessage } = effectLogic.checkIfCanBeExecuted({
-          //     playerID: myID,
-          //     myCards: myCardsAfterTriggeredEffects,
-          //     myDice: myDiceAfterTriggeredEffects,
-          //     opponentCards: opponentInGameCardsAfterTriggeredEffects,
-          //     opponentDice: opponentDiceAfterTriggeredEffects,
-          //     triggerContext: {
-          //       eventType: "CARD_ACTIVATION",
-          //     },
-          //   });
-          //   if (errorMessage) {
-          //     setErrorMessage(errorMessage);
-          //     return;
-          //   }
-          // }
+
           const {
             myUpdatedCards: myCardsAfterTriggeredEffects,
             myUpdatedDice: myDiceAfterTriggeredEffects,
@@ -868,6 +843,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             errorMessage,
           } = effectLogic.execute({
             effect,
+            thisCardID: cardID,
             playerID: myID,
             summons,
             myCards: myUpdatedCards,
@@ -876,8 +852,12 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             opponentDice: opponentDice,
             currentRound,
             targetCards: selectedTargetCards,
-
-            //TODO: add trigger context
+            triggerContext: {
+              eventType,
+              cost,
+              activatedCard: card,
+              targetCards: selectedTargetCards,
+            },
           });
           if (errorMessage) {
             setErrorMessage(errorMessage);

@@ -133,25 +133,32 @@ export const findEquippedCards = (
       (type ? card.subtype === type : true)
   );
 };
+type EffectAndCardID = {
+  effect: Effect;
+  cardID: string;
+};
 
-export const findCostModifyingEffects = (cards: CardExt[]) => {
+//returns all cost modifying effects of the cards along with IDs of the cards they belong to
+export const findCostModifyingEffectsWithCardIDs = (cards: CardExt[]) => {
   return cards.reduce((acc, card) => {
     //TODO: add other allowed locations
     return ["ACTION", "EQUIPPED"].includes(card.location!) ||
       (card.location === "DISCARDED" && card.wasActivatedThisTurn)
       ? acc.concat(
-          card.effects.filter((effect) => effect.effectType === "COST_MODIFIER")
+          card.effects
+            .filter((effect) => effect.effectType === "COST_MODIFIER")
+            ?.map((effect) => ({ effect, cardID: card.id }))
         )
       : acc;
-  }, [] as Effect[]);
+  }, [] as EffectAndCardID[]);
 };
 
-export const findCostModifyingEffectsOfCardsEquippedTo = (
+export const findCostModifyingEffectWithCardIDsOfCardsEquippedTo = (
   target: CardExt,
   playerCards: CardExt[]
 ) => {
   const equippedCards = findEquippedCards(target, playerCards);
-  return findCostModifyingEffects(equippedCards);
+  return findCostModifyingEffectsWithCardIDs(equippedCards);
 };
 
 export const subtractCostAfterModifiers = ({
@@ -160,7 +167,7 @@ export const subtractCostAfterModifiers = ({
   selectedDice,
 }: {
   baseCost: Cost;
-  executeArgs: Omit<ExecuteEffectParams, "effect">;
+  executeArgs: Omit<ExecuteEffectParams, "effect" | "thisCardID">;
   selectedDice: Dice;
 }) => {
   let modifiedCost = baseCost;
@@ -171,9 +178,10 @@ export const subtractCostAfterModifiers = ({
   if (!triggerContext) {
     return { errorMessage: "No trigger context" };
   }
-  const costModifyingEffects = findCostModifyingEffects(myUpdatedCards);
+  const costModifyingEffectsWithCardIDs =
+    findCostModifyingEffectsWithCardIDs(myUpdatedCards);
   //execute all cost modifying effects
-  costModifyingEffects.forEach((effect) => {
+  costModifyingEffectsWithCardIDs.forEach(({ effect, cardID }) => {
     const effectLogic = findEffectLogic(effect);
     if (!effectLogic?.execute) return;
     let {
@@ -183,6 +191,7 @@ export const subtractCostAfterModifiers = ({
     } = effectLogic.execute({
       ...executeArgs,
       effect,
+      thisCardID: cardID,
       triggerContext: {
         ...triggerContext,
         cost: modifiedCost,
@@ -222,7 +231,7 @@ export const calculateCostAfterModifiers = ({
   executeArgs,
 }: {
   baseCost: Cost;
-  executeArgs: Omit<ExecuteEffectParams, "effect">;
+  executeArgs: Omit<ExecuteEffectParams, "effect" | "thisCardID">;
 }) => {
   let modifiedCost = baseCost;
   const triggerContext = executeArgs.triggerContext;
@@ -230,15 +239,18 @@ export const calculateCostAfterModifiers = ({
   if (!triggerContext) {
     return { errorMessage: "No trigger context" };
   }
-  const costModifyingEffects = findCostModifyingEffects(executeArgs.myCards);
+  const costModifyingEffectsWithCardIDs = findCostModifyingEffectsWithCardIDs(
+    executeArgs.myCards
+  );
   //execute all cost modifying effects
-  costModifyingEffects.forEach((effect) => {
+  costModifyingEffectsWithCardIDs.forEach(({ effect, cardID }) => {
     const effectLogic = findEffectLogic(effect);
     if (!effectLogic?.execute) return;
     let { modifiedCost: modifiedCostAfterCostModyfingEffect } =
       effectLogic.execute({
         ...executeArgs,
         effect,
+        thisCardID: cardID,
         triggerContext: {
           ...triggerContext,
           cost: modifiedCost,
@@ -253,7 +265,7 @@ export const calculateCostAfterModifiers = ({
   return { modifiedCost };
 };
 
-export const findDamageModifyingEffects = (
+export const findDamageModifyingEffectsWithCardIDs = (
   cards: CardExt[],
   trigger?: EventType
 ) => {
@@ -261,19 +273,21 @@ export const findDamageModifyingEffects = (
     return ["ACTION", "EQUIPPED"].includes(card.location!) ||
       (card.location === "DISCARDED" && card.wasActivatedThisTurn)
       ? acc.concat(
-          card.effects.filter((effect) => {
-            const effectLogic = findEffectLogic(effect);
-            return (
-              effect.effectType === "DAMAGE_MODIFIER" &&
-              (trigger ? effectLogic.triggerOn?.includes(trigger) : true)
-            );
-          })
+          card.effects
+            .filter((effect) => {
+              const effectLogic = findEffectLogic(effect);
+              return (
+                effect.effectType === "DAMAGE_MODIFIER" &&
+                (trigger ? effectLogic.triggerOn?.includes(trigger) : true)
+              );
+            })
+            .map((effect) => ({ effect, cardID: card.id }))
         )
       : acc;
-  }, [] as Effect[]);
+  }, [] as EffectAndCardID[]);
 };
 
-export const findEffectsThatTriggerOn = (
+export const findEffectsThatTriggerOnWithCardIDs = (
   trigger: EventType,
   cards: CardExt[],
   {
@@ -286,24 +300,26 @@ export const findEffectsThatTriggerOn = (
     return ["ACTION", "EQUIPPED", "SUMMON", null].includes(card.location!) ||
       (card.location === "DISCARDED" && card.wasActivatedThisTurn)
       ? acc.concat(
-          card.effects.filter((effect) => {
-            const effectLogic = findEffectLogic(effect);
-            const includesTrigger = effectLogic.triggerOn?.includes(trigger);
-            if (includesTrigger) {
-              if (effect.effectType === "COST_MODIFIER") {
-                return includeCostModifiers;
+          card.effects
+            .filter((effect) => {
+              const effectLogic = findEffectLogic(effect);
+              const includesTrigger = effectLogic.triggerOn?.includes(trigger);
+              if (includesTrigger) {
+                if (effect.effectType === "COST_MODIFIER") {
+                  return includeCostModifiers;
+                }
+                if (effect.effectType === "DAMAGE_MODIFIER") {
+                  return includeDamageModifiers;
+                }
+                return true;
+              } else {
+                return false;
               }
-              if (effect.effectType === "DAMAGE_MODIFIER") {
-                return includeDamageModifiers;
-              }
-              return true;
-            } else {
-              return false;
-            }
-          })
+            })
+            .map((effect) => ({ effect, cardID: card.id }))
         )
       : acc;
-  }, [] as Effect[]);
+  }, [] as EffectAndCardID[]);
 };
 
 export const calculateDamageAfterModifiers = ({
@@ -327,8 +343,8 @@ export const calculateDamageAfterModifiers = ({
 }) => {
   let damage = baseDamage;
   let myUpdatedCards = myCards;
-  const damageModifyingEffects = findDamageModifyingEffects(myCards);
-  damageModifyingEffects.forEach((effect) => {
+  const damageModifyingEffects = findDamageModifyingEffectsWithCardIDs(myCards);
+  damageModifyingEffects.forEach(({ effect, cardID }) => {
     const effectLogic = findEffectLogic(effect);
     if (
       effectLogic.execute &&
@@ -339,6 +355,7 @@ export const calculateDamageAfterModifiers = ({
           effect,
           opponentDice,
           currentRound,
+          thisCardID: cardID,
           myDice,
         })) ||
         !effectLogic.checkIfCanBeExecuted)
@@ -350,6 +367,7 @@ export const calculateDamageAfterModifiers = ({
           myDice,
           opponentDice,
           effect,
+          thisCardID: cardID,
           triggerContext: {
             eventType: "ATTACK",
             damage,
@@ -853,13 +871,13 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       return card;
     });
 
-    const effectsThatTriggerOnReaction = findEffectsThatTriggerOn(
+    const effectsThatTriggerOnReaction = findEffectsThatTriggerOnWithCardIDs(
       "REACTION",
       //TODO!: handle opponent's effects
       [...myUpdatedCards]
     );
     if (effectsThatTriggerOnReaction.length > 0) {
-      effectsThatTriggerOnReaction.forEach((effect) => {
+      effectsThatTriggerOnReaction.forEach(({ effect, cardID }) => {
         const effectLogic = findEffectLogic(effect);
         if (
           effectLogic.execute &&
@@ -867,6 +885,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
             effectLogic.checkIfCanBeExecuted({
               effect,
               myCards,
+              thisCardID: cardID,
               opponentCards,
               //TODO: add dice
               myDice: {},
@@ -884,6 +903,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
             opponentCards: opponentUpdatedCards,
             //TODO: add dice
             myDice: {},
+            thisCardID: cardID,
             opponentDice: {},
             triggerContext: {
               eventType: "REACTION",
@@ -977,11 +997,11 @@ export const createSummon = ({
 };
 
 type ExecuteEffectsSequentiallyParams = {
-  effects: Effect[];
-  executeArgs: Omit<ExecuteEffectParams, "effect">;
+  effectsAndCardIDs: EffectAndCardID[];
+  executeArgs: Omit<ExecuteEffectParams, "effect" | "thisCardID">;
 };
 export const executeEffectsSequentially = ({
-  effects,
+  effectsAndCardIDs,
   executeArgs,
 }: ExecuteEffectsSequentiallyParams) => {
   let myUpdatedCards = executeArgs.myCards;
@@ -990,58 +1010,65 @@ export const executeEffectsSequentially = ({
   let opponentUpdatedDice = executeArgs.opponentDice;
   let errorMessage: string | null = null;
 
-  effects.forEach((effect) => {
-    if (errorMessage) return;
-    const effectLogic = findEffectLogic(effect);
-
-    if (!effectLogic.execute) return;
-    // if (effectLogic.checkIfCanBeExecuted) {
-    //   //TODO: is this necessary?
-    //   const { errorMessage } = effectLogic.checkIfCanBeExecuted({
-    //     playerID: myID,
-    //     myCards: myCardsAfterTriggeredEffects,
-    //     myDice: myDiceAfterTriggeredEffects,
-    //     opponentCards: opponentInGameCardsAfterTriggeredEffects,
-    //     opponentDice: opponentDiceAfterTriggeredEffects,
-    //     triggerContext: {
-    //       eventType: "CARD_ACTIVATION",
-    //     },
-    //   });
-    //   if (errorMessage) {
-    //     setErrorMessage(errorMessage);
-    //     return;
-    //   }
-    // }
-    const {
-      myUpdatedCards: myUpdatedCardsAfterEffects,
-      myUpdatedDice: myUpdatedDiceAfterEffects,
-      opponentUpdatedCards: opponentUpdatedCardsAfterEffects,
-      opponentUpdatedDice: opponentUpdatedDiceAfterEffects,
-      errorMessage: errorMessageAfterEffects,
-    } = effectLogic.execute({
-      ...executeArgs,
-      myCards: myUpdatedCards,
-      myDice: myUpdatedDice,
-      opponentCards: opponentUpdatedCards,
-      opponentDice: opponentUpdatedDice,
+  effectsAndCardIDs.forEach(
+    ({
       effect,
-    });
-    if (errorMessageAfterEffects) {
-      errorMessage = errorMessageAfterEffects;
+      //TODO!: use cardID
+      cardID,
+    }) => {
+      if (errorMessage) return;
+      const effectLogic = findEffectLogic(effect);
+
+      if (!effectLogic.execute) return;
+      // if (effectLogic.checkIfCanBeExecuted) {
+      //   //TODO: is this necessary?
+      //   const { errorMessage } = effectLogic.checkIfCanBeExecuted({
+      //     playerID: myID,
+      //     myCards: myCardsAfterTriggeredEffects,
+      //     myDice: myDiceAfterTriggeredEffects,
+      //     opponentCards: opponentInGameCardsAfterTriggeredEffects,
+      //     opponentDice: opponentDiceAfterTriggeredEffects,
+      //     triggerContext: {
+      //       eventType: "CARD_ACTIVATION",
+      //     },
+      //   });
+      //   if (errorMessage) {
+      //     setErrorMessage(errorMessage);
+      //     return;
+      //   }
+      // }
+      const {
+        myUpdatedCards: myUpdatedCardsAfterEffects,
+        myUpdatedDice: myUpdatedDiceAfterEffects,
+        opponentUpdatedCards: opponentUpdatedCardsAfterEffects,
+        opponentUpdatedDice: opponentUpdatedDiceAfterEffects,
+        errorMessage: errorMessageAfterEffects,
+      } = effectLogic.execute({
+        ...executeArgs,
+        myCards: myUpdatedCards,
+        myDice: myUpdatedDice,
+        opponentCards: opponentUpdatedCards,
+        opponentDice: opponentUpdatedDice,
+        effect,
+        thisCardID: cardID,
+      });
+      if (errorMessageAfterEffects) {
+        errorMessage = errorMessageAfterEffects;
+      }
+      if (myUpdatedCardsAfterEffects) {
+        myUpdatedCards = myUpdatedCardsAfterEffects;
+      }
+      if (myUpdatedDiceAfterEffects) {
+        myUpdatedDice = myUpdatedDiceAfterEffects;
+      }
+      if (opponentUpdatedCardsAfterEffects) {
+        opponentUpdatedCards = opponentUpdatedCardsAfterEffects;
+      }
+      if (opponentUpdatedDiceAfterEffects) {
+        opponentUpdatedDice = opponentUpdatedDiceAfterEffects;
+      }
     }
-    if (myUpdatedCardsAfterEffects) {
-      myUpdatedCards = myUpdatedCardsAfterEffects;
-    }
-    if (myUpdatedDiceAfterEffects) {
-      myUpdatedDice = myUpdatedDiceAfterEffects;
-    }
-    if (opponentUpdatedCardsAfterEffects) {
-      opponentUpdatedCards = opponentUpdatedCardsAfterEffects;
-    }
-    if (opponentUpdatedDiceAfterEffects) {
-      opponentUpdatedDice = opponentUpdatedDiceAfterEffects;
-    }
-  });
+  );
   return {
     errorMessage,
     myUpdatedCards,
@@ -1054,7 +1081,7 @@ export const executeEffectsSequentially = ({
 type ExecutePhaseEffectsParams = {
   // amIPlayer1: boolean;
   phaseName: PhaseName;
-  executeArgs: Omit<ExecuteEffectParams, "effect">;
+  executeArgs: Omit<ExecuteEffectParams, "effect" | "thisCardID">;
   areMyEffectsFirst?: boolean;
 };
 const executePhaseEffectsForOnePlayer = ({
@@ -1065,7 +1092,7 @@ const executePhaseEffectsForOnePlayer = ({
   let myUpdatedDice = executeArgs.myDice;
   let opponentUpdatedCards = executeArgs.opponentCards;
   let opponentUpdatedDice = executeArgs.opponentDice;
-  const myEffectsThatTriggeOnPhase = findEffectsThatTriggerOn(
+  const myEffectsThatTriggeOnPhase = findEffectsThatTriggerOnWithCardIDs(
     phaseName,
     myUpdatedCards
   );
@@ -1076,7 +1103,7 @@ const executePhaseEffectsForOnePlayer = ({
     opponentUpdatedDice: opponentDiceAfterTriggeredEffects,
     errorMessage,
   } = executeEffectsSequentially({
-    effects: myEffectsThatTriggeOnPhase,
+    effectsAndCardIDs: myEffectsThatTriggeOnPhase,
     executeArgs: {
       ...executeArgs,
       myCards: myUpdatedCards,
@@ -1111,9 +1138,7 @@ const executePhaseEffectsForOnePlayer = ({
 export const executePhaseEffectsForBothPlayers = ({
   phaseName,
   executeArgs,
-}: //TODO: implement!
-// areMyEffectsFirst,
-ExecutePhaseEffectsParams) => {
+}: ExecutePhaseEffectsParams) => {
   //player 1 is always the one executing this entire function
 
   //executing phase effects for player 1 (myUpdatedCards, myUpdatedDice refer to player 1)
@@ -1292,8 +1317,6 @@ export const deleteDeck = async ({
   client: SupabaseClient<Database>;
   deckID: string;
 }) => {
-  console.log("Deleting deck", deckID);
-  //TODO: cascade delete
   try {
     await client.from("deck").delete().eq("id", deckID);
   } catch (e) {
