@@ -1,5 +1,6 @@
 import { calculateCostAfterModifiers } from "@/app/utils";
 import {
+  amIReadyForNextPhaseState,
   currentPhaseState,
   currentRoundState,
   myDiceState,
@@ -10,7 +11,6 @@ import {
 } from "@/recoil/atoms";
 import { useRecoilValue } from "recoil";
 import { AttackDiceDisplay } from "./DiceDisplay";
-import { useEffect } from "react";
 
 type Props = {
   attack: Effect;
@@ -40,10 +40,7 @@ export default function CardAttackInfo({
   const currentRound = useRecoilValue(currentRoundState);
   const opponentDice = useRecoilValue(opponentDiceState);
   const currentPhase = useRecoilValue(currentPhaseState);
-  useEffect(() => {
-    console.log("thisc", thisCard);
-  }, [thisCard]);
-  // TODO: calculate and display actual cost?
+  const amIReadyForNextPhase = useRecoilValue(amIReadyForNextPhaseState);
   const { modifiedCost } = calculateCostAfterModifiers({
     baseCost: attack.cost ?? {},
     executeArgs: {
@@ -58,18 +55,25 @@ export default function CardAttackInfo({
       triggerContext: {
         eventType: "ATTACK",
         attack: {
-          attackBaseEffectID: attack.id,
+          attackerCard: thisCard,
+          attackBaseEffectID: attack.effect_basic_info_id,
         },
+        targetCards,
       },
     },
   });
-  const maxEnergy = thisCard?.max_energy;
   return (
-    currentPhase === "ACTION_PHASE" && (
+    currentPhase === "ACTION_PHASE" &&
+    !amIReadyForNextPhase && (
       <div>
         <div
-          className={`flex flex-col justify-between z-20 mr-3 bg-yellow-600/80 hover:bg-yellow-600 text-xl text-slate-100 hover:scale-110 transition-all ring-2 ring-offset-2 hover:ring-offset-4  ring-amber-600/70 rounded-lg w-20 h-20 items-center py-2
-         ${!isCardFrozen && "cursor-pointer"}`}
+          className={`flex cursor-pointer flex-col justify-between z-20 mr-3 bg-yellow-600/80 hover:bg-yellow-600 text-xl text-slate-100 hover:scale-110 transition-all ring-2 ring-offset-2 hover:ring-offset-4  ring-amber-600/70 rounded-lg w-20 h-20 items-center py-2
+         ${
+           isCardFrozen ||
+           (attack.effectType === "ELEMENTAL_BURST" &&
+             (thisCard?.max_energy || 0) > (thisCard?.energy || 0) &&
+             "cursor-none opacity-50")
+         }`}
           onClick={() => {
             if (!isCardFrozen) {
               handleAttack();
@@ -94,9 +98,6 @@ export default function CardAttackInfo({
           </div>
           <div className="w-full flex justify-center">
             <AttackDiceDisplay dice={modifiedCost ?? {}} isMyBoard={true} />
-            {/* {attack?.effectType === "ELEMENTAL_BURST" && maxEnergy && (
-            <RequiredEnergyDisplay energy={maxEnergy} />
-          )} */}
           </div>
         </div>
       </div>
