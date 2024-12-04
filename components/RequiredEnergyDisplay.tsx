@@ -1,9 +1,13 @@
 export default function RequiredEnergyDisplay({
   energy,
+  showCurrentEnergy = false,
+  currentEnergy,
   energySize = 4,
 }: {
   energy: number;
   energySize: number;
+  showCurrentEnergy?: boolean;
+  currentEnergy?: number;
 }) {
   return (
     <div className="flex items-center">
@@ -15,7 +19,12 @@ export default function RequiredEnergyDisplay({
           <img
             key={"energy" + i}
             src="/energy_icon.svg"
-            className={`w-${energySize} h-${energySize}`}
+            className={`w-${energySize} h-${energySize} 
+            ${
+              !showCurrentEnergy || i < (currentEnergy ?? 0)
+                ? "opacity-100"
+                : "opacity-50 grayscale"
+            }`}
           />
         ))}
       </ul>
