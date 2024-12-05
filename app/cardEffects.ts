@@ -50,7 +50,7 @@ const executeAttack = ({
   if (myUpdatedCardsAfterDamage) {
     myUpdatedCards = myUpdatedCardsAfterDamage;
   }
-  //TODO: multiple target cards
+  //TODO: multiple target cards?
   const targetCardId = targetCards[0].id;
   const attackerCardId = thisCard.id;
   const { opponentCardsAfterReaction, myCardsAfterReaction, reactions } =
@@ -85,14 +85,13 @@ const makeExecuteFunctionOfElementalRelicWith2UnalignedCost = (
     if (!thisCardID || !thisCard) {
       return { errorMessage: "No card passed to effect" };
     }
-    //TODO: check if this card is equipped
     if (!triggerContext) {
       return { errorMessage: "No trigger context" };
     }
     const thisEffect = thisCard?.effects.find(
       (eff) => eff.effect_basic_info_id === baseEffectID
     );
-    //returning {} means this effect won't affect the cost of the event or the state of the cards but it will not throw an error
+    //returning {} means this effect won't affect the cost of the event or the state of the cards but it will not lead to an error
     if (thisEffect?.usages_this_turn && thisEffect.usages_this_turn >= 1) {
       return {};
     }
@@ -110,7 +109,6 @@ const makeExecuteFunctionOfElementalRelicWith2UnalignedCost = (
       if (!attackerCard) {
         return {};
       }
-      //TODO!: check
       if (attackerCard.id !== thisCard?.equippedTo) {
         return {};
       }
@@ -159,13 +157,6 @@ const makeTriggerAndExecuteFunctionOfWeaponWithPlus1Damage: MakeTriggerAndExecut
     return {
       //TODO: how to display the damage increase on the character if it's only triggered on attack?
       triggerOn: ["THIS_CARD_ACTIVATION", "ATTACK"],
-      // if (triggerContext?.eventType === "CARD_ACTIVATION") {
-      //   const target = triggerContext?.targetCards?.[0];
-      //   const activatedCard = triggerContext?.activatedCard;
-      //   if (!activatedCard || activatedCard.id !== thisCardID) {
-      //     return {};
-      //   }
-
       execute: ({ triggerContext, thisCardID, myCards }) => {
         const thisCard = myCards.find((card) => card.id === thisCardID);
         if (!thisCardID || !thisCard) {
@@ -193,7 +184,6 @@ const makeTriggerAndExecuteFunctionOfWeaponWithPlus1Damage: MakeTriggerAndExecut
             ? { modifiedDamage: triggerContext.damage + 1 }
             : {};
         }
-        //TODO: thisCard
         return {};
       },
     };
@@ -213,8 +203,7 @@ const makeNormalAttackExecuteFunction = (
     myDice,
     opponentDice,
     currentRound,
-  }: //TODO: triggerContext,
-  ExecuteEffectParams) => {
+  }: ExecuteEffectParams) => {
     const thisCard = myCards.find((card) => card.id === thisCardID);
     if (!thisCardID || !thisCard) {
       return { errorMessage: "No card passed to effect" };
@@ -222,7 +211,6 @@ const makeNormalAttackExecuteFunction = (
     if (!targetCards || targetCards.length < 1) {
       return { errorMessage: "One target card is required" };
     }
-    //TODO: only use modifiers that activate before the attack?
     const { myUpdatedCards, errorMessage, opponentUpdatedCards } =
       executeAttack({
         myCards,
@@ -247,7 +235,7 @@ export const effects: {
   [key: string]: EffectLogic;
 } = {
   //Chang the Ninth
-  //TODO: when and how should this be executed?
+  //TODO!: when and how should this be executed?
   // "7c59cd7c-68d5-4428-99cb-c245f7522b0c": {
   //   //???????
   //   trigger: "REACTION",
@@ -259,21 +247,11 @@ export const effects: {
   //The Bestest Travel Companion!
   "c4ba57f8-fd10-4d3c-9766-3b9b610de812": {
     triggerOn: ["THIS_CARD_ACTIVATION"],
-    execute: ({ thisCardID, myCards, myDice, triggerContext }) => {
-      const thisCard = myCards.find((card) => card.id === thisCardID);
-      if (!thisCardID || !thisCard) {
-        return { errorMessage: "No card passed to effect" };
-      }
-      const cost = triggerContext?.cost;
-      if (!cost) {
-        return { errorMessage: "No cost found" };
-      }
-
-      const available_dice = addDice(myDice, {
-        // OMNI: cardCostTotal,
-        //TODO:
+    execute: ({ myDice }) => {
+      const myUpdatedDice = addDice(myDice, {
+        OMNI: 2,
       });
-      return { myUpdatedDice: available_dice };
+      return { myUpdatedDice };
     },
   },
   //Guardian's Oath
@@ -439,7 +417,7 @@ export const effects: {
       if (!weaponsEquippedToShiftFromTarget.length) {
         return { errorMessage: "No weapon found on the first target card" };
       }
-      //TODO: select weapon
+      //only one weapon can be equipped to a character
       const weaponToShift: CardExt = weaponsEquippedToShiftFromTarget[0];
       const myUpdatedCards = myCards.map((card) => {
         if (card.id === weaponToShift.id) {
@@ -467,8 +445,6 @@ export const effects: {
   //When the Crane Returned
   "369a3f69-dc1b-49dc-8487-83ad8eb6979d": {
     triggerOn: ["ATTACK"],
-    //is skill the same as attack?
-    // trigger: "ATTACK",
     execute: ({ myCards }) => {
       let myCharacters = myCards.filter(
         (card) => card.location === "CHARACTER"
@@ -477,7 +453,7 @@ export const effects: {
         (card) => card.is_active
       );
       if (previousActiveCharacterIndex === -1) {
-        //TODO: throw an error
+        //TODO: throw an error?
         previousActiveCharacterIndex = 0;
       }
       const nextActiveCharacterIndex =
@@ -659,15 +635,18 @@ export const effects: {
       "cef04fc2-6fc7-4eab-a3b2-3545c65f8dcd"
     ),
   },
-  //TODO: add other elemental relics
+  //Laurel Coronet
+  "0c6267cf-5fbd-4f89-901f-30b1fb47843b": {
+    triggerOn: ["ATTACK", "CARD_ACTIVATION"],
+    execute: makeExecuteFunctionOfElementalRelicWith2UnalignedCost(
+      "DENDRO",
+      "0c6267cf-5fbd-4f89-901f-30b1fb47843b"
+    ),
+  },
 
   //Changing Shifts
   "fb9696af-6916-4079-b9db-17cbfd941156": {
     triggerOn: ["SWITCH_CHARACTER"],
-    //TODO: make checkIfCanBeExecuted function
-    // checkIfCanBeExecuted: ({ effect }) => {
-    //   // if (!triggerContext?.switched) {
-    // },
     execute: ({ triggerContext, thisCardID, effect, myCards }) => {
       const thisCard = myCards.find((card) => card.id === thisCardID);
       if (!thisCardID || !thisCard) {
@@ -686,11 +665,9 @@ export const effects: {
         return {};
       }
       try {
-        //TODO: is this correct?
         cost = subtractCost({ ...cost }, { UNALIGNED: 1 }) as Cost;
       } catch (e) {
         console.log(e);
-        //TODO: change error message
         return { errorMessage: "could not subtract" };
       } finally {
         return {
@@ -737,7 +714,6 @@ export const effects: {
   "11d9e029-7d7e-4239-904e-d3b6600f1c84": {
     triggerOn: ["SWITCH_CHARACTER"],
     execute: () => {
-      //TODO: check...
       return { isFastAction: true };
     },
   },
@@ -782,7 +758,6 @@ export const effects: {
         return {};
       }
       try {
-        //TODO: is this correct?
         cost = subtractCost({ ...cost }, { UNALIGNED: 1 }) as Cost;
       } catch (e) {
         console.log(e);
@@ -1018,7 +993,6 @@ export const effects: {
         (card) => card.is_active
       );
       if (previousActiveCharacterIndex === -1) {
-        //TODO: throw an error
         previousActiveCharacterIndex = 0;
       }
       const nextActiveCharacterIndex =
@@ -1064,8 +1038,7 @@ export const effects: {
       opponentDice,
       effect,
       currentRound,
-    }: //TODO: triggerContext,
-    // triggerContext,
+    }: 
     ExecuteEffectParams) => {
       const thisCard = myCards.find((card) => card.id === thisCardID);
       if (!thisCardID || !thisCard) {
@@ -1093,7 +1066,6 @@ export const effects: {
       const { myUpdatedCards: myUpdatedCardsAfterSummon } = createSummon({
         summonBasicInfoID: "c9835b98-7a88-4493-9023-62f9ea7e729a",
         summons,
-        //TODO: is this correct?
         myCards: myUpdatedCards || myCards,
         maxUsages: 3,
       });
@@ -1169,8 +1141,7 @@ export const effects: {
       opponentDice,
       effect,
       currentRound,
-    }: //TODO: triggerContext,
-    // triggerContext,
+    }: 
     ExecuteEffectParams) => {
       const thisCard = myCards.find((card) => card.id === thisCardID);
       if (!thisCardID || !thisCard) {
@@ -1199,7 +1170,6 @@ export const effects: {
         summonBasicInfoID: "529ec9d6-67ed-430a-acc2-22219f0880ef",
         isCreation: true,
         summons,
-        //TODO: is this correct?
         myCards: myUpdatedCards || myCards,
         maxUsages: 3,
       });
@@ -1235,8 +1205,7 @@ export const effects: {
       opponentDice,
       effect,
       currentRound,
-    }: //TODO: triggerContext,
-    // triggerContext,
+    }: 
     ExecuteEffectParams) => {
       let baseDamage = 3;
       const thisCard = myCards.find((card) => card.id === thisCardID);
@@ -1341,7 +1310,6 @@ export const effects: {
       effect,
       currentRound,
     }) => {
-      //TODO? check if it is the end phase
       const thisCard = myCards.find((card) => card.id === thisCardID);
       if (!thisCardID || !thisCard) {
         return { errorMessage: "No card passed to effect" };
@@ -1366,7 +1334,6 @@ export const effects: {
       });
 
       if (!myUpdatedCards) {
-        //TODO: throw an error?
         return { errorMessage: "No cards found" };
       }
       if (thisCard.max_usages !== undefined && thisCard.max_usages !== null) {
@@ -1514,7 +1481,6 @@ export const effects: {
 };
 
 export const findEffectLogic = (effect: Effect) => {
-  //TODO: does effect_basic_info_id really always exist?
   const basicInfoId = effect.effect_basic_info_id!;
   console.log("basicInfoId", basicInfoId, effects, effects[basicInfoId]);
   return effects[basicInfoId];
