@@ -592,7 +592,8 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
           return clearCardStatuses(card, ["HYDRO", "ELECTRO"]);
           //doing 1 damage to all characters except the target
         } else if (card.location === "CHARACTER") {
-          const updatedHealth = card.health && Math.max(0, card.health - 1);
+          const updatedHealth =
+            card.health !== null && Math.max(0, card.health - 1);
           const defeatedInTurn =
             updatedHealth === 0 ? currentRound : card.defeatedInTurn;
           return { ...card, defeatedInTurn, updatedHealth };
@@ -820,7 +821,12 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
         card.health && Math.max(0, card.health - damageToHealth);
 
       if (card.id === targetCardId) {
-        return { ...card, health: updatedHealth };
+        return {
+          ...card,
+          health: updatedHealth,
+          defeatedInTurn:
+            updatedHealth === 0 ? currentRound : card.defeatedInTurn,
+        };
       }
       return card;
     });
