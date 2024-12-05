@@ -564,11 +564,20 @@ export const effects: {
   //Calx's Arts
   "1acc972c-4549-4533-926c-dc18af73eb0b": {
     triggerOn: ["THIS_CARD_ACTIVATION"],
-    execute: ({ myCards, targetCards }: ExecuteEffectParams) => {
-      if (!targetCards || targetCards.length < 1 || targetCards.length > 2) {
-        return { errorMessage: "One or two target cards are required" };
-      }
-      //shift 1 energy from each target to the active character or 2 energy from one target to the active character
+    execute: ({ myCards }: ExecuteEffectParams) => {
+      //at most 2 inactive characters with energy are considered
+      const inactiveCharactersWithAvailableEnergy = myCards
+        .filter(
+          (card) =>
+            card.location === "CHARACTER" &&
+            !card.is_active &&
+            !(card.health === 0) &&
+            card.energy != null &&
+            card.energy > 0
+        )
+        .slice(0, 2);
+      const energyToShift = inactiveCharactersWithAvailableEnergy.length;
+      //shift 1 energy from each inactive character to the active character
       const myUpdatedCards = myCards.map((card) => {
         if (card.location !== "CHARACTER") {
           return card;
@@ -576,25 +585,30 @@ export const effects: {
         if (card.is_active) {
           return {
             ...card,
-            energy: (card.energy ?? 0) + 2,
+            //energy must not overcap
+            //if active character has 1 missing energy and 1 energy is shifted from each inactive charaters, 1 energy will be wasted
+            energy: Math.min(
+              (card.energy ?? 0) + energyToShift,
+              card.max_energy!
+            ),
           };
         } else {
-          if (targetCards.some((target) => target.id === card.id)) {
-            if (targetCards.length === 1) {
-              return {
-                ...card,
-                energy: (card.energy ?? 0) - 2,
-              };
-            } else {
-              return {
-                ...card,
-                energy: (card.energy ?? 0) - 1,
-              };
-            }
+          if (
+            inactiveCharactersWithAvailableEnergy.some(
+              (target) => target.id === card.id
+            )
+          ) {
+            return {
+              ...card,
+              //card.energy is not null because of the filter
+              energy: card.energy! - 1,
+            };
+          } else {
+            return card;
           }
         }
       });
-      return { myUpdatedCards: myUpdatedCards as CardExt[] };
+      return { myUpdatedCards };
     },
   },
   //Mask of Solitude Basalt
@@ -957,7 +971,7 @@ export const effects: {
     requiredTargets: 1,
     execute: makeNormalAttackExecuteFunction(
       "ANEMO",
-      10,
+      1,
       "b4a1b3f5-45a1-4db8-8d07-a21cb5e5be11"
     ),
   },
