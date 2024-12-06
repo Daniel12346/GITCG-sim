@@ -80,7 +80,7 @@ export default function ElementalTuning({
     <div className="px-3">
       {/* //TODO: error handling */}
       <button
-        className="px-1 bg-blue-800 font-semibold text-md text-blue-200 w-fit"
+        className="px-1 bg-blue-800 font-semibold text-md text-blue-100 w-fit"
         onClick={() => {
           const { errorMessage } = performElementalTuning();
           errorMessage && setErrorMessage(errorMessage);
