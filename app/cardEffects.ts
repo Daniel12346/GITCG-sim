@@ -63,6 +63,8 @@ const executeAttack = ({
       opponentCards,
       attackBaseEffectID,
       currentRound,
+      myDice,
+      opponentDice,
     });
   reactions?.forEach((reaction) => {
     console.log("reaction", reaction);
@@ -235,14 +237,81 @@ export const effects: {
   [key: string]: EffectLogic;
 } = {
   //Chang the Ninth
-  //TODO!: when and how should this be executed?
-  // "7c59cd7c-68d5-4428-99cb-c245f7522b0c": {
-  //   //???????
-  //   trigger: "REACTION",
-  //   execute: ({ myCards, opponentCards }) => {
-  //     return { ...myCards };
-  //   },
-  // },
+  "7c59cd7c-68d5-4428-99cb-c245f7522b0c": {
+    triggerOn: ["EITHER_PLAYER_REACTION"],
+    execute: ({ myCards, triggerContext, thisCardID }) => {
+      console.log(
+        "Chang the Ninth effect",
+        myCards,
+        triggerContext,
+        thisCardID
+      );
+      const thisCard = myCards.find((card) => card.id === thisCardID);
+      let myUpdatedCards: CardExt[] | null = null;
+      if (!thisCardID || !thisCard) {
+        return { errorMessage: "No card passed to effect" };
+      }
+      if (triggerContext?.eventType !== "REACTION") {
+        return {};
+      }
+      const { reaction, attack } = triggerContext;
+      if (!reaction || !attack || reaction.cause !== "ATTACK") {
+        return {};
+      }
+
+      const { damageElement } = attack;
+      const reactionNames = reaction.names;
+      //if a reaction was triggered by an attack or physical/piercing damage was dealt, increase the counter by 1
+      //TODO: don't increase counter if damage was prevented by shields
+      if (
+        !(
+          reactionNames.length ||
+          damageElement === "PHYSICAL" ||
+          damageElement === "PIERCING"
+        )
+      ) {
+        return {};
+      }
+      const counter = thisCard.counters?.find((c) => c.name === "INSPIRATION");
+      const updatedCounter = counter ? counter.amount + 1 : 1;
+      //if this card has 3 counters, discard it and draw 2 cards
+      if (updatedCounter === 3) {
+        myUpdatedCards = myCards.map((card) => {
+          if (card.id === thisCard.id) {
+            return {
+              ...card,
+              counters: [],
+              location: "DISCARDED",
+            };
+          } else {
+            return card;
+          }
+        });
+        myUpdatedCards = drawCards(myUpdatedCards, 2);
+      } else {
+        //if this card has less than 3 counters, increase the counter by 1
+        myUpdatedCards = myCards.map((card) => {
+          if (card.id === thisCard.id) {
+            return {
+              ...card,
+              counters: [
+                ...(card.counters ?? []).filter(
+                  (c) => c.name !== "INSPIRATION"
+                ),
+                {
+                  name: "INSPIRATION",
+                  amount: updatedCounter,
+                },
+              ],
+            };
+          } else {
+            return card;
+          }
+        });
+      }
+      return { myUpdatedCards };
+    },
+  },
 
   //The Bestest Travel Companion!
   "c4ba57f8-fd10-4d3c-9766-3b9b610de812": {
@@ -266,7 +335,7 @@ export const effects: {
               location: null,
               //TODO: make a function for resetting cards
               effects: [],
-              counters: 0,
+              counters: [],
             } as CardExt;
           } else {
             return card;
@@ -1038,8 +1107,7 @@ export const effects: {
       opponentDice,
       effect,
       currentRound,
-    }: 
-    ExecuteEffectParams) => {
+    }: ExecuteEffectParams) => {
       const thisCard = myCards.find((card) => card.id === thisCardID);
       if (!thisCardID || !thisCard) {
         return { errorMessage: "No card passed to effect" };
@@ -1141,8 +1209,7 @@ export const effects: {
       opponentDice,
       effect,
       currentRound,
-    }: 
-    ExecuteEffectParams) => {
+    }: ExecuteEffectParams) => {
       const thisCard = myCards.find((card) => card.id === thisCardID);
       if (!thisCardID || !thisCard) {
         return { errorMessage: "No card passed to effect" };
@@ -1205,8 +1272,7 @@ export const effects: {
       opponentDice,
       effect,
       currentRound,
-    }: 
-    ExecuteEffectParams) => {
+    }: ExecuteEffectParams) => {
       let baseDamage = 3;
       const thisCard = myCards.find((card) => card.id === thisCardID);
       if (!thisCardID || !thisCard) {
@@ -1376,7 +1442,7 @@ export const effects: {
       }
       if (
         triggerContext.eventType !== "REACTION" ||
-        reaction.name !== "SWIRL"
+        reaction.names.includes("SWIRL")
       ) {
         return {
           errorMessage: "Effect can only be triggered on swirl reactions",
