@@ -27,6 +27,7 @@ interface CardExtended extends Card {
   hasUsedFoodThisTurn?: boolean;
   defeatedInTurn?: number;
   statuses?: CardStatus[];
+  counters?: CardCounter[];
   max_usages?: number;
   isCombatAction?: boolean;
 }
@@ -85,6 +86,10 @@ type CardStatusT = {
   //for Dendro spores, etc.
   amount?: number;
 };
+type CardCounterT = {
+  name: string;
+  amount: number;
+};
 type DeckCardsBasicInfoT =
   Database["public"]["Tables"]["deck_card_basic_info"]["Row"][];
 type DeckWithCardBasicInfoT = Database["public"]["Tables"]["deck"]["Row"] & {
@@ -106,12 +111,16 @@ type PhaseNameT =
   | "ACTION_PHASE"
   | "END_PHASE";
 
-//TODO: add missing events
+//no prefix is used to respond to events that are triggered by the player
+//OPPONENT_  prefix is used to respond to event that are triggered by the opponent
+//EITHER_PLAYER_ prefix is to respond to events that can be triggered by either player
 type EventTypeT =
   | "THIS_CARD_ACTIVATION"
   | "CARD_ACTIVATION"
   | "ATTACK"
   | "REACTION"
+  | "OPPONENT_REACTION"
+  | "EITHER_PLAYER_REACTION"
   | "EQUIP_ARTIFACT"
   | "EQUIP_WEAPON"
   | "SWITCH_CHARACTER"
@@ -166,11 +175,14 @@ type TriggerContextT = {
   attack?: {
     attackBaseEffectID?: string;
     attackerCard?: CardExt;
+    damageElement?: DamageElement;
   };
   damage?: number;
   reaction?: {
-    name: ElementalReaction;
+    names: ElementalReaction[];
     resultingElement?: ElementName;
+    //TODO: other possible causes of reactions
+    cause: "ATTACK" | "EFFECT";
   };
   switched?: {
     from?: CardExt;
@@ -217,6 +229,7 @@ declare global {
   type ElementalInfusion = ElementalInfusionT;
   type Status = StatusT;
   type CardStatus = CardStatusT;
+  type CardCounter = CardCounterT;
   type DeckCardsBasicInfo = DeckCardsBasicInfoT;
   type DeckWithCardBasicInfo = DeckWithCardBasicInfoT;
   type CardBasicInfo = CardBasicInfoT;
