@@ -10,6 +10,7 @@ import { RealtimeChannel } from "@supabase/supabase-js";
 import CardInGame from "./CardInGame";
 import { shuffleDeck } from "@/app/utils";
 import { useEffect } from "react";
+import { Check, RefreshCw } from "lucide-react";
 
 export default function CardRedraw({
   channel,
@@ -38,6 +39,18 @@ export default function CardRedraw({
     );
     return updatedCards;
   };
+  const handleRedraw = () => {
+    const myUpdatedCards = redrawCards(myCards, selectedCards);
+    channel &&
+      channel.send({
+        type: "broadcast",
+        event: "updated_cards_and_dice",
+        payload: { myCards: myUpdatedCards },
+      });
+    setAmIRedrawing(false);
+    setMyCards(myUpdatedCards);
+    setSelectedCards([]);
+  };
   useEffect(() => {
     if (currentPhase === "PREPARATION_PHASE") {
       setAmIRedrawing(true);
@@ -63,29 +76,20 @@ export default function CardRedraw({
               ))}
           </div>
           <div className="flex justify-between w-full ">
-            <button
-              onClick={() => {
-                const myUpdatedCards = redrawCards(myCards, selectedCards);
-                channel &&
-                  channel.send({
-                    type: "broadcast",
-                    event: "updated_cards_and_dice",
-                    payload: { myCards: myUpdatedCards },
-                  });
-                setAmIRedrawing(false);
-                setMyCards(myUpdatedCards);
-                setSelectedCards([]);
-              }}
-            >
-              redraw
-            </button>
-            <button
-              onClick={() => {
-                setAmIRedrawing(false);
-              }}
-            >
-              confirm
-            </button>
+            <div className="flex items-center gap-1">
+              <button onClick={handleRedraw}>redraw</button>
+              <RefreshCw size={16} className="mt-0.5" />
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => {
+                  setAmIRedrawing(false);
+                }}
+              >
+                confirm
+              </button>
+              <Check size={16} className="mt-0.5" />
+            </div>
           </div>
         </div>
       )}

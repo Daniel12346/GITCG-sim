@@ -12,6 +12,7 @@ import { addDice, createRandomDice, subtractCost } from "@/app/actions";
 import { broadcastUpdatedCardsAndDice, calculateTotalDice } from "@/app/utils";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { useEffect } from "react";
+import { Check, RefreshCcw, RefreshCw } from "lucide-react";
 
 export default function DiceReroll({
   channel,
@@ -23,9 +24,7 @@ export default function DiceReroll({
   const [amIRerolling, setAmIRerolling] = useRecoilState(amIRerollingState);
   const setSelectedDice = useSetRecoilState(mySelectedDiceState);
   const currentPhase = useRecoilValue(currentPhaseState);
-  const amIPlayer1 = useRecoilValue(amIPlayer1State);
-  const setOpponentDice = useSetRecoilState(opponentDiceState);
-  const rerollDice = () => {
+  const handleReroll = () => {
     try {
       const amountSelected = calculateTotalDice(selectedDice);
       if (amountSelected === 0) return;
@@ -70,17 +69,27 @@ export default function DiceReroll({
         <div className="animate-in bg-overlay p-4 border-yellow-300 border-solid border-4 overflow-hidden pointer-events-auto">
           {/* should not be displayed at all for the other player's board */}
 
-          <DiceDisplay dice={myDice} isMyBoard={true}></DiceDisplay>
-          <span className="flex justify-between w-full">
-            <button onClick={rerollDice}>reroll</button>
-            <button
-              onClick={() => {
-                setAmIRerolling(false);
-              }}
-            >
-              confirm
-            </button>
-          </span>
+          <DiceDisplay
+            dice={myDice}
+            isMyBoard={true}
+            displayDiceSelection
+          ></DiceDisplay>
+          <div className="flex justify-between w-full ">
+            <div className="flex items-center gap-1">
+              <button onClick={handleReroll}>reroll</button>
+              <RefreshCw size={16} className="mt-0.5" />
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => {
+                  setAmIRerolling(false);
+                }}
+              >
+                confirm
+              </button>
+              <Check size={16} className="mt-0.5" />
+            </div>
+          </div>
         </div>
       )}
     </div>
