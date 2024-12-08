@@ -53,19 +53,23 @@ const executeAttack = ({
   //TODO: multiple target cards?
   const targetCardId = targetCards[0].id;
   const attackerCardId = thisCard.id;
-  const { opponentCardsAfterReaction, myCardsAfterReaction, reactions } =
-    calculateAttackElementalReaction({
-      damage: damageBeforeElementalReactions,
-      damageElement,
-      attackerCardId,
-      targetCardId,
-      myCards,
-      opponentCards,
-      attackBaseEffectID,
-      currentRound,
-      myDice,
-      opponentDice,
-    });
+  const {
+    opponentCardsAfterReaction,
+    myCardsAfterReaction,
+    reactions,
+    updatedDamage,
+  } = calculateAttackElementalReaction({
+    damage: damageBeforeElementalReactions,
+    damageElement,
+    attackerCardId,
+    targetCardId,
+    myCards,
+    opponentCards,
+    attackBaseEffectID,
+    currentRound,
+    myDice,
+    opponentDice,
+  });
   reactions?.forEach((reaction) => {
     console.log("reaction", reaction);
   });
@@ -75,7 +79,7 @@ const executeAttack = ({
   if (opponentCardsAfterReaction) {
     opponentUpdatedCards = opponentCardsAfterReaction;
   }
-  return { myUpdatedCards, opponentUpdatedCards };
+  return { myUpdatedCards, opponentUpdatedCards, updatedDamage };
 };
 
 const makeExecuteFunctionOfElementalRelicWith2UnalignedCost = (
@@ -213,21 +217,30 @@ const makeNormalAttackExecuteFunction = (
     if (!targetCards || targetCards.length < 1) {
       return { errorMessage: "One target card is required" };
     }
-    const { myUpdatedCards, errorMessage, opponentUpdatedCards } =
-      executeAttack({
-        myCards,
-        effect,
-        opponentCards,
-        myDice,
-        opponentDice,
-        thisCardID,
-        targetCards,
-        baseDamage,
-        damageElement: attackElement,
-        attackBaseEffectID,
-        currentRound,
-      });
-    return { myUpdatedCards, errorMessage, opponentUpdatedCards };
+    const {
+      myUpdatedCards,
+      errorMessage,
+      opponentUpdatedCards,
+      updatedDamage,
+    } = executeAttack({
+      myCards,
+      effect,
+      opponentCards,
+      myDice,
+      opponentDice,
+      thisCardID,
+      targetCards,
+      baseDamage,
+      damageElement: attackElement,
+      attackBaseEffectID,
+      currentRound,
+    });
+    return {
+      myUpdatedCards,
+      errorMessage,
+      opponentUpdatedCards,
+      modifiedDamage: updatedDamage,
+    };
   };
   return execute;
 };
@@ -1041,19 +1054,20 @@ export const effects: {
         return { errorMessage: "One target card is required" };
       }
 
-      let { myUpdatedCards, opponentUpdatedCards } = executeAttack({
-        myCards,
-        opponentCards,
-        myDice,
-        opponentDice,
-        thisCardID,
-        targetCards,
-        effect,
-        baseDamage,
-        damageElement: "ANEMO",
-        attackBaseEffectID: "54bf4d1a-18bd-4b09-80d1-6573acfcd5cf",
-        currentRound,
-      });
+      let { myUpdatedCards, opponentUpdatedCards, updatedDamage } =
+        executeAttack({
+          myCards,
+          opponentCards,
+          myDice,
+          opponentDice,
+          thisCardID,
+          targetCards,
+          effect,
+          baseDamage,
+          damageElement: "ANEMO",
+          attackBaseEffectID: "54bf4d1a-18bd-4b09-80d1-6573acfcd5cf",
+          currentRound,
+        });
       //set opponent's next character as active
       let opponentCharacters = opponentCards.filter(
         (card) => card.location === "CHARACTER"
@@ -1091,6 +1105,7 @@ export const effects: {
       return {
         myUpdatedCards,
         opponentUpdatedCards,
+        modifiedDamage: updatedDamage,
       };
     },
   },
@@ -1115,19 +1130,20 @@ export const effects: {
       if (!targetCards || targetCards.length < 1) {
         return { errorMessage: "One target card is required" };
       }
-      let { myUpdatedCards, opponentUpdatedCards } = executeAttack({
-        myCards,
-        opponentCards,
-        myDice,
-        opponentDice,
-        thisCardID,
-        targetCards,
-        effect,
-        baseDamage: 1,
-        damageElement: "ANEMO",
-        attackBaseEffectID: "0f9f109f-3310-46df-a18a-3a659181c23e",
-        currentRound,
-      });
+      let { myUpdatedCards, opponentUpdatedCards, updatedDamage } =
+        executeAttack({
+          myCards,
+          opponentCards,
+          myDice,
+          opponentDice,
+          thisCardID,
+          targetCards,
+          effect,
+          baseDamage: 1,
+          damageElement: "ANEMO",
+          attackBaseEffectID: "0f9f109f-3310-46df-a18a-3a659181c23e",
+          currentRound,
+        });
       if (!summons) {
         return { errorMessage: "No summons found" };
       }
@@ -1144,6 +1160,7 @@ export const effects: {
       return {
         myUpdatedCards,
         opponentUpdatedCards,
+        modifiedDamage: updatedDamage,
       };
     },
   },
@@ -1156,6 +1173,7 @@ export const effects: {
       "b17045ef-f632-4864-b72d-c0cd048eb4b3"
     ),
   },
+  //Kaeya's Skill
   "124e3616-dc1d-48de-b9c5-2fb05e65a498": {
     requiredTargets: 1,
     execute: ({
@@ -1176,23 +1194,25 @@ export const effects: {
       if (!targetCards || targetCards.length < 1) {
         return { errorMessage: "One target card is required" };
       }
-      let { myUpdatedCards, opponentUpdatedCards } = executeAttack({
-        myCards,
-        opponentCards,
-        myDice,
-        opponentDice,
-        thisCardID,
-        targetCards,
-        effect,
-        baseDamage,
-        damageElement: "CRYO",
-        attackBaseEffectID: "124e3616-dc1d-48de-b9c5-2fb05e65a498",
-        currentRound,
-      });
+      let { myUpdatedCards, opponentUpdatedCards, updatedDamage } =
+        executeAttack({
+          myCards,
+          opponentCards,
+          myDice,
+          opponentDice,
+          thisCardID,
+          targetCards,
+          effect,
+          baseDamage,
+          damageElement: "CRYO",
+          attackBaseEffectID: "124e3616-dc1d-48de-b9c5-2fb05e65a498",
+          currentRound,
+        });
 
       return {
         myUpdatedCards,
         opponentUpdatedCards,
+        modifiedDamage: updatedDamage,
       };
     },
   },
@@ -1217,19 +1237,20 @@ export const effects: {
       if (!targetCards || targetCards.length < 1) {
         return { errorMessage: "One target card is required" };
       }
-      let { myUpdatedCards, opponentUpdatedCards } = executeAttack({
-        myCards,
-        opponentCards,
-        myDice,
-        effect,
-        opponentDice,
-        thisCardID,
-        targetCards,
-        baseDamage: 1,
-        damageElement: "CRYO",
-        attackBaseEffectID: "f72c5197-0fea-451c-9756-76885ac144e1",
-        currentRound,
-      });
+      let { myUpdatedCards, opponentUpdatedCards, updatedDamage } =
+        executeAttack({
+          myCards,
+          opponentCards,
+          myDice,
+          effect,
+          opponentDice,
+          thisCardID,
+          targetCards,
+          baseDamage: 1,
+          damageElement: "CRYO",
+          attackBaseEffectID: "f72c5197-0fea-451c-9756-76885ac144e1",
+          currentRound,
+        });
       if (!summons) {
         return { errorMessage: "No summons found" };
       }
@@ -1247,6 +1268,7 @@ export const effects: {
       return {
         myUpdatedCards,
         opponentUpdatedCards,
+        modifiedDamage: updatedDamage,
       };
     },
   },
@@ -1284,23 +1306,25 @@ export const effects: {
       if ((effect.usages_this_turn || 0) + 1 == 3) {
         baseDamage = 5;
       }
-      let { myUpdatedCards, opponentUpdatedCards } = executeAttack({
-        myCards,
-        opponentCards,
-        myDice,
-        opponentDice,
-        thisCardID,
-        targetCards,
-        effect,
-        baseDamage,
-        damageElement: "PYRO",
-        attackBaseEffectID: "9b20f340-e91f-4831-b768-7e7ee0ced987",
-        currentRound,
-      });
+      let { myUpdatedCards, opponentUpdatedCards, updatedDamage } =
+        executeAttack({
+          myCards,
+          opponentCards,
+          myDice,
+          opponentDice,
+          thisCardID,
+          targetCards,
+          effect,
+          baseDamage,
+          damageElement: "PYRO",
+          attackBaseEffectID: "9b20f340-e91f-4831-b768-7e7ee0ced987",
+          currentRound,
+        });
 
       return {
         myUpdatedCards,
         opponentUpdatedCards,
+        modifiedDamage: updatedDamage,
       };
     },
   },
@@ -1325,19 +1349,20 @@ export const effects: {
       if (!targetCards || targetCards.length < 1) {
         return { errorMessage: "One target card is required" };
       }
-      let { myUpdatedCards, opponentUpdatedCards } = executeAttack({
-        myCards,
-        opponentCards,
-        myDice,
-        opponentDice,
-        thisCardID,
-        targetCards,
-        baseDamage: 8,
-        damageElement: "PYRO",
-        attackBaseEffectID: "0f9f109f-3310-46df-a18a-3a659181c23e",
-        effect,
-        currentRound,
-      });
+      let { myUpdatedCards, opponentUpdatedCards, updatedDamage } =
+        executeAttack({
+          myCards,
+          opponentCards,
+          myDice,
+          opponentDice,
+          thisCardID,
+          targetCards,
+          baseDamage: 8,
+          damageElement: "PYRO",
+          attackBaseEffectID: "0f9f109f-3310-46df-a18a-3a659181c23e",
+          effect,
+          currentRound,
+        });
       //add status PYRO_INFUSION to Diluc
       myUpdatedCards = (myUpdatedCards || myCards).map((card) => {
         if (card.id === thisCardID) {
@@ -1359,6 +1384,7 @@ export const effects: {
       return {
         myUpdatedCards,
         opponentUpdatedCards,
+        modifiedDamage: updatedDamage,
       };
     },
   },
