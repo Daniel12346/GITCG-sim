@@ -50,7 +50,7 @@ export default function DeckCopyButton({
         onClick={handleCopyDeck}
         // relative after:absolute after:w-full after:bottom-0 after:left-0  after:bg-orange-950 after:transition-all after:duration-300 after:rounded-sm after:transform after:scale-x-0 after:origin-left
         // after:block hover:after:scale-x-100 after:z-100 after:h-1
-        className={` w-fit flex gap-1 items-center  bg-yellow-100/80 mb-1  text-orange-950 px-1 cursor-pointer font-semibold rounded-sm text-center hover:bg-yellow-100 hover:transition-all hover:duration-200 hover:rounded-sm   
+        className={` w-fit flex gap-1 items-center h-8  bg-yellow-100/80 mb-1  text-orange-950 px-1 cursor-pointer font-semibold rounded-sm text-center hover:bg-yellow-100 hover:transition-all hover:duration-200 hover:rounded-sm   
         `}
       >
         <Copy size={20} className="" />
