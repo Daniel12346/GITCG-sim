@@ -1011,6 +1011,8 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       opponentCardsAfterReaction: opponentUpdatedCards,
       myCardsAfterReaction: myUpdatedCards,
       reactions,
+      //TODO!: use damage after shields 
+      updatedDamage: damageAfterReaction,
     };
   };
 
