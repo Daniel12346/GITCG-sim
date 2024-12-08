@@ -827,7 +827,10 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
     } else {
       if (
         damageElement &&
-        !(damageElement === "PHYSICAL" || damageElement === "PIERCING")
+        //PIERCING, PHYSICAL, GEO and ANEMO don't create elemental statuses on their own
+        !(["ANEMO", "GEO", "PIERCING", "PHYSICAL"] as DamageElement[]).includes(
+          damageElement
+        )
       ) {
         //adding the attacking element to the target's statuses if no other reaction happened
         opponentUpdatedCards = opponentCards.map((card) => {
@@ -1011,7 +1014,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       opponentCardsAfterReaction: opponentUpdatedCards,
       myCardsAfterReaction: myUpdatedCards,
       reactions,
-      //TODO!: use damage after shields 
+      //TODO!: use damage after shields
       updatedDamage: damageAfterReaction,
     };
   };
