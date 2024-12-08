@@ -157,11 +157,8 @@ export default ({}) => {
         break;
       case "ROLL_PHASE":
         setCurrentPlayerID(nextRoundFirstPlayerID);
-        //TODO: revert
-        myUpdatedDice = createOmniDice(18);
-        opponentUpdatedDice = createOmniDice(18);
-        // myUpdatedDice = createRandomDice(8);
-        // opponentUpdatedDice = createRandomDice(8);
+        myUpdatedDice = createRandomDice(8);
+        opponentUpdatedDice = createRandomDice(8);
         break;
       case "ACTION_PHASE":
         break;
@@ -369,7 +366,7 @@ export default ({}) => {
         >
           {!amIReadyForNextPhase ? (
             <button className="btn bg-amber-800 hover:bg-amber-700 px-1 rounded-sm flex items-center">
-              Finish phase
+              Complete phase
               {/* TODO: use forward icon */}
               <span className="text-xl font-extrabold">{">>"}</span>
             </button>
