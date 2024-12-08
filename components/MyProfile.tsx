@@ -9,15 +9,11 @@ export default function MyProfile() {
   const myID = useRecoilValue(myIDState);
   return (
     <div className="flex flex-col">
-      <PlayerProfileBanner isMyProfile={true} playerProfile={myProfile} />
-      <div className="flex flex-col">
-        <span className="text-blue-300 uppercase font-semibold">settings</span>
-        {/* <SelectAvatar />
-        <SelectBanner /> */}
-      </div>
+      <PlayerProfileBanner playerProfile={myProfile} isMyProfile />;
       <div className="text-slate-200">
         <PlayerBattleStats playerID={myID} />
       </div>
+      {/* <span className="text-blue-200">current deck</span> */}
       <PlayerCurrentDeckDisplay playerID={myID} canBeCopied={false} />
     </div>
   );
