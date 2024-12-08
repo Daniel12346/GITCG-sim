@@ -7,20 +7,23 @@ import {
   myInGameCardsState,
   mySelectedCardsState,
   opponentDiceState,
+  selectedAttackPreviewDamageState,
   summonsState,
 } from "@/recoil/atoms";
-import { useRecoilValue } from "recoil";
+import { useRecoilValue, useSetRecoilState } from "recoil";
 import { AttackDiceDisplay } from "./DiceDisplay";
 
 type Props = {
   attack: Effect;
   playerID: string;
+  handleHover?: () => void;
   handleAttack: () => void;
 };
 
 export default function CardAttackInfo({
   attack,
   playerID,
+  handleHover,
   handleAttack,
 }: Props) {
   const myCards = useRecoilValue(myInGameCardsState);
@@ -41,6 +44,9 @@ export default function CardAttackInfo({
   const opponentDice = useRecoilValue(opponentDiceState);
   const currentPhase = useRecoilValue(currentPhaseState);
   const amIReadyForNextPhase = useRecoilValue(amIReadyForNextPhaseState);
+  const setSelectedAttackPreviewDamage = useSetRecoilState(
+    selectedAttackPreviewDamageState
+  );
   const { modifiedCost } = calculateCostAfterModifiers({
     baseCost: attack.cost ?? {},
     executeArgs: {
@@ -65,40 +71,44 @@ export default function CardAttackInfo({
   return (
     currentPhase === "ACTION_PHASE" &&
     !amIReadyForNextPhase && (
-      <div>
-        <div
-          className={`flex cursor-pointer flex-col justify-between z-20 mr-3 bg-yellow-600/80 hover:bg-yellow-600 text-xl text-slate-100 hover:scale-110 transition-all ring-2 ring-offset-2 hover:ring-offset-4  ring-amber-600/70 rounded-lg w-20 h-20 items-center py-2
+      <div
+        onMouseEnter={() => {
+          handleHover && handleHover();
+        }}
+        onMouseLeave={() => {
+          setSelectedAttackPreviewDamage(null);
+        }}
+        className={`flex cursor-pointer flex-col justify-between z-20 mr-3 bg-yellow-600/80 hover:bg-yellow-600 text-xl text-slate-100 hover:scale-110 transition-all ring-2 ring-offset-2 hover:ring-offset-4  ring-amber-600/70 rounded-lg w-20 h-20 items-center py-2
          ${
            isCardFrozen ||
            (attack.effectType === "ELEMENTAL_BURST" &&
              (thisCard?.max_energy || 0) > (thisCard?.energy || 0) &&
              "cursor-none opacity-50")
          }`}
-          onClick={() => {
-            if (!isCardFrozen) {
-              handleAttack();
-            }
-          }}
-        >
-          {/* <p className="text-xs">{attack.name}</p> */}
-          <div
-            className={`flex flex-col items-center   
+        onClick={() => {
+          if (!isCardFrozen) {
+            handleAttack();
+          }
+        }}
+      >
+        {/* <p className="text-xs">{attack.name}</p> */}
+        <div
+          className={`flex flex-col items-center   
             ${isCardFrozen && "opacity-50"}}
           }`}
-          >
-            <span className="text-lg mb-1 font-semibold  flex items-center justify-center">
-              {attack?.effectType &&
-                attackTypeDisplayText[
-                  attack.effectType as
-                    | "NORMAL_ATTACK"
-                    | "ELEMENTAL_SKILL"
-                    | "ELEMENTAL_BURST"
-                ]}
-            </span>
-          </div>
-          <div className="w-full flex justify-center">
-            <AttackDiceDisplay dice={modifiedCost ?? {}} isMyBoard={true} />
-          </div>
+        >
+          <span className="text-lg mb-1 font-semibold  flex items-center justify-center">
+            {attack?.effectType &&
+              attackTypeDisplayText[
+                attack.effectType as
+                  | "NORMAL_ATTACK"
+                  | "ELEMENTAL_SKILL"
+                  | "ELEMENTAL_BURST"
+              ]}
+          </span>
+        </div>
+        <div className="w-full flex justify-center">
+          <AttackDiceDisplay dice={modifiedCost ?? {}} isMyBoard={true} />
         </div>
       </div>
     )
