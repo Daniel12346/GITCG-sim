@@ -21,14 +21,14 @@ export default function PlayerCurrentDeckDisplay({
   const playerProfile = useRecoilValue(userProfileState(playerID));
   return userCurrentDeckCardsWithQuantitiesAndEffects ? (
     <div>
-      {canBeCopied && (
-        <div className="flex justify-end">
+      <div className="flex justify-end h-10">
+        {canBeCopied && (
           <DeckCopyButton
             deckCards={userCurrentDeckCardsWithQuantitiesAndEffects}
             deckName={playerProfile?.username + "'s deck"}
           />
-        </div>
-      )}
+        )}
+      </div>
       <DeckDisplay deckCards={userCurrentDeckCardsWithQuantitiesAndEffects} />
     </div>
   ) : null;
