@@ -14,6 +14,7 @@ type DiceDisplayProps = {
   isMyBoard: boolean;
   withElementalTuning?: boolean;
   isMain?: boolean;
+  displayDiceSelection?: boolean;
 };
 
 const Die = ({
@@ -92,6 +93,7 @@ export default function DiceDisplay({
   channel,
   withElementalTuning,
   isMain,
+  displayDiceSelection,
 }: DiceDisplayProps) {
   const currentPhase = useRecoilValue(currentPhaseState);
   return (
@@ -101,7 +103,7 @@ export default function DiceDisplay({
       )}
       <ul
         className={`flex gap-2 flex-wrap p-3 h-full
-        ${isMain && "p-0 h-full overflow-y-scroll"}`}
+        ${isMain && "p-0 overflow-y-scroll"}`}
       >
         {Object.entries(dice)
           .toSorted()
@@ -111,7 +113,7 @@ export default function DiceDisplay({
               amount={amount}
               isMyBoard={isMyBoard}
               dieSize={8}
-              displayDiceSelection={!!isMain}
+              displayDiceSelection={displayDiceSelection || !!isMain}
             />
           ))}
       </ul>
