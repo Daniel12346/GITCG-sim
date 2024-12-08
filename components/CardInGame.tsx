@@ -9,7 +9,9 @@ import {
   usedAttackState,
   amIReadyForNextPhaseState,
   currentActiveCharacterState,
+  selectedAttackPreviewDamageState,
 } from "@/recoil/atoms";
+import { ArrowUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 
@@ -46,13 +48,17 @@ export default function CardInGame({
   const isMyTurn = useRecoilValue(isMyTurnState);
   const currentPhase = useRecoilValue(currentPhaseState);
   const usedAttack = useRecoilValue(usedAttackState);
-  let isAttacker = usedAttack?.attackerCardID === card.id;
-  let isAttackTarget = usedAttack?.targetCardID === card.id;
+  let wasAttacker = usedAttack?.attackerCardID === card.id;
+  let wasUsedAttackTarget = usedAttack?.targetCardID === card.id;
   const previousCard = usePrevious(card);
   const [healthChange, setHealthChange] = useState(0);
   const amIReadyForNextPhase = useRecoilValue(amIReadyForNextPhaseState);
   const myActiveCharacter = useRecoilValue(currentActiveCharacterState);
-
+  //TODO!: explicitly define selected attack target (may not be the same as the active character?)
+  const isOpponentActiveCharacter = card.is_active && !isMyCard;
+  const selectedAttackPreviewDamage = useRecoilValue(
+    selectedAttackPreviewDamageState
+  );
   useEffect(() => {
     if (
       previousCard &&
@@ -80,11 +86,11 @@ export default function CardInGame({
         ${isHighlighted && "highlight-with-shadow"}
         ${overrideIsFaceDown && "pointer-events-none"}
         ${
-          isAttacker &&
+          wasAttacker &&
           (isMyCard ? "my-attack-attacker" : "opponent-attack-attacker")
         }
         ${
-          isAttackTarget &&
+          wasUsedAttackTarget &&
           (isMyCard ? "opponent-attack-target" : "my-attack-target")
         }
         `}
@@ -161,6 +167,23 @@ export default function CardInGame({
             {card.max_usages! - card.usages!}
           </span>
         </div>
+      )}
+
+      {isOpponentActiveCharacter && selectedAttackPreviewDamage && (
+        <>
+          <div className="z-50 absolute -bottom-6 left-0 w-full flex justify-center">
+            <ArrowUp
+              strokeWidth={4}
+              className="w-10 h-10 text-red-400
+        animate-bounce duration-1500"
+            />
+          </div>
+          <div className="z-10 flex justify-center items-center w-full h-full bg-slate-950 bg-opacity-60">
+            <span className="text-red-400 font-extrabold text-4xl ">
+              {`-${selectedAttackPreviewDamage}`}
+            </span>
+          </div>
+        </>
       )}
       <div className="z-10 flex justify-between w-full absolute top-0 left-0">
         <span

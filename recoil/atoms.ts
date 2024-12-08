@@ -598,6 +598,10 @@ export const errorMessageState = atom<string>({
   default: "",
 });
 
+export const selectedAttackPreviewDamageState = atom<number | null>({
+  key: "selectedAttackPreviewDamageState",
+  default: null,
+});
 export const usedAttackState = atom<Attack | null>({
   key: "usedAttackState",
   default: null,
