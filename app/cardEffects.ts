@@ -1168,7 +1168,7 @@ export const effects: {
   "b17045ef-f632-4864-b72d-c0cd048eb4b3": {
     requiredTargets: 1,
     execute: makeNormalAttackExecuteFunction(
-      "CRYO",
+      "PHYSICAL",
       2,
       "b17045ef-f632-4864-b72d-c0cd048eb4b3"
     ),
