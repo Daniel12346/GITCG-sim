@@ -21,7 +21,7 @@ import {
   myProfileState,
   isOpponentReadyForNextPhaseState,
   amIReadyForNextPhaseState,
-  selectedAttackPreviewDamageState,
+  opponentCharacterChangesAfterAttackState,
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
@@ -103,8 +103,9 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   const isOpponentReadyForNextPhase = useRecoilValue(
     isOpponentReadyForNextPhaseState
   );
-  const setSelectedAttackPreviewDamage = useSetRecoilState(
-    selectedAttackPreviewDamageState
+
+  const setOpponentCharacterChangesAfterAttack = useSetRecoilState(
+    opponentCharacterChangesAfterAttackState
   );
   const amIReadyForNextPhase = useRecoilValue(amIReadyForNextPhaseState);
   useEffect(() => {
@@ -366,9 +367,12 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         return;
       }
     }
+    const opponentCharactersBeforeAttack = opponentInGameCards.filter(
+      (c) => c.location === "CHARACTER"
+    );
     //the target of the attack is the opponent's active character
-    const opponentActiveCharacter = opponentInGameCards.find(
-      (c) => c.location === "CHARACTER" && c.is_active
+    const opponentActiveCharacter = opponentCharactersBeforeAttack.find(
+      (c) => c.is_active
     );
     if (!opponentActiveCharacter) {
       return { errorMessage: "No target found" };
@@ -483,6 +487,38 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         }) as CardExtended[];
       }
     }
+    const opponentCharactersAfterAttack = opponentUpdatedCards?.filter(
+      (c) => c.location === "CHARACTER"
+    );
+    const opponentCharactersHealthAndStatusChanges =
+      opponentCharactersAfterAttack?.reduce<CardStatChange[]>((acc, card) => {
+        const cardBeforeAttack = opponentCharactersBeforeAttack.find(
+          (c) => c.id === card.id
+        );
+        if (!cardBeforeAttack) return acc;
+        const healthChange = card.health! - cardBeforeAttack.health!;
+        const statusesAdded = card.statuses?.filter(
+          (status) =>
+            !cardBeforeAttack.statuses?.find((s) => s.name === status.name)
+        );
+        const statusesRemoved = cardBeforeAttack.statuses?.filter(
+          (status) => !card.statuses?.find((s) => s.name === status.name)
+        );
+        if (
+          healthChange !== 0 ||
+          statusesAdded?.length ||
+          statusesRemoved?.length
+        ) {
+          acc.push({
+            cardID: card.id,
+            healthChange,
+            statusesAdded,
+            statusesRemoved,
+          });
+        }
+        return acc;
+      }, []);
+
     return {
       myUpdatedCards,
       myUpdatedDice: myUpdatedDice || myDiceAfterCost,
@@ -492,6 +528,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       attackerCard,
       targetCard: opponentActiveCharacter,
       modifiedDamage,
+      opponentCharacterChanges: opponentCharactersHealthAndStatusChanges,
     };
   };
   //TODO: make equipping work with this
@@ -851,13 +888,19 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                         key={attack.id}
                         playerID={playerID}
                         attack={attack}
-                        handleHover={() => {
+                        handleMouseEnter={() => {
                           const res = activateAttackEffect(attack);
                           console.log(res);
                           if (!res) return;
-                          const { modifiedDamage } = res;
-                          modifiedDamage &&
-                            setSelectedAttackPreviewDamage(modifiedDamage);
+                          const { opponentCharacterChanges } = res;
+
+                          opponentCharacterChanges &&
+                            setOpponentCharacterChangesAfterAttack(
+                              opponentCharacterChanges
+                            );
+                        }}
+                        handleMouseLeave={() => {
+                          setOpponentCharacterChangesAfterAttack(null);
                         }}
                         handleAttack={() => {
                           const res = activateAttackEffect(attack);
