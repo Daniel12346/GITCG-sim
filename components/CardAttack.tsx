@@ -7,7 +7,6 @@ import {
   myInGameCardsState,
   mySelectedCardsState,
   opponentDiceState,
-  selectedAttackPreviewDamageState,
   summonsState,
 } from "@/recoil/atoms";
 import { useRecoilValue, useSetRecoilState } from "recoil";
@@ -16,14 +15,16 @@ import { AttackDiceDisplay } from "./DiceDisplay";
 type Props = {
   attack: Effect;
   playerID: string;
-  handleHover?: () => void;
+  handleMouseEnter?: () => void;
+  handleMouseLeave?: () => void;
   handleAttack: () => void;
 };
 
 export default function CardAttackInfo({
   attack,
   playerID,
-  handleHover,
+  handleMouseEnter,
+  handleMouseLeave,
   handleAttack,
 }: Props) {
   const myCards = useRecoilValue(myInGameCardsState);
@@ -44,9 +45,7 @@ export default function CardAttackInfo({
   const opponentDice = useRecoilValue(opponentDiceState);
   const currentPhase = useRecoilValue(currentPhaseState);
   const amIReadyForNextPhase = useRecoilValue(amIReadyForNextPhaseState);
-  const setSelectedAttackPreviewDamage = useSetRecoilState(
-    selectedAttackPreviewDamageState
-  );
+
   const { modifiedCost } = calculateCostAfterModifiers({
     baseCost: attack.cost ?? {},
     executeArgs: {
@@ -73,10 +72,10 @@ export default function CardAttackInfo({
     !amIReadyForNextPhase && (
       <div
         onMouseEnter={() => {
-          handleHover && handleHover();
+          handleMouseEnter && handleMouseEnter();
         }}
         onMouseLeave={() => {
-          setSelectedAttackPreviewDamage(null);
+          handleMouseLeave && handleMouseLeave();
         }}
         className={`flex cursor-pointer flex-col justify-between z-20 mr-3 bg-yellow-600/80 hover:bg-yellow-600 text-xl text-slate-100 hover:scale-110 transition-all ring-2 ring-offset-2 hover:ring-offset-4  ring-amber-600/70 rounded-lg w-20 h-20 items-center py-2
          ${
