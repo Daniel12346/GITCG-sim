@@ -1,6 +1,7 @@
 import {
   currentActiveCharacterState,
   currentPhaseState,
+  isMyTurnState,
   mySelectedDiceState,
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue } from "recoil";
@@ -96,11 +97,15 @@ export default function DiceDisplay({
   displayDiceSelection,
 }: DiceDisplayProps) {
   const currentPhase = useRecoilValue(currentPhaseState);
+  const isMyTurn = useRecoilValue(isMyTurnState);
   return (
     <div className={`${!isMyBoard && "pt-3"} h-full`}>
-      {withElementalTuning && isMyBoard && currentPhase === "ACTION_PHASE" && (
-        <ElementalTuning channel={channel || null} />
-      )}
+      {withElementalTuning &&
+        isMyBoard &&
+        isMyTurn &&
+        currentPhase === "ACTION_PHASE" && (
+          <ElementalTuning channel={channel || null} />
+        )}
       <ul
         className={`flex gap-2 flex-wrap p-3 h-full
         ${isMain && "p-0 overflow-y-scroll"}`}
