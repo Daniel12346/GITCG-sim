@@ -189,7 +189,12 @@ type TriggerContextT = {
     to?: CardExt;
   };
 };
-
+type CardStatChangeT = {
+  cardID: string;
+  healthChange: number;
+  statusesAdded: CardStatus[] | undefined;
+  statusesRemoved: CardStatus[] | undefined;
+};
 type CheckIfEffectCanBeExecutedParamsT = ExecuteEffectParams;
 //  {
 //   myCards?: CardExt[];
@@ -247,4 +252,5 @@ declare global {
   type TriggerEvents = TriggerEventsT;
   type EffectLogic = EffectLogicT;
   type Attack = AttackT;
+  type CardStatChange = CardStatChangeT;
 }
