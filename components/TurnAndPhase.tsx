@@ -407,7 +407,7 @@ export default ({}) => {
           draw
         </button>
         {/* TEST:------------------ */}
-        <button
+        {/* <button
           className="bg-pink-500"
           onClick={() => {
             if (!myCards?.length) return;
@@ -423,7 +423,7 @@ export default ({}) => {
           }}
         >
           add card
-        </button>
+        </button> */}
         {/* <button
         className="bg-pink-500"
         onClick={() => setMyDice({ ANEMO: 4, CRYO: 4 })}
