@@ -9,7 +9,7 @@ import {
   usedAttackState,
   amIReadyForNextPhaseState,
   currentActiveCharacterState,
-  selectedAttackPreviewDamageState,
+  opponentCharacterChangesAfterAttackState,
 } from "@/recoil/atoms";
 import { ArrowUp } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -56,8 +56,12 @@ export default function CardInGame({
   const myActiveCharacter = useRecoilValue(currentActiveCharacterState);
   //TODO!: explicitly define selected attack target (may not be the same as the active character?)
   const isOpponentActiveCharacter = card.is_active && !isMyCard;
-  const selectedAttackPreviewDamage = useRecoilValue(
-    selectedAttackPreviewDamageState
+
+  const opponentCharacterChangesAfterAttack = useRecoilValue(
+    opponentCharacterChangesAfterAttackState
+  );
+  const thisCardChangesAfterAttack = opponentCharacterChangesAfterAttack?.find(
+    (change) => change.cardID === card.id
   );
   useEffect(() => {
     if (
@@ -169,18 +173,20 @@ export default function CardInGame({
         </div>
       )}
 
-      {isOpponentActiveCharacter && selectedAttackPreviewDamage && (
+      {thisCardChangesAfterAttack?.healthChange != undefined && (
         <>
-          <div className="z-50 absolute -bottom-6 left-0 w-full flex justify-center">
-            <ArrowUp
-              strokeWidth={4}
-              className="w-10 h-10 text-red-400
+          {isOpponentActiveCharacter && (
+            <div className="z-50 absolute -bottom-6 left-0 w-full flex justify-center">
+              <ArrowUp
+                strokeWidth={4}
+                className="w-10 h-10 text-red-400
         animate-bounce duration-1500"
-            />
-          </div>
-          <div className="z-10 flex justify-center items-center w-full h-full bg-slate-950 bg-opacity-60">
+              />
+            </div>
+          )}
+          <div className="z-40 flex justify-center items-center w-full h-full bg-slate-950 bg-opacity-60">
             <span className="text-red-400 font-extrabold text-4xl ">
-              {`-${selectedAttackPreviewDamage}`}
+              {`${thisCardChangesAfterAttack.healthChange}`}
             </span>
           </div>
         </>
@@ -220,20 +226,40 @@ export default function CardInGame({
         )}
       </div>
       {/* statuses */}
-      <div className="rounded-sm text-blue-800 z-10 absolute left-0 flex gap-1">
-        {card.statuses?.map((status, i) => (
-          <div key={status.name + i}>
-            <span>
-              <img
-                className="w-4 h-4 ml-2"
-                src={`/${status.name.toLowerCase()}.svg`}
-              ></img>
-            </span>
-            {status.turnsLeft !== undefined && status.turnsLeft !== null && (
-              <span>: {status.turnsLeft}</span>
-            )}
-          </div>
-        ))}
+      <div className="rounded-sm  z-10 absolute left-0 -top-6 col-re gap-1">
+        <div className="flex gap-1">
+          {card.statuses
+            ?.concat(thisCardChangesAfterAttack?.statusesAdded || [])
+            ?.map((status, i) => (
+              <div
+                key={status.name + i}
+                className={`
+                    bg-opacity-40
+                    ${
+                      thisCardChangesAfterAttack?.statusesAdded?.some(
+                        (statusAdded) => statusAdded.name === status.name
+                      ) && "bg-green-400"
+                    }
+                    ${
+                      thisCardChangesAfterAttack?.statusesRemoved?.some(
+                        (statusRemoved) => statusRemoved.name === status.name
+                      ) && "bg-red-400"
+                    }
+                    `}
+              >
+                <span>
+                  <img
+                    className="w-4 h-4 "
+                    src={`/${status.name.toLowerCase()}.svg`}
+                  ></img>
+                </span>
+                {status.turnsLeft !== undefined &&
+                  status.turnsLeft !== null && (
+                    <span>: {status.turnsLeft}</span>
+                  )}
+              </div>
+            ))}
+        </div>
       </div>
 
       {/* //TODO: use Next.js Image component */}
