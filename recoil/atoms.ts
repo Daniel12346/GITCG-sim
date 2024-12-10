@@ -598,10 +598,6 @@ export const errorMessageState = atom<string>({
   default: "",
 });
 
-export const selectedAttackPreviewDamageState = atom<number | null>({
-  key: "selectedAttackPreviewDamageState",
-  default: null,
-});
 export const usedAttackState = atom<Attack | null>({
   key: "usedAttackState",
   default: null,
@@ -736,4 +732,11 @@ export const myCurrentActiveCharacterEnergyState = selector({
     if (!myActiveCharacter) return 0;
     return myActiveCharacter.energy;
   },
+});
+
+export const opponentCharacterChangesAfterAttackState = atom<
+  CardStatChange[] | null
+>({
+  key: "opponentCharacterChangesAfterAttackState",
+  default: null,
 });
