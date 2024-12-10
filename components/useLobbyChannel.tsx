@@ -122,8 +122,9 @@ export default function useLobbyChannel() {
             })
           );
 
-          const myDice = createRandomDice(8);
-          const opponentDice = createRandomDice(8);
+        
+          const myDice = {};
+          const opponentDice = {};
           const myShuffledCards = shuffleDeck(myCards!);
           const opponentShuffledCards = shuffleDeck(opponentCards!);
 
