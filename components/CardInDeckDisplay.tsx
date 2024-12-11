@@ -132,7 +132,6 @@ export default function CardInDeckDisplay({
         </span>
       </div>
 
-      {/* //TODO: use Next.js Image component */}
       <img
         src={card.img_src}
         className={`w-full absolute h-full object-cover object-center rounded-md`}

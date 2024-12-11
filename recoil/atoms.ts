@@ -309,7 +309,6 @@ export const deckInDeckBuilderNameState = atom<string>({
   default: "",
 });
 
-//TODO: make this depend on gameState?
 export const currentGameIDState = atom<string>({
   key: "currentGameIDState",
   default: "",

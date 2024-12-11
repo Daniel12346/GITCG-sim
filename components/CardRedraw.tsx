@@ -61,7 +61,6 @@ export default function CardRedraw({
 
   return (
     <div
-      //TODO: center properly
       className="absolute top-[50%] 
     left-[50%] -translate-x-1/2 -translate-y-1/2
       flex items-center justify-center z-[100] overflow-hidden pointer-events-none"

@@ -10,7 +10,6 @@ type Props = {
 };
 export default function PlayerProfileBanner({
   playerProfile,
-  //TODO: calculate isMyProfile in component
   isMyProfile,
 }: Props) {
   const userAvatar = useRecoilValue(userAvatarState(playerProfile?.id));

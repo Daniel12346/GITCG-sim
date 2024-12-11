@@ -535,7 +535,6 @@ export const effects: {
         (card) => card.is_active
       );
       if (previousActiveCharacterIndex === -1) {
-        //TODO: throw an error?
         previousActiveCharacterIndex = 0;
       }
       const nextActiveCharacterIndex =
@@ -962,7 +961,6 @@ export const effects: {
                 ),
               };
             } else if (card.id === attackerCard.id) {
-              //TODO: replace with satiated status?
               return { ...card, hasUsedFoodThisTurn: true };
             } else {
               return card;

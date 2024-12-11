@@ -122,7 +122,6 @@ export default function useLobbyChannel() {
             })
           );
 
-        
           const myDice = {};
           const opponentDice = {};
           const myShuffledCards = shuffleDeck(myCards!);
@@ -158,7 +157,6 @@ export default function useLobbyChannel() {
         } catch (error) {
           console.log("error", error);
         }
-        //TODO: get game ID, send to both players
       })
       .on("presence", { event: "sync" }, () => {
         !isCancelled &&
@@ -205,6 +203,5 @@ export default function useLobbyChannel() {
       setChannel(null);
     };
   }, []);
-  //TODO: what should this return?
   return channel;
 }

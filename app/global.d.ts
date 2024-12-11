@@ -137,7 +137,6 @@ type EffectLogicT = {
 };
 
 type ExecuteEffectParamsT = {
-  //TODO: move some params to the trigger context
   myCards: CardExt[];
   opponentCards: CardExt[];
   myDice: Dice;
@@ -196,19 +195,6 @@ type CardStatChangeT = {
   statusesRemoved: CardStatus[] | undefined;
 };
 type CheckIfEffectCanBeExecutedParamsT = ExecuteEffectParams;
-//  {
-//   myCards?: CardExt[];
-//   opponentCards?: CardExt[];
-//   triggerContext?: TriggerContext;
-//   effect?: Effect;
-//   thisCard?: CardExt;
-//   opponentDice?: Dice;
-//   playerID?: string;
-//   myDice?: Dice;
-//   //the card that is being targeted by the activated card
-//   targetCards?: CardExt[];
-//   //TODO: add more params
-// };
 type CheckIfEffectCanBeExecutedT = (
   params: CheckIfEffectCanBeExecutedParams
 ) => { errorMessage?: string };

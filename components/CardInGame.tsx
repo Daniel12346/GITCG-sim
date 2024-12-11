@@ -54,7 +54,6 @@ export default function CardInGame({
   const [healthChange, setHealthChange] = useState(0);
   const amIReadyForNextPhase = useRecoilValue(amIReadyForNextPhaseState);
   const myActiveCharacter = useRecoilValue(currentActiveCharacterState);
-  //TODO!: explicitly define selected attack target (may not be the same as the active character?)
   const isOpponentActiveCharacter = card.is_active && !isMyCard;
 
   const opponentCharacterChangesAfterAttack = useRecoilValue(
@@ -262,7 +261,6 @@ export default function CardInGame({
         </div>
       </div>
 
-      {/* //TODO: use Next.js Image component */}
       <img
         src={!isFaceDown ? card.img_src : "../card_back_origin.png"}
         className={`w-full absolute h-full object-cover object-center rounded-md`}
@@ -271,7 +269,6 @@ export default function CardInGame({
         <div className="flex gap-1 z-20 absolute">
           {equippedCards.map((equippedCard) => (
             <div className="scale-50">
-              {/* //TODO: use unique key */}
               <CardInGame key={equippedCard.id} card={equippedCard} />
             </div>
           ))}

@@ -531,7 +531,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       opponentCharacterChanges: opponentCharactersHealthAndStatusChanges,
     };
   };
-  //TODO: make equipping work with this
   const activateCard = (card: CardExt) => {
     //weapon and artifact cards
     if (!myCards) return;
