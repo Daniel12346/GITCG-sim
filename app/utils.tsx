@@ -123,7 +123,7 @@ export const findEquippedCards = (
   target: CardExt,
   playerCards: CardExt[],
   //TODO: use string enum
-  type?: string
+  type?: CardExt["subtype"]
 ) => {
   return playerCards.filter(
     (card) =>
@@ -519,7 +519,6 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
 
     const attackerCard = myCards.find((card) => card.id === attackerCardId);
     const targetCard = opponentCards.find((card) => card.id === targetCardId);
-    //TODO: check attacker statuses for elemental infusion
     if (!attackerCard || !targetCard) {
       return {
         errorMessage: "Attacker or target card is missing",
@@ -536,7 +535,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       damageElement = infusionElement;
     }
 
-    //  //TODO: check for shields
+    //  //TODO!: check for shields
     //  if (damageElement === "PIERCING") {
     //    return { updatedDamage: damage };
     //  }
@@ -726,7 +725,6 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       reactingElements.includes("CRYO") &&
       reactingElements.includes("ELECTRO")
     ) {
-      //TODO: check logic for superconduct
       opponentUpdatedCards = opponentCards.map((card) => {
         if (card.id === targetCardId) {
           return clearCardStatuses(card, ["CRYO", "ELECTRO"]);
@@ -940,7 +938,6 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
           effect,
           myCards: myUpdatedCards,
           opponentCards: opponentUpdatedCards,
-          //TODO: add dice
           myDice,
           thisCardID: cardID,
           opponentDice,
@@ -1098,47 +1095,41 @@ export const executeEffectsSequentially = ({
   let opponentUpdatedDice = executeArgs.opponentDice;
   let errorMessage: string | null = null;
 
-  effectsAndCardIDs.forEach(
-    ({
+  effectsAndCardIDs.forEach(({ effect, cardID }) => {
+    if (errorMessage) return;
+    const effectLogic = findEffectLogic(effect);
+    if (!effectLogic.execute) return;
+    const {
+      myUpdatedCards: myUpdatedCardsAfterEffects,
+      myUpdatedDice: myUpdatedDiceAfterEffects,
+      opponentUpdatedCards: opponentUpdatedCardsAfterEffects,
+      opponentUpdatedDice: opponentUpdatedDiceAfterEffects,
+      errorMessage: errorMessageAfterEffects,
+    } = effectLogic.execute({
+      ...executeArgs,
+      myCards: myUpdatedCards,
+      myDice: myUpdatedDice,
+      opponentCards: opponentUpdatedCards,
+      opponentDice: opponentUpdatedDice,
       effect,
-      //TODO!: use cardID
-      cardID,
-    }) => {
-      if (errorMessage) return;
-      const effectLogic = findEffectLogic(effect);
-      if (!effectLogic.execute) return;
-      const {
-        myUpdatedCards: myUpdatedCardsAfterEffects,
-        myUpdatedDice: myUpdatedDiceAfterEffects,
-        opponentUpdatedCards: opponentUpdatedCardsAfterEffects,
-        opponentUpdatedDice: opponentUpdatedDiceAfterEffects,
-        errorMessage: errorMessageAfterEffects,
-      } = effectLogic.execute({
-        ...executeArgs,
-        myCards: myUpdatedCards,
-        myDice: myUpdatedDice,
-        opponentCards: opponentUpdatedCards,
-        opponentDice: opponentUpdatedDice,
-        effect,
-        thisCardID: cardID,
-      });
-      if (errorMessageAfterEffects) {
-        errorMessage = errorMessageAfterEffects;
-      }
-      if (myUpdatedCardsAfterEffects) {
-        myUpdatedCards = myUpdatedCardsAfterEffects;
-      }
-      if (myUpdatedDiceAfterEffects) {
-        myUpdatedDice = myUpdatedDiceAfterEffects;
-      }
-      if (opponentUpdatedCardsAfterEffects) {
-        opponentUpdatedCards = opponentUpdatedCardsAfterEffects;
-      }
-      if (opponentUpdatedDiceAfterEffects) {
-        opponentUpdatedDice = opponentUpdatedDiceAfterEffects;
-      }
+      thisCardID: cardID,
+    });
+    if (errorMessageAfterEffects) {
+      errorMessage = errorMessageAfterEffects;
     }
-  );
+    if (myUpdatedCardsAfterEffects) {
+      myUpdatedCards = myUpdatedCardsAfterEffects;
+    }
+    if (myUpdatedDiceAfterEffects) {
+      myUpdatedDice = myUpdatedDiceAfterEffects;
+    }
+    if (opponentUpdatedCardsAfterEffects) {
+      opponentUpdatedCards = opponentUpdatedCardsAfterEffects;
+    }
+    if (opponentUpdatedDiceAfterEffects) {
+      opponentUpdatedDice = opponentUpdatedDiceAfterEffects;
+    }
+  });
   return {
     errorMessage,
     myUpdatedCards,
@@ -1246,7 +1237,6 @@ export const executePhaseEffectsForBothPlayers = ({
   if (errorMessageOtherSide) {
     return { errorMessage: errorMessageOtherSide };
   }
-  //TODO: is this correct?
   return {
     myUpdatedCards: otherSideUpdatedCardsFromSecondSide,
     myUpdatedDice: otherSideUpdatedDiceFromSecondSide,
