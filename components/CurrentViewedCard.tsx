@@ -30,7 +30,7 @@ export default () => {
             {currentGameID && currentCard?.statuses?.length !== 0 && (
               <div className="flex flex-col w-full p-2 gap-1">
                 <span>STATUSES</span>
-                {currentCard?.statuses?.map((status) => (
+                {currentCard?.statuses?.map((status, i) => (
                   <div className="flex items-center gap-1">
                     <span>
                       <img
@@ -38,12 +38,10 @@ export default () => {
                         src={`/${status.name.toLowerCase()}.svg`}
                       ></img>
                     </span>
-                    <span
-                      //TODO: use a unique key
-                      key={status.name}
-                    >{`${status.name.replace("_", " ")}  ${
-                      status.turnsLeft ?? ""
-                    }`}</span>
+                    <span key={status.name + i}>{`${status.name.replace(
+                      "_",
+                      " "
+                    )}  ${status.turnsLeft ?? ""}`}</span>
                   </div>
                 ))}
               </div>
@@ -51,20 +49,16 @@ export default () => {
             {currentGameID && currentCard?.counters?.length !== 0 && (
               <div className="flex flex-col w-full p-2 gap-1">
                 <span>COUNTERS</span>
-                {currentCard?.counters?.map((counter) => (
+                {currentCard?.counters?.map((counter, i) => (
                   <div className="flex items-center gap-1">
-                    <span
-                      //TODO: use a unique key
-                      key={counter.name}
-                    >{`${counter.name.replace("_", " ")}  ${
-                      counter.amount ?? ""
-                    }`}</span>
+                    <span key={counter.name + i}>{`${counter.name.replace(
+                      "_",
+                      " "
+                    )}  ${counter.amount ?? ""}`}</span>
                   </div>
                 ))}
               </div>
             )}
-
-            {/* //TODO: counter name, multiple countes */}
 
             <div className="flex flex-col gap-1  max-h-[10rem] overflow-y-scroll translate-x-0">
               {currentCard?.effects &&
