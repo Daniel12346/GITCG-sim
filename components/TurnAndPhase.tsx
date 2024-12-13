@@ -1,9 +1,4 @@
-import {
-  addOneCardFromDeckByName,
-  createOmniDice,
-  createRandomDice,
-  drawCards,
-} from "@/app/actions";
+import { createRandomDice, drawCards } from "@/app/actions";
 import { CardExtended } from "@/app/global";
 import {
   broadcastSwitchPlayer,
@@ -32,7 +27,8 @@ import {
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { RealtimeChannel } from "@supabase/supabase-js";
-import { use, useEffect, useState } from "react";
+import { Hourglass } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 
 export default ({}) => {
@@ -63,6 +59,7 @@ export default ({}) => {
   const [amIPlayer1, setamIPlayer1] = useRecoilState(amIPlayer1State);
   const isMyTurn = useRecoilValue(isMyTurnState);
   const setGameOverMessage = useSetRecoilState(gameOverMessageState);
+  const [phaseChange, setPhaseChange] = useState(false);
 
   useEffect(() => {
     const supabase = createClientComponentClient<Database>();
@@ -159,6 +156,21 @@ export default ({}) => {
         setCurrentPlayerID(nextRoundFirstPlayerID);
         myUpdatedDice = createRandomDice(8);
         opponentUpdatedDice = createRandomDice(8);
+        //reset effect usages of all cards for both players
+        myUpdatedCards = myUpdatedCards.map((card) => ({
+          ...card,
+          effects: card.effects.map((effect) => ({
+            ...effect,
+            usages_this_turn: 0,
+          })),
+        }));
+        opponentUpdatedCards = opponentUpdatedCards.map((card) => ({
+          ...card,
+          effects: card.effects.map((effect) => ({
+            ...effect,
+            usages_this_turn: 0,
+          })),
+        }));
         break;
       case "ACTION_PHASE":
         break;
@@ -264,6 +276,12 @@ export default ({}) => {
     setOpponentCards(opponentUpdatedCards);
     setOpponentDice(opponentUpdatedDice);
   }, [channel, currentPhase]);
+  useEffect(() => {
+    setPhaseChange(true);
+    setTimeout(() => {
+      setPhaseChange(false);
+    }, 400);
+  }, [currentPhase]);
 
   //only happens once at the beginning of the game
   useEffect(() => {
@@ -317,6 +335,7 @@ export default ({}) => {
         console.log("currentPlayerID", currentPlayerID);
         //the player that ended the action phase (?) first is the first player of the next round
         //if both players are ready, it means the current turn player ended the round second and will go second next round
+        //TODO: check if this is correct
         setNextRoundFirstPlayerID(currentPlayerID === myID ? opponentID : myID);
         setCurrentRound((prev) => prev + 1);
       }
@@ -338,46 +357,47 @@ export default ({}) => {
     <div className="py-1 flex justify-center">
       <div className="w-4/5 text-blue-100 bg-indigo-900 px-1 py-2 flex gap-4 justify-evenly">
         <span className="text-lg">Round {currentRound}</span>
-        <button
-          onClick={async () => {
-            if (!myCards.find((card) => card.is_active)) {
-              setErrorMessage("No active character");
-              return;
-            }
-            await channel
-              ?.send({
-                type: "broadcast",
-                event: "ready_for_next_phase",
-                payload: {
-                  isReadyForNextPhase: !amIReadyForNextPhase,
-                },
-              })
-              .then(() => {
-                if (!isOpponentReadyForNextPhase) {
-                  setCurrentPlayerID(opponentID);
-                  broadcastSwitchPlayer({
-                    channel,
-                    playerID: opponentID,
-                  });
-                }
-              });
-            setAmIReadyForNextPhase((prev) => !prev);
-          }}
-        >
+        <span>
           {!amIReadyForNextPhase ? (
-            <button className="btn bg-amber-800 hover:bg-amber-700 px-1 rounded-sm flex items-center">
+            <button
+              onClick={async () => {
+                if (!myCards.find((card) => card.is_active)) {
+                  setErrorMessage("No active character");
+                  return;
+                }
+                await channel
+                  ?.send({
+                    type: "broadcast",
+                    event: "ready_for_next_phase",
+                    payload: {
+                      isReadyForNextPhase: !amIReadyForNextPhase,
+                    },
+                  })
+                  .then(() => {
+                    if (!isOpponentReadyForNextPhase) {
+                      setCurrentPlayerID(opponentID);
+                      broadcastSwitchPlayer({
+                        channel,
+                        playerID: opponentID,
+                      });
+                    }
+                  });
+                setAmIReadyForNextPhase((prev) => !prev);
+              }}
+              className="btn bg-amber-800 hover:bg-amber-700 p-1 rounded-sm flex items-center"
+            >
+              <Hourglass size={16} />
               Complete phase
-              {/* TODO: use forward icon */}
-              <span className="text-xl font-extrabold">{">>"}</span>
             </button>
           ) : (
-            currentPhase === "ACTION_PHASE" && (
-              <span>waiting for opponent to finish phase...</span>
-            )
+            <span>waiting for opponent to complete phase...</span>
           )}
-        </button>
+        </span>
         <div className="flex gap-2">
-          <span className="font-semibold text-lg">
+          <span
+            className={`font-semibold text-lg transition-all
+            ${phaseChange && "duration-400 text-yellow-400 animate-pulse"}`}
+          >
             {currentPhase?.replace("_", " ")}
           </span>
           {currentPhase === "ACTION_PHASE" && (
@@ -389,9 +409,8 @@ export default ({}) => {
               {isMyTurn ? "your turn" : "opponent's turn"}
             </span>
           )}
-          {/* {isMyTurn && <span>pass turn</span>} */}
         </div>
-        <button
+        {/* <button
           className="bg-blue-500"
           onClick={() => {
             if (!myCards?.length) return;
@@ -405,7 +424,7 @@ export default ({}) => {
           }}
         >
           draw
-        </button>
+        </button> */}
         {/* TEST:------------------ */}
         {/* <button
           className="bg-pink-500"
