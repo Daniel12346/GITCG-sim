@@ -535,37 +535,24 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       damageElement = infusionElement;
     }
 
-    //  //TODO!: check for shields
-    //  if (damageElement === "PIERCING") {
-    //    return { updatedDamage: damage };
-    //  }
-    //  if (!targetStatuses || targetStatuses.length === 0) {
-    //    let updatedTargetStatuses = [
-    //      { name: damageElement as ElementName, turnsLeft: 1 },
-    //    ];
-    //    return {
-    //      updatedDamage: damage,
-    //      updatedTargetCard: { ...targetCard, statuses: updatedTargetStatuses },
-    //    };
-    //  }
     const targetStatuses = targetCard.statuses || [];
 
     const reactingElements = [
       ...targetStatuses.map((status) => status.name),
       damageElement,
     ];
-    let damageAfterReaction = damage;
+    let updatedDamage = damage;
     let reactions: ElementalReaction[] = [];
     let opponentUpdatedCards = opponentCards;
     let myUpdatedCards = myCards;
-    //refers to the element that was swirled, possibly other uses, TODO: rename
+    //refers to the element that was swirled, possibly other uses, TODO!: rename
     let resultingElement: ElementName | null = null;
     //SHATTERED
     if (damageElement === "PHYSICAL") {
       if (
         targetStatuses.find((status: CardStatus) => status.name === "FROZEN")
       ) {
-        damageAfterReaction += 2;
+        updatedDamage += 2;
         reactions.push("SHATTERED");
         opponentUpdatedCards = opponentCards.map((card) => {
           if (card.id === targetCardId) {
@@ -579,7 +566,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       damageElement === "PYRO" &&
       targetStatuses.find((status) => status.name === "FROZEN")
     ) {
-      damageAfterReaction += 2;
+      updatedDamage += 2;
       opponentCards = opponentCards.map((card) => {
         if (card.id === targetCardId) {
           return clearCardStatuses(card, ["FROZEN"]);
@@ -592,7 +579,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       reactingElements.includes("PYRO") &&
       reactingElements.includes("HYDRO")
     ) {
-      damageAfterReaction += 2;
+      updatedDamage += 2;
       reactions.push("VAPORIZE");
       opponentUpdatedCards = opponentUpdatedCards.map((card) => {
         if (card.id === targetCardId) {
@@ -606,7 +593,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       reactingElements.includes("HYDRO") &&
       reactingElements.includes("ELECTRO")
     ) {
-      damageAfterReaction += 1;
+      updatedDamage += 1;
       reactions.push("ELECTROCHARGED");
       opponentUpdatedCards = opponentUpdatedCards.map((card) => {
         if (card.id === targetCardId) {
@@ -628,7 +615,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       reactingElements.includes("CRYO") &&
       reactingElements.includes("HYDRO")
     ) {
-      damageAfterReaction += 1;
+      updatedDamage += 1;
       reactions.push("FROZEN");
       opponentUpdatedCards = opponentUpdatedCards.map((card) => {
         if (card.id === targetCardId) {
@@ -656,7 +643,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
         }
         return card;
       });
-      damageAfterReaction += 1;
+      updatedDamage += 1;
       reactions?.push("SWIRL");
       const swirlTargets = opponentCards.filter(
         (card) => card.location === "CHARACTER" && card.id !== targetCardId
@@ -717,7 +704,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
         }
         return card;
       });
-      damageAfterReaction += 1;
+      updatedDamage += 1;
       reactions?.push("CRYSTALLIZE");
     }
     //SUPERCONDUCT
@@ -731,7 +718,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
         }
         return card;
       });
-      damageAfterReaction += 1;
+      updatedDamage += 1;
       //superconduct does 1 piercing damage to all characters except the target
       const piercingTargets = opponentCards.filter(
         (card) => card.location === "CHARACTER" && card.id !== targetCardId
@@ -768,7 +755,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       reactingElements.includes("PYRO") &&
       reactingElements.includes("CRYO")
     ) {
-      damageAfterReaction += 2;
+      updatedDamage += 2;
       reactions.push("MELT");
       opponentUpdatedCards = opponentUpdatedCards.map((card) => {
         if (card.id === targetCardId) {
@@ -780,7 +767,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       reactingElements.includes("PYRO") &&
       reactingElements.includes("ELECTRO")
     ) {
-      damageAfterReaction += 2;
+      updatedDamage += 2;
       reactions.push("OVERLOADED");
       let opponentCharacters = opponentUpdatedCards.filter(
         (card) => card.location === "CHARACTER"
@@ -840,12 +827,12 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       }
     }
     opponentUpdatedCards = opponentUpdatedCards.map((card) => {
-      const damageToHealth =
+      updatedDamage =
         damageElement === "PIERCING"
-          ? damageAfterReaction
-          : damageAfterReaction - (card.shield || 0);
+          ? updatedDamage
+          : updatedDamage - (card.shield || 0);
       const updatedHealth =
-        card.health && Math.max(0, card.health - damageToHealth);
+        card.health && Math.max(0, card.health - updatedDamage);
 
       if (card.id === targetCardId) {
         return {
@@ -916,21 +903,6 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
     if (myEffectsThatTriggerOnReaction.length > 0) {
       myEffectsThatTriggerOnReaction.forEach(({ effect, cardID }) => {
         const effectLogic = findEffectLogic(effect);
-        // if (
-        //   effectLogic.execute &&
-        //   ((effectLogic?.checkIfCanBeExecuted &&
-        //     effectLogic.checkIfCanBeExecuted({
-        //       effect,
-        //       myCards,
-        //       thisCardID: cardID,
-        //       opponentCards,
-        //       //TODO: add dice
-        //       myDice: {},
-        //       opponentDice: {},
-        //       currentRound,
-        //     })) ||
-        //     !effectLogic.checkIfCanBeExecuted)
-        // ) {
         const {
           myUpdatedCards: myUpdatedCardsAfterEffects,
           opponentUpdatedCards: opponentUpdatedCardsAfterEffects,
@@ -947,8 +919,6 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
               names: reactions,
               resultingElement: resultingElement || undefined,
               cause: "ATTACK",
-              //TODO: add more info
-              //reactionTarget?
             },
             attack: {
               attackerCard: attackerCard,
@@ -988,8 +958,6 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
               //TODO: fix resultingElement
               resultingElement: resultingElement || undefined,
               cause: "ATTACK",
-              //TODO: add more info
-              //reactionTarget?
             },
             attack: {
               attackerCard: attackerCard,
@@ -1011,8 +979,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       opponentCardsAfterReaction: opponentUpdatedCards,
       myCardsAfterReaction: myUpdatedCards,
       reactions,
-      //TODO!: use damage after shields
-      updatedDamage: damageAfterReaction,
+      updatedDamage,
     };
   };
 
