@@ -41,19 +41,6 @@ export default function DiceReroll({
   };
   useEffect(() => {
     if (currentPhase === "ROLL_PHASE") {
-      // if (amIPlayer1) {
-      //   //resettting dice for both players
-      //   const myDice = createRandomDice(8);
-      //   const opponentDice = createRandomDice(8);
-      //   setMyDice(myDice);
-      //   setOpponentDice(opponentDice);
-      //   channel &&
-      //     broadcastUpdatedCardsAndDice({
-      //       channel,
-      //       myDice,
-      //       opponentDice,
-      //     });
-      // }
       setAmIRerolling(true);
     } else {
       setAmIRerolling(false);
@@ -67,8 +54,6 @@ export default function DiceReroll({
     >
       {currentPhase === "ROLL_PHASE" && amIRerolling && (
         <div className="animate-in bg-overlay p-4 border-yellow-300 border-solid border-4 overflow-hidden pointer-events-auto">
-          {/* should not be displayed at all for the other player's board */}
-
           <DiceDisplay
             dice={myDice}
             isMyBoard={true}
