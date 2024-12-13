@@ -161,7 +161,6 @@ type MakeTriggerAndExecuteFunctionOfWeaponWithPlus1Damage = (
 const makeTriggerAndExecuteFunctionOfWeaponWithPlus1Damage: MakeTriggerAndExecuteFunctionOfWeaponWithPlus1Damage =
   (weapon_type: string) => {
     return {
-      //TODO: how to display the damage increase on the character if it's only triggered on attack?
       triggerOn: ["THIS_CARD_ACTIVATION", "ATTACK"],
       execute: ({ triggerContext, thisCardID, myCards }) => {
         const thisCard = myCards.find((card) => card.id === thisCardID);
@@ -346,7 +345,6 @@ export const effects: {
             return {
               ...card,
               location: null,
-              //TODO: make a function for resetting cards
               effects: [],
               counters: [],
             } as CardExt;

@@ -90,7 +90,6 @@ export default function CardAttackInfo({
           }
         }}
       >
-        {/* <p className="text-xs">{attack.name}</p> */}
         <div
           className={`flex flex-col items-center   
             ${isCardFrozen && "opacity-50"}}

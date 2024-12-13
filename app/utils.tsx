@@ -18,7 +18,6 @@ export const cardFromBasicInfo = (
     //TODO: do not ts ignore
     //@ts-ignore
     quantity: cardBasicInfo.quantity || null,
-    //TODO: make cardType either nullalble or non-nullable for both cardBasicInfo and card
     card_type: cardBasicInfo.card_type ?? "",
     counters: [],
     location:
@@ -141,7 +140,6 @@ type EffectAndCardID = {
 //returns all cost modifying effects of the cards along with IDs of the cards they belong to
 export const findCostModifyingEffectsWithCardIDs = (cards: CardExt[]) => {
   return cards.reduce((acc, card) => {
-    //TODO: add other allowed locations
     return ["ACTION", "EQUIPPED"].includes(card.location!) ||
       (card.location === "DISCARDED" && card.wasActivatedThisTurn)
       ? acc.concat(
@@ -475,7 +473,6 @@ const addStatusToCard = (
   const statuses = alreadyHasStatus
     ? card.statuses?.map((s: CardStatus) => {
         if (s.name === status) {
-          //TODO: how much to increase duration by?
           return {
             ...s,
             turnsLeft:

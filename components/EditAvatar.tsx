@@ -7,10 +7,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
-//TODO: default avatar selection
 export default function EditAvatar() {
   const myID = useRecoilValue(myIDState);
-  //TODO: does this work?
   const refreshMyAvatar = useRecoilRefresher_UNSTABLE(myAvatarState);
   return (
     <TooltipProvider>

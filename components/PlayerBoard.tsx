@@ -51,7 +51,6 @@ import CardRedraw from "./CardRedraw";
 import GameOver from "./GameOver";
 import PlayerBannerInGame from "./PlayerBannerInGame";
 
-//TODO: move to another file
 interface PlayerBoardProps {
   playerID?: string;
 }
@@ -96,7 +95,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   const cardsInDeck = playerCards.filter((card) => card.location === "DECK");
   const setHighlightedCard = useSetRecoilState(currentHighlightedCardState);
   const [usedAttack, setUsedAttack] = useRecoilState(usedAttackState);
-  //TODO: handle better
   const myProfile = useRecoilValue(myProfileState);
   const opponentProfile = useRecoilValue(opponentProfileState);
   const playerProfile = isMyBoard ? myProfile : opponentProfile;

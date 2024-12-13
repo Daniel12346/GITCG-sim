@@ -10,7 +10,6 @@ import {
 //TODO: default banner selection
 export default function EditBanner() {
   const myID = useRecoilValue(myIDState);
-  //TODO: does this work?
   const refreshMyBanner = useRecoilRefresher_UNSTABLE(myBannerState);
   return (
     <TooltipProvider>

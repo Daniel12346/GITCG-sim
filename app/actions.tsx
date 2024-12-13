@@ -97,7 +97,6 @@ export const subtractCost = (
         }
 
         //after all element have been checked, if no element has been subtracted, throw error
-        //TODO: handle error
         if (!hasSubtracted) throw new Error("Not enough dice");
       } else if (requiredElementName === "UNALIGNED") {
         let i = requiredAmount;

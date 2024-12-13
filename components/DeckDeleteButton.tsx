@@ -25,7 +25,6 @@ export default function DeleteDeck({ deckID }: Props) {
           if (deckID === undefined) {
             return;
           }
-          //TODO: icon
           deleteDeck({
             client,
             deckID,

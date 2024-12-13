@@ -546,7 +546,6 @@ export const mySelectedDiceState = atom<Dice>({
   key: "mySelectedDiceState",
   default: {},
 });
-//TODO: remove Card from database?
 type Card = Database["public"]["Tables"]["card"]["Row"];
 
 export const opponentCardsState = atom<Card[]>({

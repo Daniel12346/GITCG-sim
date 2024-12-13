@@ -55,7 +55,6 @@ export default () => {
       })
     );
     //remove all cards from deck
-    //TODO: how to delete only the cards that are not in cardIdsWithQuantities
     const { error: deckCardsDeleteError } = await client
       .from("deck_card_basic_info")
       .delete()
