@@ -140,18 +140,20 @@ export const AttackDiceDisplay = ({
       <ul className="flex flex-row gap-1 flex-wrap justify-center">
         {Object.entries(dice)
           .toSorted()
-          .map(([element, amount]) =>
+          .map(([element, amount], idx) =>
             element !== "ENERGY" ? (
               <DiceOfElement
                 element={element as DieElementName}
                 amount={amount}
                 isMyBoard={isMyBoard}
                 dieSize={4}
+                key={element + idx}
                 displayDiceSelection={false}
               />
             ) : (
               <RequiredEnergyDisplay
                 energy={amount}
+                key={element + idx}
                 energySize={4}
                 currentEnergy={currentEnergy}
                 showCurrentEnergy
