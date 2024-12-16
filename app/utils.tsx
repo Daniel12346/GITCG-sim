@@ -9,7 +9,7 @@ type CardBasicInfo = Database["public"]["Tables"]["card_basic_info"]["Row"];
 export const cardFromBasicInfo = (
   cardBasicInfo: CardBasicInfo,
   ownerID?: string,
-  location?: Database["public"]["Tables"]["card"]["Row"]["location"]
+  location?: CardExt["location"]
 ): CardExt => {
   const cardID = uuid();
   return {
@@ -36,7 +36,6 @@ export const cardFromBasicInfo = (
     costJson: cardBasicInfo.cost,
     cost: cardBasicInfo.cost as Dice,
     subtype: cardBasicInfo.card_subtype || "",
-    equipped_to_id: null,
     equippedTo: null,
     wasActivatedThisTurn: false,
     isCombatAction: cardBasicInfo.is_combat_action || false,
@@ -53,7 +52,6 @@ export const cardFromBasicInfo = (
           usages_this_turn: 0,
           costJson: effectBasicInfo.cost,
           //TODO: remove this
-          effect_basic_infoIdId: effectBasicInfo.id,
           cost: effectBasicInfo.cost as Dice,
           description: effectBasicInfo.description || "",
           effectType: effectBasicInfo.effect_type || "",
@@ -824,14 +822,14 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
       }
     }
     opponentUpdatedCards = opponentUpdatedCards.map((card) => {
-      updatedDamage =
-        damageElement === "PIERCING"
-          ? updatedDamage
-          : updatedDamage - (card.shield || 0);
-      const updatedHealth =
-        card.health && Math.max(0, card.health - updatedDamage);
-
       if (card.id === targetCardId) {
+        updatedDamage =
+          damageElement === "PIERCING"
+            ? updatedDamage
+            : updatedDamage - (card.shield || 0);
+        const updatedHealth =
+          card.health && Math.max(0, card.health - updatedDamage);
+
         return {
           ...card,
           health: updatedHealth,
@@ -921,6 +919,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
               attackerCard: attackerCard,
               attackBaseEffectID,
               damageElement,
+              damageDealt: updatedDamage,
             },
           },
           currentRound,
@@ -960,6 +959,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
               attackerCard: attackerCard,
               attackBaseEffectID,
               damageElement,
+              damageDealt: updatedDamage,
             },
           },
           currentRound,
