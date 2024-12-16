@@ -1,8 +1,12 @@
 import { Database as DB } from "@/lib/database.types";
 import { CardStatus } from "./utils";
 
-type EffectBase = DB["public"]["Tables"]["effect"]["Row"];
-interface EffectT extends EffectBase {
+interface EffectT {
+  card_id?: string;
+  cost?: Json;
+  id?: string;
+  total_usages?: number;
+  usages_this_turn?: number;
   costJson?: Json;
   cost?: Cost;
   description?: string;
@@ -10,8 +14,32 @@ interface EffectT extends EffectBase {
   effectType?: string;
   // TODO:add effect element to db
 }
-type Card = DB["public"]["Tables"]["card"]["Row"];
-interface CardExtended extends Card {
+type LocationT =
+  | "DECK"
+  | "CHARACTER"
+  | "SUMMON"
+  | "HAND"
+  | "EQUIPPED"
+  | "DISCARDED"
+  | "ACTION";
+
+interface CardExtended {
+  base_health: number | null;
+  card_basic_info_id: string;
+  card_type: string;
+  energy: number | null;
+  faction: string | null;
+  full_text: string | null;
+  health: number | null;
+  id: string;
+  img_src: string;
+  is_active: boolean | null;
+  location: CardLocation | null;
+  max_energy: number | null;
+  name: string;
+  owner_id: string;
+  usages: number | null;
+  weapon_type: string | null;
   element: ElementName | null;
   effects: EffectT[];
   shield?: number;
@@ -175,6 +203,7 @@ type TriggerContextT = {
     attackBaseEffectID?: string;
     attackerCard?: CardExt;
     damageElement?: DamageElement;
+    damageDealt?: number;
   };
   damage?: number;
   reaction?: {
@@ -219,6 +248,7 @@ declare global {
   type ElementalReaction = ElementalReactionT;
   type ElementalInfusion = ElementalInfusionT;
   type Status = StatusT;
+  type CardLocation = CardLocationT;
   type CardStatus = CardStatusT;
   type CardCounter = CardCounterT;
   type DeckCardsBasicInfo = DeckCardsBasicInfoT;
