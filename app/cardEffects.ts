@@ -271,14 +271,14 @@ export const effects: {
         return {};
       }
 
-      const { damageElement } = attack;
+      const { damageElement, damageDealt } = attack;
       const reactionNames = reaction.names;
       //if a reaction was triggered by an attack or physical/piercing damage was dealt, increase the counter by 1
-      //TODO: don't increase counter if damage was prevented by shields
       if (
         !(
           reactionNames.length ||
-          damageElement === "PHYSICAL" ||
+          //don't increase counter if physical damage was prevented by shields (piercing damage can not be prevented by shields)
+          (damageElement === "PHYSICAL" && damageDealt === 0) ||
           damageElement === "PIERCING"
         )
       ) {
