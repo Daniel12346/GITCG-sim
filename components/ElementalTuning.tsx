@@ -9,7 +9,8 @@ import {
   mySelectedDiceState,
 } from "@/recoil/atoms";
 import { RealtimeChannel } from "@supabase/supabase-js";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
+//By discarding cards, the player can tune their elemental dice to match the element of their active character. 
 export default function ElementalTuning({
   channel,
 }: {
@@ -33,9 +34,8 @@ export default function ElementalTuning({
     if (!resultingDiceElement) {
       return { errorMessage: "No active character element" };
     }
-    //TODO: check the amount of dice
     if (!selectedDice) return { errorMessage: "No dice to tune" };
-    //TODO: discarding multiple cards
+    //the number of cards to be discarded must match the number of dice selected
     if (selectedCards.length !== calculateTotalDice(selectedDice))
       return { errorMessage: "Number of cards selected does not match dice" };
 
@@ -47,9 +47,6 @@ export default function ElementalTuning({
       let myUpdatedDice = subtractCost(myDice, selectedDice);
       myUpdatedDice = {
         ...myUpdatedDice,
-        // OMNI: myUpdatedDice.OMNI
-        //   ? myUpdatedDice.OMNI + selectedCards.length
-        //   : selectedCards.length,
         [resultingDiceElement]:
           selectedCards.length + (myUpdatedDice[resultingDiceElement] || 0),
       };
@@ -78,7 +75,6 @@ export default function ElementalTuning({
   };
   return (
     <div className="px-3">
-      {/* //TODO: error handling */}
       <button
         className="px-1 bg-blue-800 font-semibold text-md text-blue-100 w-fit"
         onClick={() => {
