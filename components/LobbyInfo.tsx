@@ -1,8 +1,10 @@
 "use client";
 import { opponentProfileState } from "@/recoil/atoms";
-import { useRecoilStateLoadable, useRecoilValue } from "recoil";
+import { useRecoilValue } from "recoil";
+import useLobbyChannel from "./useLobbyChannel";
 
 export default function LobbyInfo() {
+  useLobbyChannel();
   const opponentProfile = useRecoilValue(opponentProfileState);
   return (
     <div className="text-slate-300">
