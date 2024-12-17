@@ -1,4 +1,4 @@
-import { createRandomDice, drawCards } from "@/app/actions";
+import { drawCards } from "@/app/actions";
 import {
   myIDState,
   usersInLobbyIDsState,
@@ -9,20 +9,17 @@ import {
   opponentInGameCardsState,
   myDiceState,
   opponentDiceState,
-  currentPlayerIDState,
   nextRoundFirstPlayerIDState,
 } from "@/recoil/atoms";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { RealtimeChannel } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-import { useState, useEffect, use } from "react";
-import { useRecoilValue, useRecoilState, useSetRecoilState } from "recoil";
+import { useEffect } from "react";
+import { useRecoilValue, useSetRecoilState } from "recoil";
 import { cardFromBasicInfo, shuffleDeck } from "@/app/utils";
 
 export default function useLobbyChannel() {
   const myID = useRecoilValue(myIDState);
-  const [usersInLobbyIDs, setUsersInLobbyIDs] =
-    useRecoilState(usersInLobbyIDsState);
+  const setUsersInLobbyIDs = useSetRecoilState(usersInLobbyIDsState);
   const setCurrentGameID = useSetRecoilState(currentGameIDState);
   const setOpponentID = useSetRecoilState(opponentIDState);
   const setAmIPlayer1 = useSetRecoilState(amIPlayer1State);
@@ -30,12 +27,9 @@ export default function useLobbyChannel() {
   const setOpponentCards = useSetRecoilState(opponentInGameCardsState);
   const setMyDice = useSetRecoilState(myDiceState);
   const setOpponentDice = useSetRecoilState(opponentDiceState);
-  const setCurrentPlayerID = useSetRecoilState(currentPlayerIDState);
   const setNextRoundFirstPlayer = useSetRecoilState(
     nextRoundFirstPlayerIDState
   );
-  //TDO: use or remove
-  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
   const router = useRouter();
   useEffect(() => {
     const supabase = createClientComponentClient<Database>();
@@ -197,11 +191,8 @@ export default function useLobbyChannel() {
           console.log(presenceTrackStatus);
         }
       });
-    setChannel(channel);
     return () => {
       supabase.removeChannel(channel);
-      setChannel(null);
     };
   }, []);
-  return channel;
 }
