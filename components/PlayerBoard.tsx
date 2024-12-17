@@ -208,7 +208,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             return c;
           }) as CardExtended[]
       );
-      if (amIReadyForNextPhase) {
+      if (amIReadyForNextPhase && currentPhase === "ACTION_PHASE") {
         //if the player is ready for the next phase, the turn is passed back to the opponent
         setCurrentPlayerID(opponentID);
         channel &&
@@ -339,6 +339,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                   event: "switch_player",
                   payload: {
                     playerID: opponentID,
+                    currentPhase: phase,
                   },
                 })
                 .then((res) => {
@@ -411,6 +412,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             eventType: "ATTACK",
             cost,
             attack: {
+              //damageDealt is not needed here because cost is paid before the attack is executed
               attackerCard,
               attackBaseEffectID: attackEffect.effect_basic_info_id,
             },
@@ -823,9 +825,9 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     <div
       className={`bg-fieldSecondary grid grid-cols-[10%_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)_10%] 
     gap-2 w-100% text-slate-100 p-2 overflow-x-hidden border-x-4  transition-colors duration-300 ${
-      isMyBoard
-        ? isMyTurn && currentPhase !== "PREPARATION_PHASE" && "border-green-500"
-        : !isMyTurn && currentPhase !== "PREPARATION_PHASE" && "border-red-500"
+      isMyBoard && currentPhase === "ACTION_PHASE" && isMyTurn
+        ? "border-green-500"
+        : "border-red-500"
     }`}
     >
       <div
@@ -916,7 +918,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                             }
                             if (attack.effect_basic_info_id) {
                               setUsedAttack({
-                                attackerCardID: attack.card_id,
+                                attackerCardID: attack.card_id ?? null,
                                 targetCardID: targetCard?.id || null,
                                 attackEffectBaseID: attack.effect_basic_info_id,
                               });
