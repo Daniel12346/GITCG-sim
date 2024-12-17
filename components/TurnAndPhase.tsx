@@ -153,7 +153,6 @@ export default ({}) => {
       case "PREPARATION_PHASE":
         break;
       case "ROLL_PHASE":
-        setCurrentPlayerID(nextRoundFirstPlayerID);
         myUpdatedDice = createRandomDice(8);
         opponentUpdatedDice = createRandomDice(8);
         //reset effect usages of all cards for both players
@@ -173,6 +172,7 @@ export default ({}) => {
         }));
         break;
       case "ACTION_PHASE":
+        setCurrentPlayerID(nextRoundFirstPlayerID);
         break;
       case "END_PHASE":
         myUpdatedCards = drawCards(myUpdatedCards, 2);
@@ -374,7 +374,11 @@ export default ({}) => {
                     },
                   })
                   .then(() => {
-                    if (!isOpponentReadyForNextPhase) {
+                    //TODO!: only switch player in ACTION_PHASE, other phases are shared
+                    if (
+                      !isOpponentReadyForNextPhase &&
+                      currentPhase === "ACTION_PHASE"
+                    ) {
                       setCurrentPlayerID(opponentID);
                       broadcastSwitchPlayer({
                         channel,
