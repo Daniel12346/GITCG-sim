@@ -546,27 +546,26 @@ export const mySelectedDiceState = atom<Dice>({
   key: "mySelectedDiceState",
   default: {},
 });
-type Card = Database["public"]["Tables"]["card"]["Row"];
 
-export const opponentCardsState = atom<Card[]>({
+export const opponentCardsState = atom<CardExt[]>({
   key: "opponentCardsState",
   default: [],
 });
-export const opponentCardsInHandState = selector<Card[]>({
+export const opponentCardsInHandState = selector<CardExt[]>({
   key: "opponentCardsInHandState",
   get: ({ get }) => {
     const opponentCards = get(opponentCardsState);
     return opponentCards.filter((card) => card.location === "HAND");
   },
 });
-export const opponentCardsInDiscardPileState = selector<Card[]>({
+export const opponentCardsInDiscardPileState = selector<CardExt[]>({
   key: "opponentCardsInDiscardPileState",
   get: ({ get }) => {
     const opponentCards = get(opponentCardsState);
     return opponentCards.filter((card) => card.location === "DISCARDED");
   },
 });
-export const opponentCardsInDeckState = selector<Card[]>({
+export const opponentCardsInDeckState = selector<CardExt[]>({
   key: "opponentCardsInDeckState",
   get: ({ get }) => {
     const opponentCards = get(opponentCardsState);
