@@ -105,7 +105,7 @@ export const subtractCost = (
             throw new Error("Not enough dice");
           }
           for (let elName of availableElements) {
-            if (i > 0 && result[elName] && result[elName] > 0) {
+            if (i > 0 && result && result[elName] && result[elName] > 0) {
               result[elName] = result[elName]! - 1;
               i--;
             }
