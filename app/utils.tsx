@@ -15,7 +15,6 @@ export const cardFromBasicInfo = (
   return {
     ...cardBasicInfo,
     element: (cardBasicInfo.element as ElementName) || null,
-    //TODO: do not ts ignore
     //@ts-ignore
     quantity: cardBasicInfo.quantity || null,
     card_type: cardBasicInfo.card_type ?? "",
@@ -51,7 +50,6 @@ export const cardFromBasicInfo = (
           total_usages: 0,
           usages_this_turn: 0,
           costJson: effectBasicInfo.cost,
-          //TODO: remove this
           cost: effectBasicInfo.cost as Dice,
           description: effectBasicInfo.description || "",
           effectType: effectBasicInfo.effect_type || "",
@@ -525,7 +523,6 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
     );
     const infusionElement = infusionStatus?.name.split("_")[0] as ElementName;
     //infusionElement overrides PHYSICAL damage
-    //TODO: multiple infusions?
     if (infusionElement && damageElement === "PHYSICAL") {
       damageElement = infusionElement;
     }

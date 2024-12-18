@@ -12,7 +12,6 @@ interface EffectT {
   description?: string;
   effect_basic_info_id?: string;
   effectType?: string;
-  // TODO:add effect element to db
 }
 type LocationT =
   | "DECK"
@@ -46,11 +45,10 @@ interface CardExtended {
   cost?: Cost;
   costJson?: Json;
   subtype?: string;
-  //IDs of cards equipped to this card
+  //id of the card that this card is equipped to
   equippedTo?: string | null;
   //should only be used in deck builder
   quantity?: number;
-  //TODO: remove equipped_to_id from card table
   wasActivatedThisTurn?: boolean;
   hasUsedFoodThisTurn?: boolean;
   defeatedInTurn?: number;
@@ -209,7 +207,6 @@ type TriggerContextT = {
   reaction?: {
     names: ElementalReaction[];
     resultingElement?: ElementName;
-    //TODO: other possible causes of reactions
     cause: "ATTACK" | "EFFECT";
   };
   switched?: {

@@ -194,7 +194,6 @@ export const activateEffect: ExecuteEffect = (params) => {
   const { myCards, thisCardID, effect } = params;
   if (!effect) return { errorMessage: "no effect" };
   const effectLogic = findEffectLogic(effect);
-  // TODO: handle somewhere else
   const effectSourceCard = myCards.find((card) => card.id === thisCardID);
   if (!effectSourceCard) {
     return { errorMessage: "no card with this effect" };
