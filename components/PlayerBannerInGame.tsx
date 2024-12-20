@@ -15,7 +15,6 @@ export default function PlayerBannerInGame({
   playerProfile,
   isMyProfile,
 }: Props) {
-  //TODO: add loadable state
   const isMyTurn = useRecoilValue(isMyTurnState);
   const isActionPhase = useRecoilValue(isActionPhaseState);
   const userAvatar = useRecoilValue(userAvatarState(playerProfile?.id));

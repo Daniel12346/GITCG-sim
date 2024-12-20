@@ -768,7 +768,6 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
         (card) => card.is_active
       );
       if (previousActiveCharacterIndex === -1) {
-        //TODO: throw an error
         previousActiveCharacterIndex = 0;
       }
       const nextActiveCharacterIndex =
@@ -848,7 +847,6 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
             const total_usages = effect.total_usages || 0;
             return {
               ...effect,
-              //TODO: reset usages this turn
               usages_this_turn: usages_this_turn + 1,
               total_usages: total_usages + 1,
             };
@@ -858,7 +856,7 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
         const currentEnergy = card.energy;
         const updatedEnergy =
           currentEnergy !== null
-            ? //summon etc. don't have max_energy (?)
+            ? //summons etc. don't have max_energy
               card.max_energy && currentEnergy < card.max_energy!
               ? currentEnergy + 1
               : currentEnergy
@@ -948,7 +946,6 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
             eventType: "REACTION",
             reaction: {
               names: reactions,
-              //TODO: fix resultingElement
               resultingElement: resultingElement || undefined,
               cause: "ATTACK",
             },
@@ -1132,7 +1129,6 @@ const executePhaseEffectsForOnePlayer = ({
       myDice: myUpdatedDice,
       opponentCards: opponentUpdatedCards,
       opponentDice: opponentUpdatedDice,
-      //TODO: is this necessary?
       triggerContext: {
         eventType: phaseName,
       },

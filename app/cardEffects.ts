@@ -405,13 +405,12 @@ export const effects: {
         return { errorMessage: "Target card is not a summon card" };
       }
       if (target.usages === null) {
-        return { errorMessage: "Target card has usages" };
+        return { errorMessage: "Target card does not have usages" };
       }
       const myUpdatedCards = myCards.map((card) => {
         if (card.id === target.id && card.usages !== null) {
           return {
             ...card,
-            //TODO: is it + or -?
             usages: card.usages - 1,
           };
         } else {
@@ -1402,6 +1401,7 @@ export const effects: {
       if (!thisCardID || !thisCard) {
         return { errorMessage: "No card passed to effect" };
       }
+      let updatedUsages;
 
       const targetCards = opponentCards.filter(
         (card) => card.location === "CHARACTER" && card.is_active
@@ -1425,19 +1425,18 @@ export const effects: {
         return { errorMessage: "No cards found" };
       }
       if (thisCard.max_usages !== undefined && thisCard.max_usages !== null) {
-        //TODO: should this be max_usages-1?
-        if (thisCard.usages === thisCard.max_usages) {
+        myUpdatedCards = myUpdatedCards.map((card) => {
+          if (card.id === thisCard.id) {
+            updatedUsages = (card.usages || 0) + 1;
+            return { ...card, usages: updatedUsages };
+          }
+          return card;
+        });
+        if (updatedUsages === thisCard.max_usages) {
           //removing the summon
           myUpdatedCards = myUpdatedCards.filter(
             (card) => card.id !== thisCard.id
           );
-        } else {
-          myUpdatedCards = myUpdatedCards.map((card) => {
-            if (card.id === thisCard.id) {
-              return { ...card, usages: (card.usages || 0) + 1 };
-            }
-            return card;
-          });
         }
       }
 

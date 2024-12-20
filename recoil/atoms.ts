@@ -25,7 +25,6 @@ export const usersInLobbyIDsState = atom<string[]>({
   default: [],
 });
 
-//TODO: set profile data at login
 export const myProfileState = selector<Profile | null>({
   key: "myProfileState",
   get: async ({ get }) => {
@@ -319,27 +318,6 @@ export const opponentInGameCardsState = atom<CardExt[]>({
   default: [],
 });
 
-// export const myInGameCardsInitialState = selector<CardExt[] | null>({
-//   key: "myInGameCardsInitialState",
-//   get: async ({ get }) => {
-//     // const currentGameID = get(currentGameIDState);
-//     const myCurrentDeckCardsBasicInfo = get(myCurrentDeckCardsBasicInfoState);
-//     const myID = get(myIDState);
-//     if (!myCurrentDeckCardsBasicInfo) return null;
-//     let myDeckCardsInGame: CardExt[] = [];
-//     console.log("myCurrentDeckCardsBasicInfo", myCurrentDeckCardsBasicInfo);
-
-//     myCurrentDeckCardsBasicInfo.forEach((cardBasicInfo) => {
-//       const quantity = cardBasicInfo.quantity || 1;
-//       for (let i = 0; i < quantity; i++) {
-//         const card = cardFromBasicInfo(cardBasicInfo, myID);
-//         myDeckCardsInGame.push(card);
-//       }
-//     });
-//     console.log("myDeckCardsInGame", myDeckCardsInGame);
-//     return myDeckCardsInGame;
-//   },
-// });
 export const myInGameCardsState = atom<CardExt[]>({
   key: "myInGameCardsState",
   default: [],
@@ -508,7 +486,6 @@ export const isMyTurnState = selector<boolean>({
   key: "isMyTurnState",
   get: ({ get }) => {
     const currentPlayerID = get(currentPlayerIDState);
-    //TODO: only use in action phase
     const myID = get(myIDState);
     return currentPlayerID === myID;
   },

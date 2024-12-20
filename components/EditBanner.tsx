@@ -7,7 +7,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
-//TODO: default banner selection
 export default function EditBanner() {
   const myID = useRecoilValue(myIDState);
   const refreshMyBanner = useRecoilRefresher_UNSTABLE(myBannerState);

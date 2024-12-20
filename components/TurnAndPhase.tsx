@@ -67,9 +67,6 @@ export default ({}) => {
       config: { presence: { key: myID } },
     });
     channel
-      .on("presence", { event: "join" }, ({ key }) => {
-        //TODO:
-      })
       .on("presence", { event: "leave" }, async ({ key }) => {
         console.log("opponent left", key, opponentID);
         if (key === opponentID) {
@@ -153,6 +150,7 @@ export default ({}) => {
       case "PREPARATION_PHASE":
         break;
       case "ROLL_PHASE":
+        setCurrentRound((prev) => prev + 1);
         myUpdatedDice = createRandomDice(8);
         opponentUpdatedDice = createRandomDice(8);
         //reset effect usages of all cards for both players
@@ -333,11 +331,9 @@ export default ({}) => {
     if (amIReadyForNextPhase && isOpponentReadyForNextPhase) {
       if (currentPhase === "ACTION_PHASE") {
         console.log("currentPlayerID", currentPlayerID);
-        //the player that ended the action phase (?) first is the first player of the next round
+        //the player that ended the action phase first is the first player of the next round
         //if both players are ready, it means the current turn player ended the round second and will go second next round
-        //TODO: check if this is correct
         setNextRoundFirstPlayerID(currentPlayerID === myID ? opponentID : myID);
-        setCurrentRound((prev) => prev + 1);
       }
       setCurrentPhase((prev: PhaseName | null) => {
         if (!prev) return "PREPARATION_PHASE";
