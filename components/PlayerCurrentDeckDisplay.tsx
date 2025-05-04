@@ -12,7 +12,6 @@ type Props = {
 };
 export default function PlayerCurrentDeckDisplay({
   playerID,
-  // playerUsername,
   canBeCopied = true,
 }: Props) {
   const userCurrentDeckCardsWithQuantitiesAndEffects = useRecoilValue(

@@ -4,7 +4,7 @@ import {
   deckInDeckBuilderCardCountState,
   deckInDeckBuilderCardsBasicInfoWithQuantitiesAndEffectsState,
 } from "@/recoil/atoms";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import {  useRecoilValue, useSetRecoilState } from "recoil";
 
 interface Props {
   card: CardBasicInfo & {
@@ -21,7 +21,6 @@ export default function CardInDeckDisplay({
   isQuantityEditable = false,
 }: Props) {
   const setCurrentViewedCard = useSetRecoilState(currentViewedCardState);
-  // const deckInDeckBuilderCards = useRecoilValue(deckInDeckBuilderCardsState);
   const setDeckInDeckBuilderCardsBasicInfoExtended = useSetRecoilState(
     deckInDeckBuilderCardsBasicInfoWithQuantitiesAndEffectsState
   );

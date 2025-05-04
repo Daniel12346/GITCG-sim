@@ -1506,7 +1506,7 @@ export const effects: {
       if (!switchedToCard) {
         return { errorMessage: "No switched card found" };
       }
-      //effect only trigger if this creation's owner is the one switching
+      //effect only triggers if this creation's owner is the one switching
       const didISwitch = myCards.find((card) => card.id === switchedToCard.id);
       if (!didISwitch) {
         return {};

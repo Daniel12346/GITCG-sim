@@ -45,7 +45,7 @@ interface CardExtended {
   cost?: Cost;
   costJson?: Json;
   subtype?: string;
-  //id of the card that this card is equipped to
+  //id of the card this card is equipped to
   equippedTo?: string | null;
   //should only be used in deck builder
   quantity?: number;
@@ -171,7 +171,7 @@ type ExecuteEffectParamsT = {
   opponentDice: Dice;
   playerID?: string;
   triggerContext?: TriggerContext;
-  //the card that is being targeted by the activated card
+  //the cards selected as targets for the effect
   targetCards?: CardExt[];
   summons?: CardExt[];
   currentRound: number;
@@ -191,9 +191,8 @@ type ExecuteEffectT = (params: ExecuteEffectParams) => {
 
 type TriggerEventsT = EventType[] | null;
 type TriggerContextT = {
-  //will be used with cost reduction effects
   eventType: EventType;
-  //can be used both for attacks and equips
+  //targetCards can be used both for attacks and equipping
   targetCards?: CardExt[];
   cost?: Cost;
   activatedCard?: CardExt;
@@ -231,7 +230,6 @@ type AttackT = {
 };
 declare global {
   type Database = DB;
-  //extends Card with effects
   type CardExt = CardExtended;
   type Effect = EffectT;
   type Board = BoardT;

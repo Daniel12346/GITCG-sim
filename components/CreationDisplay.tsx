@@ -1,12 +1,3 @@
-//TODO:
-export default function CreationDisplay({
-  creationCardBasicInfoId,
-  isMyBoard,
-}: {
-  creationCardBasicInfoId: string;
-  isMyBoard: boolean;
-}) {}
-
 type CreationDisplays = {
   [key: string]: {
     shouldDisplayOnCard({

@@ -494,7 +494,6 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
   ({
     damage,
     damageElement,
-    // effectDuration
     attackerCardId,
     targetCardId,
     myCards,
@@ -925,7 +924,6 @@ export const calculateAttackElementalReaction: CalculateAttackElementalReaction 
         if (opponentUpdatedCardsAfterEffects) {
           opponentUpdatedCards = opponentUpdatedCardsAfterEffects;
         }
-        // }
       });
     }
     if (opponentEffectsThatTriggerOnReaction.length > 0) {
@@ -997,7 +995,7 @@ export const createSummon = ({
   maxUsages,
 }: {
   summonBasicInfoID: string;
-  //creations have effects and usages like summons but are not visible on the board as cards
+  //creations have effects and usages like summons but are not treated as cards
   isCreation?: boolean;
   summons: CardExt[];
   myCards: CardExt[];
@@ -1013,11 +1011,6 @@ export const createSummon = ({
   if (!summonOriginal) {
     return { errorMessage: "Summon not found" };
   }
-  // const summoner =
-  //   summonerCard || myCards.find((card) => card.id === summonerCard);
-  // if (!summoner) {
-  //   return { errorMessage: "Summoner not found" };
-  // }
   const summonId = uuid();
   const summon: CardExt = {
     ...summonOriginal,
@@ -1098,7 +1091,6 @@ export const executeEffectsSequentially = ({
 };
 
 type ExecutePhaseEffectsParams = {
-  // amIPlayer1: boolean;
   phaseName: PhaseName;
   executeArgs: Omit<ExecuteEffectParams, "effect" | "thisCardID">;
   areMyEffectsFirst?: boolean;
