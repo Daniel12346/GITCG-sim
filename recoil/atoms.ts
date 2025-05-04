@@ -577,11 +577,6 @@ export const usedAttackState = atom<Attack | null>({
   default: null,
 });
 
-type BattleLog = Tables<"game"> & {
-  player1: Tables<"profile">;
-  player2: Tables<"profile">;
-};
-
 export const playerBattleLogsState = selectorFamily({
   key: "playerBattleData",
   get:

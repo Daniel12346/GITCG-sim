@@ -1,4 +1,4 @@
-import { Database as DB } from "@/lib/database.types";
+import { Database as DB, Tables } from "@/lib/database.types";
 import { CardStatus } from "./utils";
 
 interface EffectT {
@@ -228,6 +228,11 @@ type AttackT = {
   targetCardID: string | null;
   attackEffectBaseID: string;
 };
+type BattleLogT = Tables<"game"> & {
+  player1: Tables<"profile">;
+  player2: Tables<"profile">;
+};
+
 declare global {
   type Database = DB;
   type CardExt = CardExtended;
@@ -264,4 +269,5 @@ declare global {
   type EffectLogic = EffectLogicT;
   type Attack = AttackT;
   type CardStatChange = CardStatChangeT;
+  type BattleLog = BattleLogT;
 }
