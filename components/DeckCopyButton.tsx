@@ -52,7 +52,7 @@ export default function DeckCopyButton({
         `}
       >
         <Copy size={20} className="" />
-        copy
+        copy deck
       </button>
     </>
   );
