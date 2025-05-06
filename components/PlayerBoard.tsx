@@ -112,9 +112,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       config: { presence: { key: myID } },
     });
     channel
-      .on("presence", { event: "join" }, ({ key }) => {
-        //TODO:
-      })
       .on("broadcast", { event: "switch_player" }, ({ payload }) => {
         const { playerID } = payload;
         setCurrentPlayerID(playerID);
@@ -327,25 +324,28 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             opponentCards: opponentUpdatedCards,
           },
         })
-        //TODO: combine into one broadcast
         .then(() => {
           //passing the turn to the opponent if the switch was not a fast action
           if (!isSwitchFastAction && !isOpponentReadyForNextPhase) {
             setCurrentPlayerID(opponentID);
-            setTimeout(() => {
-              channel
-                ?.send({
-                  type: "broadcast",
-                  event: "switch_player",
-                  payload: {
-                    playerID: opponentID,
-                    currentPhase: phase,
-                  },
-                })
-                .then((res) => {
-                  console.log("switched player", res);
-                });
-            }, 400);
+            broadcastSwitchPlayer({
+              channel,
+              playerID: opponentID,
+            });
+            // setTimeout(() => {
+            //   channel
+            //     ?.send({
+            //       type: "broadcast",
+            //       event: "switch_player",
+            //       payload: {
+            //         playerID: opponentID,
+            //         currentPhase: phase,
+            //       },
+            //     })
+            //     .then((res) => {
+            //       console.log("switched player", res);
+            //     });
+            // }, 400);
           }
         });
     }
@@ -378,13 +378,10 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     }
 
     //attack effects have a cost
-    //TODO: remove energy from cost in db
     let cost =
       attackEffect.cost &&
       Object.fromEntries(
-        Object.entries(attackEffect.cost).filter(
-          ([key, value]) => key != "ENERGY"
-        )
+        Object.entries(attackEffect.cost).filter(([key]) => key != "ENERGY")
       );
     let myDiceAfterCost = myDice;
     let myUpdatedCards = myCards;
@@ -532,8 +529,8 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     };
   };
   const activateCard = (card: CardExt) => {
-    //weapon and artifact cards
     if (!myCards) return;
+    //equipment cards are weapon and artifact cards
     const isEquipment = card.subtype?.includes("EQUIPMENT");
     const isFood = card.subtype === "EVENT_FOOD";
     //location and companion cards
@@ -732,8 +729,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         { includeCostModifiers: false }
       );
 
-    //TODO: how do I update the effect usage count on this and other cards?
-
     try {
       if (
         thisCardEffectsThatTriggerOnThisCardActivation.length !== 0 ||
@@ -863,7 +858,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             ))}
         </div>
 
-        {/* //TODO: display dice, move to new component, fix overflow */}
+        {/* //TODO: move to new component, fix overflow */}
         <div className="flex justify-between overflow-hidden px-4 items-center">
           {isMyBoard && (
             <>
@@ -943,7 +938,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
                             channel
                               ?.send({
                                 type: "broadcast",
-                                //TODO: use this event or delete it
                                 event: "updated_cards_and_dice",
                                 payload: {
                                   myCards: myUpdatedCards,
