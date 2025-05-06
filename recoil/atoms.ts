@@ -5,7 +5,12 @@ import {
 import { atom, selector, selectorFamily } from "recoil";
 import { recoilPersist } from "recoil-persist";
 
-import { cardFromBasicInfo, calculateDeckCardCount } from "@/app/utils";
+import {
+  cardFromBasicInfo,
+  calculateDeckCardCount,
+  getAvatarUrl,
+  getBannerUrl,
+} from "@/app/utils";
 import { CardExtended } from "@/app/global";
 import { Tables } from "@/lib/database.types";
 const { persistAtom } = recoilPersist();
@@ -609,6 +614,75 @@ export const playerBattleStatsState = selectorFamily({
       return { wins, losses, total: data.length };
     },
 });
+export const myAvatarPathState = atom({
+  key: "myAvatarPathState",
+  default: selector({
+    key: "myAvatarPathStateSelector",
+    get: async ({ get }) => {
+      const myProfile = get(myProfileState);
+      if (!myProfile) return null;
+      return myProfile.avatar_url;
+    },
+  }),
+});
+
+export const myBannerPathState = atom({
+  key: "myBannerPathState",
+  default: selector({
+    key: "myBannerPathStateSelector",
+    get: async ({ get }) => {
+      const myProfile = get(myProfileState);
+      if (!myProfile) return null;
+      return myProfile.banner_url;
+    },
+  }),
+});
+
+export const myAvatarState = atom({
+  key: "myAvatarState",
+  default: selector({
+    key: "myAvatarStateSelector",
+    get: async ({ get }) => {
+      const myAvatarPath = get(myAvatarPathState);
+      if (!myAvatarPath) return null;
+      const supabase = createClientComponentClient<Database>();
+      try {
+        const { data } = await supabase.storage
+          .from("avatars")
+          .createSignedUrl(`${myAvatarPath}`, 600);
+        return data?.signedUrl;
+      } catch (e) {
+        console.log("error", e);
+        return null;
+      }
+    },
+  }),
+});
+
+export const myBannerState = atom({
+  key: "myBannerState",
+  default: selector({
+    key: "myBannerStateSelector",
+    get: async ({ get }) => {
+      const myBannerPath = get(myBannerPathState);
+      if (!myBannerPath) return null;
+      const supabase = createClientComponentClient<Database>();
+      try {
+        const { data, error } = await supabase.storage
+          .from("banners")
+          .createSignedUrl(`${myBannerPath}`, 600);
+        if (error) {
+          console.log("error", error);
+          return null;
+        }
+        return data.signedUrl;
+      } catch (e) {
+        console.log("error", e);
+        return null;
+      }
+    },
+  }),
+});
 
 export const userAvatarState = selectorFamily({
   key: "userAvatarState",
@@ -616,62 +690,36 @@ export const userAvatarState = selectorFamily({
     (id: string | undefined) =>
     async ({ get }) => {
       if (!id) return null;
+      const supabase = createClientComponentClient<Database>();
       try {
-        const supabase = createClientComponentClient<Database>();
-        const { data, error } = await supabase.storage
-          .from("avatars")
-          .createSignedUrl(`${id}/avatar.png`, 600);
-        if (error) {
-          console.log("error", error);
-          return null;
-        }
-        return data?.signedUrl;
+        const userProfile = get(userProfileState(id));
+        if (!userProfile) return null;
+        const avatarPath = userProfile.avatar_url;
+        if (!avatarPath) return null;
+        const avatar = await getAvatarUrl(id, supabase);
+        return avatar;
       } catch (e) {
         console.log("error", e);
         return null;
       }
     },
-});
-
-export const myAvatarState = selector({
-  key: "myAvatarState",
-  get: async ({ get }) => {
-    const myID = get(myIDState);
-    const avatar = get(userAvatarState(myID));
-    return avatar;
-  },
 });
 
 export const userBannerState = selectorFamily({
   key: "userBannerState",
   get:
     (id: string | undefined) =>
-    async ({ get }) => {
+    async ({}) => {
+      const supabase = createClientComponentClient<Database>();
       if (!id) return null;
       try {
-        const supabase = createClientComponentClient<Database>();
-        const { data, error } = await supabase.storage
-          .from("banners")
-          .createSignedUrl(`${id}/banner.png`, 600);
-        if (error) {
-          console.log("error", error);
-          return null;
-        }
-        return data?.signedUrl;
+        const banner = await getBannerUrl(id, supabase);
+        return banner;
       } catch (e) {
         console.log("error", e);
         return null;
       }
     },
-});
-
-export const myBannerState = selector({
-  key: "myBannerState",
-  get: async ({ get }) => {
-    const myID = get(myIDState);
-    const banner = get(userBannerState(myID));
-    return banner;
-  },
 });
 
 export const doIHaveAnActiveCharacterState = selector({
