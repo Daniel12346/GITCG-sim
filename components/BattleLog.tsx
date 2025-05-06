@@ -12,10 +12,6 @@ export default function BattleLog({
   const myID = useRecoilValue(myIDState);
   const player1Avatar = useRecoilValue(userAvatarState(player1?.id));
   const player2Avatar = useRecoilValue(userAvatarState(player2?.id));
-  useEffect(() => {
-    console.log("player1Avatar", player1Avatar);
-    console.log("player2Avatar", player2Avatar);
-  }, [player1Avatar, player2Avatar]);
 
   return (
     <div
