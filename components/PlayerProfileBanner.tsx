@@ -1,17 +1,11 @@
 import { Tables } from "@/lib/database.types";
 import { userAvatarState, userBannerState } from "@/recoil/atoms";
 import { useRecoilValue } from "recoil";
-import EditAvatar from "./EditAvatar";
-import EditBanner from "./EditBanner";
 
 type Props = {
   playerProfile: Tables<"profile"> | null;
-  isMyProfile?: boolean;
 };
-export default function PlayerProfileBanner({
-  playerProfile,
-  isMyProfile,
-}: Props) {
+export default function PlayerProfileBanner({ playerProfile }: Props) {
   const userAvatar = useRecoilValue(userAvatarState(playerProfile?.id));
   const userBanner = useRecoilValue(userBannerState(playerProfile?.id));
   return (
@@ -30,20 +24,11 @@ export default function PlayerProfileBanner({
             src={userBanner}
             className="absolute object-cover top-0 left-0 border-inherit w-full h-full z-10"
           ></img>
-          {isMyProfile && (
-            <div className="z-50 absolute top-1 left-1">
-              <EditBanner />
-            </div>
-          )}
+
           <div className="absolute object-cover top-0 left-0 border-inherit w-full h-full bg-gradient-to-r from-slate-800/60 to-slate-700/0 z-10"></div>
         </>
       )}
       <div className="flex relative w-fit z-10">
-        {isMyProfile && (
-          <div className="absolute top-0 right-0 w-fit h-fit z-30">
-            <EditAvatar />
-          </div>
-        )}
         <img
           className="rounded-sm w-14 h-14 object-cover z-10 object-center"
           src={userAvatar || "/card_back_origin.png"}
