@@ -4,7 +4,7 @@ import {
   deckInDeckBuilderCardCountState,
   deckInDeckBuilderCardsBasicInfoWithQuantitiesAndEffectsState,
 } from "@/recoil/atoms";
-import {  useRecoilValue, useSetRecoilState } from "recoil";
+import { useRecoilValue, useSetRecoilState } from "recoil";
 
 interface Props {
   card: CardBasicInfo & {
@@ -57,7 +57,7 @@ export default function CardInDeckDisplay({
             {card.max_energy &&
               Array.from({ length: card.max_energy }).map((_, i) => {
                 return (
-                  <div className="flex flex-col gap-1 justify-center">
+                  <div className="flex flex-col gap-1 justify-center" key={i}>
                     <span
                       className={`bg-orange-200 w-2  h-2  outline-orange-600 outline-double outline-2
                     rounded-full
