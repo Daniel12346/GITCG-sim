@@ -4,6 +4,7 @@ import { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { DieElementNameT } from "./global";
 import { subtractCost } from "./actions";
 import { useRef, useEffect } from "react";
+import { Database } from "@/lib/database.types";
 
 type CardBasicInfo = Database["public"]["Tables"]["card_basic_info"]["Row"];
 export const cardFromBasicInfo = (
@@ -1352,4 +1353,40 @@ export const uploadToSupabaseBucket = async ({
     throw new Error("Error uploading file");
   }
   return data;
+};
+
+export const getAvatarUrl = async (
+  id: string,
+  client: SupabaseClient<Database>
+) => {
+  const { data } = await client
+    .from("profile")
+    .select("avatar_url")
+    .eq("id", id)
+    .single();
+  const avatarPath = data?.avatar_url;
+  const { data: avatarData, error } = await client.storage
+    .from("avatars")
+    .createSignedUrl(`${avatarPath}`, 600);
+  if (error) {
+    console.log("error", error);
+    return null;
+  }
+  return avatarData?.signedUrl;
+};
+export const getBannerUrl = async (id: string, client: SupabaseClient) => {
+  const { data } = await client
+    .from("profile")
+    .select("banner_url")
+    .eq("id", id)
+    .single();
+  const bannerPath = data?.banner_url;
+  const { data: bannerData, error } = await client.storage
+    .from("banners")
+    .createSignedUrl(`${bannerPath}`, 600);
+  if (error) {
+    console.log("error", error);
+    return null;
+  }
+  return bannerData?.signedUrl;
 };
