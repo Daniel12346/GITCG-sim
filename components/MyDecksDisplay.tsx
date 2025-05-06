@@ -81,7 +81,7 @@ export default function MyDecksDisplay() {
           className="flex text-blue-200 cursor-pointer text-semibold items-center"
           onClick={() => setIsDropdownOpen((prev) => !prev)}
         >
-          select deck{" "}
+          switch deck{" "}
           <div className="flex font-extrabold items-center ml-1">
             {!isDropwdownOpen ? (
               <ChevronRight size={20} strokeWidth={3} />
