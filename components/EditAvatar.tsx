@@ -1,5 +1,5 @@
-import { myAvatarState, myIDState } from "@/recoil/atoms";
-import { useRecoilRefresher_UNSTABLE, useRecoilValue } from "recoil";
+import { myAvatarPathState } from "@/recoil/atoms";
+import { useSetRecoilState } from "recoil";
 import ImageUpload from "./ImageUpload";
 import {
   Tooltip,
@@ -8,24 +8,20 @@ import {
   TooltipTrigger,
 } from "./ui/tooltip";
 export default function EditAvatar() {
-  const myID = useRecoilValue(myIDState);
-  const refreshMyAvatar = useRecoilRefresher_UNSTABLE(myAvatarState);
+  const setMyAvatarPath = useSetRecoilState(myAvatarPathState);
   return (
     <TooltipProvider>
       <Tooltip delayDuration={100}>
         <TooltipTrigger>
           <ImageUpload
-            uploadPath={`${myID}/avatar.png`}
             bucketName="avatars"
             iconSrc="/edit_icon.svg"
-            afterUpload={() => {
-              refreshMyAvatar();
+            afterUpload={async (path) => {
+              path && setMyAvatarPath(path);
             }}
           />
         </TooltipTrigger>
-        <TooltipContent className="bg-opacity-90">
-          Edit Avatar
-        </TooltipContent>
+        <TooltipContent className="bg-opacity-90">Edit Avatar</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
