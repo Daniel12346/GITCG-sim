@@ -47,7 +47,7 @@ export default function MyDecksDisplay() {
   const setDeckInDeckBuilderName = useSetRecoilState(
     deckInDeckBuilderNameState
   );
-  const [isDropwdownOpen, setIsDropdownOpen] = useState(false);
+  const [isDropwdownOpen, setIsDropdownOpen] = useState(true);
   useEffect(() => {
     setDeckInDeckBuilderName(myCurrentDeck?.name ?? "");
   }, [myCurrentDeck]);
