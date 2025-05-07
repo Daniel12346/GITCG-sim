@@ -2,8 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import TextWithSlideInUnderline from "@/components/TextWithSlideInUnderline";
+import { Loader2 } from "lucide-react";
 const MyIDNoSSR = dynamic(() => import("@/components/MyID"), {
   ssr: false,
+  loading: () => (
+    <div>
+      <Loader2 className="ml-4 animate-spin text-yellow-200" size={30} />
+    </div>
+  ),
 });
 
 export default async function Index() {
