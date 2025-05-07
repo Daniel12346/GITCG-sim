@@ -1331,6 +1331,7 @@ export const deleteDeck = async ({
     await client.from("deck").delete().eq("id", deckID);
   } catch (e) {
     console.log("Error deleting deck", e);
+    throw new Error("Error deleting deck");
   }
 };
 
