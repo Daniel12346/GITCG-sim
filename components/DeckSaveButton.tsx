@@ -75,7 +75,7 @@ export default () => {
   return (
     <button
       className={`
-text-slate-100  hover:bg-green-600 ml-4 bg-green-700 px-1 cursor-pointer rounded-sm text-center
+text-slate-50  hover:bg-green-700 ml-4 bg-green-800 px-1 cursor-pointer rounded-sm text-center
         ${
           isLoading &&
           "opacity-50 pointer-events-none bg-gray-200 text-gray-800 cursor-not-allowed"
