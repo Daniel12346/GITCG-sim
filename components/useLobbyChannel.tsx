@@ -100,11 +100,6 @@ export default function useLobbyChannel() {
                 })
               );
               let cardsInGameInitial: CardExt[] = [];
-              console.log(
-                "myCurrentDeckCardsBasicInfo",
-                cardsBasicInfoWithQuantities
-              );
-
               cardsBasicInfoWithQuantities.forEach((cardBasicInfo) => {
                 const quantity = cardBasicInfo.quantity || 1;
                 for (let i = 0; i < quantity; i++) {

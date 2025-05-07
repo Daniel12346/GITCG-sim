@@ -252,12 +252,6 @@ export const effects: {
   "7c59cd7c-68d5-4428-99cb-c245f7522b0c": {
     triggerOn: ["EITHER_PLAYER_REACTION"],
     execute: ({ myCards, triggerContext, thisCardID }) => {
-      console.log(
-        "Chang the Ninth effect",
-        myCards,
-        triggerContext,
-        thisCardID
-      );
       const thisCard = myCards.find((card) => card.id === thisCardID);
       let myUpdatedCards: CardExt[] | null = null;
       if (!thisCardID || !thisCard) {
@@ -1569,6 +1563,5 @@ export const effects: {
 
 export const findEffectLogic = (effect: Effect) => {
   const basicInfoId = effect.effect_basic_info_id!;
-  console.log("basicInfoId", basicInfoId, effects, effects[basicInfoId]);
   return effects[basicInfoId];
 };

@@ -9,7 +9,6 @@ const PlayerProfileNoSSR = dynamic(() => import("@/components/PlayerProfile"), {
 export default function Player() {
   const params = useParams();
   const playerID = params.id as string;
-  console.log(playerID);
   return (
     <div className="flex justify-center max-w-lg mt-3">
       <PlayerProfileNoSSR playerID={playerID} />

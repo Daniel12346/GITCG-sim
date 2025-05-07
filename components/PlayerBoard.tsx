@@ -332,20 +332,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
               channel,
               playerID: opponentID,
             });
-            // setTimeout(() => {
-            //   channel
-            //     ?.send({
-            //       type: "broadcast",
-            //       event: "switch_player",
-            //       payload: {
-            //         playerID: opponentID,
-            //         currentPhase: phase,
-            //       },
-            //     })
-            //     .then((res) => {
-            //       console.log("switched player", res);
-            //     });
-            // }, 400);
           }
         });
     }

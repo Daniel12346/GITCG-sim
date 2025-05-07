@@ -70,7 +70,6 @@ export const opponentProfileState = selector<Profile | null>({
       .eq("id", opponentID)
       .single();
     console.log("error", error);
-    console.log("data", data);
     return data;
   },
 });
