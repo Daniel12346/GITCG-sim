@@ -370,7 +370,6 @@ export default ({}) => {
                     },
                   })
                   .then(() => {
-                    //TODO!: only switch player in ACTION_PHASE, other phases are shared
                     if (
                       !isOpponentReadyForNextPhase &&
                       currentPhase === "ACTION_PHASE"

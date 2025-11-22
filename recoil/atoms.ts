@@ -376,18 +376,6 @@ export const currentHighlightedCardState = atom<CardExt | null>({
   key: "currentHighlightedCardState",
   default: null,
 });
-//TODO: use this
-export const gameState = atom<Database["public"]["Tables"]["game"]["Row"]>({
-  key: "gameState",
-  default: {
-    created_at: null,
-    turn_count: 0,
-    id: "",
-    player1_id: "",
-    player2_id: "",
-    winner_id: "",
-  },
-});
 
 export const myBoardState = atom<Board>({
   key: "MyBoardState",

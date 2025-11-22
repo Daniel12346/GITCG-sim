@@ -118,7 +118,6 @@ export const removeBasicInfoFromDeck = async (
 export const findEquippedCards = (
   target: CardExt,
   playerCards: CardExt[],
-  //TODO: use string enum
   type?: CardExt["subtype"]
 ) => {
   return playerCards.filter(
@@ -1027,7 +1026,6 @@ export const createSummon = ({
       usages_this_turn: 0,
     })),
   };
-  //TODO: can a summon be summoned to the opponent's side?
   const myUpdatedCards = [...myCards, summon];
   //TODO: effects that trigger on summon
   return { myUpdatedCards };
