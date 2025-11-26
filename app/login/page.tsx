@@ -1,3 +1,4 @@
+import { signInAction } from "../actions";
 import Messages from "./messages";
 import ReturnHome from "@/components/ReturnHome";
 
@@ -5,11 +6,7 @@ export default function Login() {
   return (
     <div className="flex-1 flex flex-col  w-full px-8 sm:max-w-md justify-center gap-2">
       <ReturnHome />
-      <form
-        className="flex-1 flex flex-col w-full justify-center gap-2 text-foreground"
-        action="/auth/sign-in"
-        method="post"
-      >
+      <form className="flex-1 flex flex-col w-full justify-center gap-2 text-foreground">
         <label className="text-md text-blue-100" htmlFor="email">
           Email
         </label>
@@ -29,14 +26,14 @@ export default function Login() {
           placeholder="••••••••"
           required
         />
-        <button className="bg-green-200 rounded px-4 py-2 text-green-700 font-semibold mb-2">
+        {/* <button className="bg-green-200 rounded px-4 py-2 text-green-700 font-semibold mb-2">
           Sign In
-        </button>
+        </button> */}
         <button
-          formAction="/auth/sign-up"
+          formAction={signInAction}
           className="border border-gray-700 bg-blue-200 rounded px-4 py-2 text-blue-700 font-semibold mb-2"
         >
-          Sign Up
+          Log in
         </button>
         <Messages />
       </form>
