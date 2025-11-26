@@ -1,4 +1,4 @@
-import { createRandomDice, drawCards } from "@/app/actions";
+import { createRandomDice, drawCards } from "@/app/gameActions";
 import { CardExtended } from "@/app/global";
 import {
   broadcastSwitchPlayer,
@@ -25,7 +25,7 @@ import {
   errorMessageState,
   gameOverMessageState,
 } from "@/recoil/atoms";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/utils/supabase/client";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { Hourglass } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -62,7 +62,7 @@ export default ({}) => {
   const [phaseChange, setPhaseChange] = useState(false);
 
   useEffect(() => {
-    const supabase = createClientComponentClient<Database>();
+    const supabase = createClient();
     const channel = supabase.channel("game:" + gameID, {
       config: { presence: { key: myID } },
     });
@@ -300,7 +300,7 @@ export default ({}) => {
     };
 
     const updateAndBroadcastGameWinner = async (gameWinnerID: string) => {
-      const client = createClientComponentClient<Database>();
+      const client = createClient();
       await updateGameWinnerInDatabase(
         client,
         gameID,

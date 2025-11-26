@@ -5,7 +5,7 @@ import {
   myInGameCardsState,
   mySelectedCardsState,
 } from "@/recoil/atoms";
-import { drawCards } from "@/app/actions";
+import { drawCards } from "@/app/gameActions";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import CardInGame from "./CardInGame";
 import { shuffleDeck } from "@/app/utils";

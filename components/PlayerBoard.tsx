@@ -24,7 +24,6 @@ import {
   opponentCharacterChangesAfterAttackState,
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useState } from "react";
 import CardInGame from "./CardInGame";
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -32,7 +31,7 @@ import {
   activateEffect,
   subtractCost,
   switchActiveCharacterCard,
-} from "@/app/actions";
+} from "@/app/gameActions";
 import { CardExtended, CostT } from "@/app/global";
 import {
   broadcastSwitchPlayer,
@@ -50,6 +49,7 @@ import DiceReroll from "./DiceReroll";
 import CardRedraw from "./CardRedraw";
 import GameOver from "./GameOver";
 import PlayerBannerInGame from "./PlayerBannerInGame";
+import { createClient } from "@/utils/supabase/client";
 
 interface PlayerBoardProps {
   playerID?: string;
@@ -107,7 +107,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   );
   const amIReadyForNextPhase = useRecoilValue(amIReadyForNextPhaseState);
   useEffect(() => {
-    const supabase = createClientComponentClient<Database>();
+    const supabase = createClient();
     const channel = supabase.channel("game-updates:" + gameID, {
       config: { presence: { key: myID } },
     });

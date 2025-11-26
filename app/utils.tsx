@@ -2,7 +2,7 @@ import { uuid } from "uuidv4";
 import { findEffectLogic } from "./cardEffects";
 import { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { DieElementNameT } from "./global";
-import { subtractCost } from "./actions";
+import { subtractCost } from "./gameActions";
 import { useRef, useEffect } from "react";
 import { Database } from "@/lib/database.types";
 

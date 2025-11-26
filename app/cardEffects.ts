@@ -1,4 +1,4 @@
-import { addDice, discardCard, drawCards, subtractCost } from "./actions";
+import { addDice, discardCard, drawCards, subtractCost } from "./gameActions";
 import {
   calculateAttackElementalReaction,
   calculateDamageAfterModifiers,

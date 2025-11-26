@@ -1,4 +1,4 @@
-import { subtractCost } from "@/app/actions";
+import { subtractCost } from "@/app/gameActions";
 import { CardExtended } from "@/app/global";
 import { calculateTotalDice } from "@/app/utils";
 import {
@@ -10,7 +10,7 @@ import {
 } from "@/recoil/atoms";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { useRecoilState, useSetRecoilState } from "recoil";
-//By discarding cards, the player can tune their elemental dice to match the element of their active character. 
+//By discarding cards, the player can tune their elemental dice to match the element of their active character.
 export default function ElementalTuning({
   channel,
 }: {

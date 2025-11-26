@@ -8,7 +8,7 @@ import {
   mySelectedDiceState,
   opponentDiceState,
 } from "@/recoil/atoms";
-import { addDice, createRandomDice, subtractCost } from "@/app/actions";
+import { addDice, createRandomDice, subtractCost } from "@/app/gameActions";
 import { broadcastUpdatedCardsAndDice, calculateTotalDice } from "@/app/utils";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { useEffect } from "react";

@@ -1,4 +1,4 @@
-import { drawCards } from "@/app/actions";
+import { drawCards } from "@/app/gameActions";
 import {
   myIDState,
   usersInLobbyIDsState,
@@ -11,11 +11,11 @@ import {
   opponentDiceState,
   nextRoundFirstPlayerIDState,
 } from "@/recoil/atoms";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { cardFromBasicInfo, shuffleDeck } from "@/app/utils";
+import { createClient } from "@/utils/supabase/client";
 
 export default function useLobbyChannel() {
   const myID = useRecoilValue(myIDState);
@@ -32,7 +32,7 @@ export default function useLobbyChannel() {
   );
   const router = useRouter();
   useEffect(() => {
-    const supabase = createClientComponentClient<Database>();
+    const supabase = createClient();
     let isCancelled = false;
     const channel = supabase.channel("lobby", {
       config: { presence: { key: myID } },
@@ -73,6 +73,7 @@ export default function useLobbyChannel() {
                 .eq("id", id)
                 .single();
               const currentDeckID = data?.current_deck_id;
+              if (!currentDeckID) return [];
               const { data: deckData } = await supabase
                 .from("deck")
                 .select("*, deck_card_basic_info(*)")
