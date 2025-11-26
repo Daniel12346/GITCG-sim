@@ -40,7 +40,7 @@ export default function DeckBuilder() {
   }, [searchKey]);
 
   return (
-    <div className="pt-12 flex flex-col text-slate-200 md:max-w-6xl w-full md:grid md:grid-cols-[6fr_3fr_3fr] gap-6">
+    <div className="pt-12 px-2 md:px-0 flex flex-col text-slate-200 md:max-w-6xl w-full md:grid md:grid-cols-[6fr_3fr_3fr] gap-6">
       <ReturnHome />
       <Suspense fallback={<div>Loading deck...</div>}>
         <div className="col-span-3">
