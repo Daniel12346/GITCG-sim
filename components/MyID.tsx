@@ -20,7 +20,7 @@ export default function MyID() {
         </span>
         <span className="text-lg">
           <TextWithSlideInUnderline>
-            {" " + myProfile?.username}
+            {" " + (myProfile?.username ?? "guest")}
           </TextWithSlideInUnderline>
         </span>
       </Link>
