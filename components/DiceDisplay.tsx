@@ -112,8 +112,9 @@ export default function DiceDisplay({
       >
         {Object.entries(dice)
           .toSorted()
-          .map(([element, amount]) => (
+          .map(([element, amount], i) => (
             <DiceOfElement
+              key={element + i}
               element={element as DieElementName}
               amount={amount}
               isMyBoard={isMyBoard}
