@@ -1,10 +1,10 @@
 "use client";
 
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
 
-export default function ClientComponent() {
-  const supabase = createClientComponentClient<any>();
+export default function CardBasicInfo() {
+  const supabase = createClient();
 
   const [basicInfo, setBasicInfo] = useState<any>();
   useEffect(() => {

@@ -18,13 +18,13 @@ import {
 } from "recoil";
 import SelectCurrentDeck from "./SelectCurrentDeck";
 import DeckDisplay from "./DeckDisplay";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { updateMyCurrentDeckInDatabase } from "@/app/utils";
 import DeleteDeck from "./DeckDeleteButton";
 import { ChevronRight, ChevronUp } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
 
 export default function MyDecksDisplay() {
-  const supabase = createClientComponentClient<Database>();
+  const supabase = createClient();
   const myID = useRecoilValue(myIDState);
   const myCurrentDeckID = useRecoilValue(myCurrentDeckIDState);
   const myDecks = useRecoilValue(myDecksState);

@@ -6,13 +6,13 @@ import {
   myDecksState,
   myIDState,
 } from "@/recoil/atoms";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/utils/supabase/client";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { useState } from "react";
 import { useRecoilRefresher_UNSTABLE, useRecoilValue } from "recoil";
 
 export default () => {
-  const client = createClientComponentClient<Database>();
+  const client = createClient();
   type SaveDeckParams = {
     client: SupabaseClient<Database>;
     deckID: string;

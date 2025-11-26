@@ -1,7 +1,3 @@
-import {
-  Session,
-  createClientComponentClient,
-} from "@supabase/auth-helpers-nextjs";
 import { atom, selector, selectorFamily } from "recoil";
 import { recoilPersist } from "recoil-persist";
 
@@ -12,14 +8,14 @@ import {
   getBannerUrl,
 } from "@/app/utils";
 import { CardExtended } from "@/app/global";
-import { Tables } from "@/lib/database.types";
+import { createClient } from "@/utils/supabase/client";
 const { persistAtom } = recoilPersist();
 type Profile = Database["public"]["Tables"]["profile"]["Row"];
 
-export const mySessionState = selector<Session | null>({
+export const mySessionState = selector({
   key: "mySessionState",
   get: async ({ get }) => {
-    const supabase = createClientComponentClient<Database>();
+    const supabase = createClient();
     const { data, error } = await supabase.auth.getSession();
     if (error) console.log("error", error);
     return data.session;
@@ -33,7 +29,7 @@ export const usersInLobbyIDsState = atom<string[]>({
 export const myProfileState = selector<Profile | null>({
   key: "myProfileState",
   get: async ({ get }) => {
-    const supabase = createClientComponentClient<Database>();
+    const supabase = createClient();
     const myID = get(myIDState);
     if (!myID) return null;
     const { data, error } = await supabase
@@ -61,7 +57,7 @@ export const opponentIDState = atom<string>({
 export const opponentProfileState = selector<Profile | null>({
   key: "opponentProfileState",
   get: async ({ get }) => {
-    const supabase = createClientComponentClient<Database>();
+    const supabase = createClient();
     const opponentID = get(opponentIDState);
     if (!opponentID) return null;
     const { data, error } = await supabase
@@ -79,7 +75,7 @@ export const userProfileState = selectorFamily<Profile | null, string>({
   get:
     (id) =>
     async ({ get }) => {
-      const supabase = createClientComponentClient<Database>();
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("profile")
         .select("*")
@@ -95,7 +91,7 @@ export const userDecksState = selectorFamily({
   get:
     (id: string) =>
     async ({ get }) => {
-      const supabase = createClientComponentClient<Database>();
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("deck")
         .select("*")
@@ -110,7 +106,7 @@ export const userCurrentDeckIDState = selectorFamily<string | null, string>({
   get:
     (id) =>
     async ({ get }) => {
-      const supabase = createClientComponentClient<Database>();
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("profile")
         .select("current_deck_id")
@@ -124,7 +120,7 @@ export const userCurrentDeckIDState = selectorFamily<string | null, string>({
 export const myDecksState = selector({
   key: "myDecksState",
   get: async ({ get }) => {
-    const supabase = createClientComponentClient<Database>();
+    const supabase = createClient();
     const myID = get(myIDState);
     console.log("myID", myID);
     if (!myID) return null;
@@ -159,7 +155,7 @@ export const myCurrentDeckWithCardBasicInfoState =
   selector<DeckWithCardBasicInfo | null>({
     key: "myCurrentDeckState",
     get: async ({ get }) => {
-      const supabase = createClientComponentClient<Database>();
+      const supabase = createClient();
       const myCurrentDeckID = get(myCurrentDeckIDState);
       if (!myCurrentDeckID) return null;
       const { data, error } = await supabase
@@ -180,8 +176,9 @@ export const userCurrentDeckWithCardBasicInfoState = selectorFamily<
   get:
     (id) =>
     async ({ get }) => {
-      const supabase = createClientComponentClient<Database>();
+      const supabase = createClient();
       const currentDeckID = get(userCurrentDeckIDState(id));
+      if (!currentDeckID) return null;
       const { data, error } = await supabase
         .from("deck")
         .select("*, deck_card_basic_info(*)")
@@ -197,7 +194,7 @@ export const userCurrentDeckCardsBasicInfoWithQuantitiesAndEffectsState =
     get:
       (id) =>
       async ({ get }) => {
-        const supabase = createClientComponentClient<Database>();
+        const supabase = createClient();
         const currentDeck = get(userCurrentDeckWithCardBasicInfoState(id));
         if (!currentDeck) return null;
         const myCardsBasicInfoIDs = currentDeck.deck_card_basic_info.map(
@@ -230,7 +227,7 @@ export const myCurrentDeckCardsBasicInfoWithQuantitiesAndEffectsState =
   selector<CardBasicInfoWithQuantityAndEffects[] | null>({
     key: "myCurrentDeckCardsBasicInfoWithQuantitiesAndEffectsState",
     get: async ({ get }) => {
-      const supabase = createClientComponentClient<Database>();
+      const supabase = createClient();
       const myCurrentDeck = get(myCurrentDeckWithCardBasicInfoState);
       if (!myCurrentDeck) return null;
       const myCardsBasicInfoIDs = myCurrentDeck.deck_card_basic_info.map(
@@ -266,7 +263,7 @@ export const deckInDeckBuilderWithCardBasicInfoState =
   selector<DeckWithCardBasicInfo | null>({
     key: "deckInDeckBuilderWithCardBasicInfo",
     get: async ({ get }) => {
-      const supabase = createClientComponentClient<Database>();
+      const supabase = createClient();
       const deckID = get(deckInDeckBuilderIDState);
       if (!deckID) return null;
       const { data, error } = await supabase
@@ -356,7 +353,7 @@ export const opponentCurrentDeckIDState = atom<string>({
 export const opponentCurrentDeckState = selector({
   key: "opponentCurrentDeckState",
   get: async ({ get }) => {
-    const supabase = createClientComponentClient<Database>();
+    const supabase = createClient();
     const opponentCurrentDeckID = get(opponentCurrentDeckIDState);
     if (!opponentCurrentDeckID) return null;
     const { data, error } = await supabase
@@ -545,7 +542,7 @@ export const opponentCardsInDeckState = selector<CardExt[]>({
 export const summonsState = selector({
   key: "summonsState",
   get: async ({}) => {
-    const supabase = createClientComponentClient<Database>();
+    const supabase = createClient();
     //fetch all summons with their effects
     const { data, error } = await supabase
       .from("card_basic_info")
@@ -574,7 +571,7 @@ export const playerBattleLogsState = selectorFamily({
   get:
     (playerID: string) =>
     async ({ get }) => {
-      const supabase = createClientComponentClient<Database>();
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("game")
         .select("*, player1:player1_id(*), player2:player2_id(*)")
@@ -632,7 +629,7 @@ export const myAvatarState = atom({
     get: async ({ get }) => {
       const myAvatarPath = get(myAvatarPathState);
       if (!myAvatarPath) return null;
-      const supabase = createClientComponentClient<Database>();
+      const supabase = createClient();
       try {
         const { data } = await supabase.storage
           .from("avatars")
@@ -653,7 +650,7 @@ export const myBannerState = atom({
     get: async ({ get }) => {
       const myBannerPath = get(myBannerPathState);
       if (!myBannerPath) return null;
-      const supabase = createClientComponentClient<Database>();
+      const supabase = createClient();
       try {
         const { data, error } = await supabase.storage
           .from("banners")
@@ -677,7 +674,7 @@ export const userAvatarState = selectorFamily({
     (id: string | undefined) =>
     async ({ get }) => {
       if (!id) return null;
-      const supabase = createClientComponentClient<Database>();
+      const supabase = createClient();
       try {
         const userProfile = get(userProfileState(id));
         if (!userProfile) return null;
@@ -697,7 +694,7 @@ export const userBannerState = selectorFamily({
   get:
     (id: string | undefined) =>
     async ({}) => {
-      const supabase = createClientComponentClient<Database>();
+      const supabase = createClient();
       if (!id) return null;
       try {
         const banner = await getBannerUrl(id, supabase);

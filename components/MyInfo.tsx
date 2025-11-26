@@ -1,13 +1,13 @@
 "use client";
 
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useState } from "react";
 import PlayerInfoInGame from "./PlayerBannerInGame";
 import { myProfileState } from "@/recoil/atoms";
 import { useRecoilValue } from "recoil";
+import { createClient } from "@/utils/supabase/client";
 
-export default function UserInfo() {
-  const supabase = createClientComponentClient<Database>();
+export default function MyInfo() {
+  const supabase = createClient();
   const [userId, setUserId] = useState<string | undefined>(undefined);
   const [userInfo, setUserInfo] = useState<any>();
   const myProfile = useRecoilValue(myProfileState);
@@ -21,6 +21,7 @@ export default function UserInfo() {
   }, [supabase, setUserId]),
     useEffect(() => {
       const getUserInfo = async () => {
+        if (!userId) return null;
         const { data } = await supabase
           .from("profile")
           .select("*, deck(*)")

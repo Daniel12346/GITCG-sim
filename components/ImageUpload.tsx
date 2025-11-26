@@ -1,7 +1,7 @@
 import { uploadToSupabaseBucket } from "@/app/utils";
 import { myIDState } from "@/recoil/atoms";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRecoilValue } from "recoil";
+import { createClient } from "@/utils/supabase/client";
 
 type Props = {
   uploadPath?: string;
@@ -17,7 +17,7 @@ export default function ImageUpload({
   iconSrc,
   afterUpload,
 }: Props) {
-  const client = createClientComponentClient();
+  const client = createClient();
   const myID = useRecoilValue(myIDState);
   const updateUserAvatar = async (url: string) => {
     // Update the user's avatar in the database

@@ -1,6 +1,6 @@
 import { copyDeck } from "@/app/utils";
 import { myIDState } from "@/recoil/atoms";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/utils/supabase/client";
 import { Copy } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -17,7 +17,7 @@ export default function DeckCopyButton({
     "INITIAL" | "LOADING" | "COMPLETED" | "ERROR"
   >("INITIAL");
   const myID = useRecoilValue(myIDState);
-  const client = createClientComponentClient<Database>();
+  const client = createClient();
   const handleCopyDeck = async () => {
     setCopyingState("LOADING");
     try {

@@ -1,11 +1,11 @@
 "use client";
 import CurrentViewedCard from "@/components/CurrentViewedCard";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import dynamic from "next/dynamic";
 import { Suspense, useEffect, useState } from "react";
 import CardInDeckDisplay from "@/components/CardInDeckDisplay";
 import { CardBasicInfoWithEffects } from "../global";
 import ReturnHome from "@/components/ReturnHome";
+import { createClient } from "@/utils/supabase/client";
 const MyDecksDisplayNoSSR = dynamic(
   () => import("@/components/MyDecksDisplay"),
   {
@@ -17,7 +17,7 @@ const DeckInfoNoSSR = dynamic(() => import("@/components/DeckInfo"), {
 });
 
 export default function DeckBuilder() {
-  const client = createClientComponentClient<Database>();
+  const client = createClient();
   const [searchKey, setSearchKey] = useState("");
   const [searchResultCards, setSearchResultCards] = useState<
     CardBasicInfoWithEffects[]

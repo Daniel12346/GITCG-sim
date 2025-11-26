@@ -1,7 +1,7 @@
 "use client";
 import { deleteDeck } from "@/app/utils";
 import { myCurrentDeckIDState, myDecksState } from "@/recoil/atoms";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/utils/supabase/client";
 import { Trash2 } from "lucide-react";
 import {
   useRecoilRefresher_UNSTABLE,
@@ -14,7 +14,7 @@ interface Props {
 }
 export default function DeleteDeck({ deckID }: Props) {
   const myCurrentDeckID = useRecoilValue(myCurrentDeckIDState);
-  const client = createClientComponentClient<Database>();
+  const client = createClient();
   const refreshDecks = useRecoilRefresher_UNSTABLE(myDecksState);
 
   return deckID === myCurrentDeckID ? null : (
