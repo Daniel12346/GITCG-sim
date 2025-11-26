@@ -24,7 +24,7 @@ export default function MyID() {
           </TextWithSlideInUnderline>
         </span>
       </Link>
-      <div>{myProfile && <LogoutButton />}</div>
+      <div>{<LogoutButton />}</div>
     </div>
   );
 }
