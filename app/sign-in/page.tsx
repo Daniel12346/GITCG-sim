@@ -2,7 +2,7 @@ import { signInAction } from "../actions";
 import Messages from "./messages";
 import ReturnHome from "@/components/ReturnHome";
 
-export default function Login() {
+export default function SignIn() {
   return (
     <div className="flex-1 flex flex-col  w-full px-8 sm:max-w-md justify-center gap-2">
       <ReturnHome />
