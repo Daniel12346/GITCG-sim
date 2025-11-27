@@ -23,25 +23,33 @@ export default function BattleLog({
         <span>ROUNDS: {turn_count}</span>
       </div>
       <div className="flex gap-3 text-xl">
-        <div>
-          <Link href={`/player/${player1?.id}`}>
-            <img
-              className="rounded-sm w-14 h-14 object-cover object-center"
-              src={player1Avatar || "/card_back_origin.png"}
-            />
+        <div className="flex gap-2">
+          <div className="min-w-[4rem] flex justify-center">
+            <Link
+              href={`/player/${player1?.id}`}
+              className="flex flex-col items-center"
+            >
+              <img
+                className="rounded-sm w-14 h-14 object-cover object-center"
+                src={player1Avatar || "/card_back_origin.png"}
+              />
 
-            <span>{player1?.username} </span>
-          </Link>
-        </div>
-        <span className="font-semibold flex items-end text-blue-300">VS</span>
-        <div>
-          <Link href={`/player/${player2?.id}`}>
-            <img
-              className="rounded-sm w-14 h-14 object-cover object-center"
-              src={player2Avatar || "/card_back_origin.png"}
-            />
-            <span>{player2?.username}</span>
-          </Link>
+              <span>{player1?.username ?? "guest"} </span>
+            </Link>
+          </div>
+          <span className="font-semibold flex items-end text-blue-300">VS</span>
+          <div className="min-w-[4rem] flex justify-center">
+            <Link
+              href={`/player/${player2?.id}`}
+              className="flex flex-col items-center"
+            >
+              <img
+                className="rounded-sm w-14 h-14 object-cover object-center"
+                src={player2Avatar || "/card_back_origin.png"}
+              />
+              <span>{player2?.username ?? "guest"}</span>
+            </Link>
+          </div>
         </div>
         <div
           className={`
