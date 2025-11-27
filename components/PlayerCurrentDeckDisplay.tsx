@@ -26,7 +26,7 @@ export default function PlayerCurrentDeckDisplay({
         {canBeCopied && playerID !== myID && (
           <DeckCopyButton
             deckCards={userCurrentDeckCardsWithQuantitiesAndEffects}
-            deckName={playerProfile?.username + "'s deck"}
+            deckName={playerProfile?.username ?? "guest" + "'s deck"}
           />
         )}
       </div>

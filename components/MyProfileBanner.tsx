@@ -45,7 +45,7 @@ export default function MyProfileBanner() {
         />
       </div>
       <span className="font-bold text-xl text-blue-100 z-10">
-        {myProfile?.username}
+        {myProfile?.username ?? "guest"}
       </span>
     </div>
   );

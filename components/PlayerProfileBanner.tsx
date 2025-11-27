@@ -35,7 +35,7 @@ export default function PlayerProfileBanner({ playerProfile }: Props) {
         />
       </div>
       <span className="font-bold text-xl text-blue-100 z-10">
-        {playerProfile?.username}
+        {playerProfile?.username ?? "guest"}
       </span>
     </div>
   );

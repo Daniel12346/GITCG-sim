@@ -46,7 +46,7 @@ export default function PlayerBannerInGame({
         src={userAvatar || "/card_back_origin.png"}
       />
       <span className="font-bold z-10 text-xl text-blue-100">
-        {playerProfile?.username}
+        {playerProfile?.username ?? "guest"}
       </span>
     </div>
   );
