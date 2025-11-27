@@ -20,7 +20,7 @@ export default async function Index() {
       </div>
       <div className="flex justify-center">
         <h1 className="text-slate-200 font-semibold text-4xl mb-10 text-center">
-          Genshin Impact TCG simulator
+          Genius Invokation TCG simulator
         </h1>
       </div>
       <div className="flex justify-center w-full">
