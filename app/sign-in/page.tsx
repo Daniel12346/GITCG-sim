@@ -1,12 +1,14 @@
+import Link from "next/link";
 import { signInAction } from "../actions";
 import Messages from "./messages";
-import ReturnHome from "@/components/ReturnHome";
 
 export default function SignIn() {
   return (
     <div className="flex-1 flex flex-col  w-full px-8 sm:max-w-md justify-center gap-2">
-      <ReturnHome />
       <form className="flex-1 flex flex-col w-full justify-center gap-2 text-foreground">
+        <span className="self-end text-slate-200/90 underline">
+          <Link href="/sign-up">Don't have an account yet? Sign up</Link>
+        </span>
         <label className="text-md text-blue-100" htmlFor="email">
           Email
         </label>
