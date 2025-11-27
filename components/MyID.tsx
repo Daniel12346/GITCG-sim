@@ -25,14 +25,7 @@ export default function MyID() {
         </span>
       </Link>
       <div>
-        {myProfile &&
-          (myProfile.username ? (
-            <LogoutButton />
-          ) : (
-            <button className="px-2 py-1 bg-red-600/60 hover:bg-red-600 rounded-sm">
-              Delete Guest Account
-            </button>
-          ))}
+        <LogoutButton isGuest={(myProfile && !myProfile.username) ?? true} />
       </div>
     </div>
   );
