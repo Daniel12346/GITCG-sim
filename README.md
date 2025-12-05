@@ -16,6 +16,19 @@ To check out the website you can join as a guest without using any credentials. 
 - Deck creation and editing, copying other players' decks
 - Game history
 
+## Media
+Deck builder usage example  
+<img src="public/deck_builder_gif.gif" alt="deck builder usage example" />
+  
+  
+Gameplay example:  
+<img src="public/gameplay.gif" alt="gameplay" />  
+This gameplay example, made using two browsers, shows:
+ - matchmaking by entering the lobby
+ - turn phases changing only when both players are ready
+ - fully synchronized gameplay - when one player's game state (cards, dice) changes, the change is propagated to the other player
+ - attack damage calculation and statuses (the snowflake icon represents an ice status applied by the atacking card) 
+
 
 ## Tech Stack
 
@@ -27,9 +40,7 @@ To check out the website you can join as a guest without using any credentials. 
 ##  Database Tables
 <img src="public/tables.png" alt="database tables" />
 
-## Media
-<img src="public/deck_builder_gif.gif" alt="deck builder usage example" />
-Deck builder usage example
+
 
 
 
