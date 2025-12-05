@@ -27,8 +27,9 @@ To check out the website you can join as a guest without using any credentials. 
 ##  Database Tables
 <img src="public/tables.png" alt="database tables" />
 
-## Screenshots
-
+## Media
+<img src="public/deck_builder_gif.gif" alt="deck builder usage example" />
+Deck builder usage example
 
 
 
