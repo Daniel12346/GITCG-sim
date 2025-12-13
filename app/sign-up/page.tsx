@@ -31,7 +31,7 @@ export default function Login() {
           Password
         </label>
         <input
-          className="rounded-md px-4 py-2 bg-inherit border-2 mb-6 border-slate-200/40 focus:outline-blue-200"
+          className="rounded-md text-blue-100 px-4 py-2 bg-inherit border-2 mb-6 border-slate-200/40 focus:outline-blue-200"
           type="password"
           name="password"
           placeholder="••••••••"
