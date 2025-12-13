@@ -72,9 +72,9 @@ export const subtractCost = (
     throw new Error("Not enough dice");
   }
   Object.keys(costToSubtract)
+    .sort((a) => (["MATCHING", "UNALIGNED"].includes(a[0]) ? 1 : -1))
     //sorting so that matching and unaligned are subtracted last because specific elements need to be checked first
     //matching and unaligned must not take any of the dice that are needed for specific elements before those requirements are met
-    .sort((a, b) => (["MATCHING", "UNALIGNED"].includes(b[0]) ? -1 : 1))
     .forEach((element) => {
       const requiredElementName = element as CostElementName;
       const requiredAmount = costToSubtract[requiredElementName];
