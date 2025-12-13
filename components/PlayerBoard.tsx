@@ -50,6 +50,7 @@ import CardRedraw from "./CardRedraw";
 import GameOver from "./GameOver";
 import PlayerBannerInGame from "./PlayerBannerInGame";
 import { createClient } from "@/utils/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface PlayerBoardProps {
   playerID?: string;
@@ -836,8 +837,15 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           />
         </div>
         {isMyBoard ? (
-          <div className="flex justify-center items-center">
-            <span className="text-red-500">{errorMessage}</span>
+          <div
+            className={cn(
+              "flex justify-center  text-red-600 items-center opacity-0",
+              errorMessage && "opacity-100"
+            )}
+          >
+            <span className="bg-red-800 p-1 text-red-100 rounded-sm border-4 border-red-400 border-solid">
+              {errorMessage}
+            </span>
           </div>
         ) : (
           <div></div>
