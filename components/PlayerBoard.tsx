@@ -125,6 +125,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           highlightedCard,
           usedAttack,
         } = payload as UpdatedCardsAndDicePayload;
+        //the cards the opponent set as "myCards" in the payload become opponentInGameCards from the other player's perspective etc.
         myCards && setOpponentInGameCards(myCards);
         opponentCards && setMyCards(opponentCards);
         myDice && setOpponentDice(myDice);
@@ -153,8 +154,18 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       supabase.removeChannel(channel);
     };
   }, []);
+  useEffect(() => {
+    if (!errorMessage) return;
+    setTimeout(
+      () => {
+        setErrorMessage("");
+      },
+      5000,
+      errorMessage
+    );
+  }, [errorMessage]);
   const handleSwitchCharacter = async (
-    card: CardExt,
+    newActiveCharacter: CardExt,
     {
       phase,
       amIReadyForNextPhase,
@@ -170,32 +181,32 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     let myUpdatedCards = myCards;
     let opponentUpdatedCards = opponentInGameCards;
     //if there is no active character or the active character was defeated, the card can be switched to active without a cost
-    const activeCharacter = myUpdatedCards.find(
+    const prevActiveCharacter = myUpdatedCards.find(
       (card) => card.location === "CHARACTER" && card.is_active
     );
-    if (!hasActiveCharacter || activeCharacter?.health === 0) {
+    if (!hasActiveCharacter || prevActiveCharacter?.health === 0) {
       myUpdatedCards = myCards.map((c) => {
-        if (c.id === card.id) {
+        if (c.id === newActiveCharacter.id) {
           return { ...c, is_active: true };
         }
-        if (c.id === activeCharacter?.id) {
+        if (c.id === prevActiveCharacter?.id) {
           return { ...c, is_active: false };
         }
         return c;
       }) as CardExtended[];
-      const res = await channel?.send({
+      await channel?.send({
         type: "broadcast",
         event: "updated_cards_and_dice",
         payload: {
           myCards: myUpdatedCards,
-          highlightedCard: card,
+          highlightedCard: newActiveCharacter,
         },
       });
-      setHighlightedCard(card);
+      setHighlightedCard(newActiveCharacter);
       setMyCards(
         (prev) =>
           prev.map((c) => {
-            if (c.id === card.id) {
+            if (c.id === newActiveCharacter.id) {
               return { ...c, is_active: true };
             } else {
               if (c.location === "CHARACTER" && c.is_active) {
@@ -226,7 +237,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         myUpdatedCards: myUpdatedCardsAfterSwitch,
         switchedFrom,
         switchedTo,
-      } = switchActiveCharacterCard(myCards, card);
+      } = switchActiveCharacterCard(myCards, newActiveCharacter);
 
       if (errorMessage) {
         setErrorMessage(errorMessage);
@@ -312,13 +323,13 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
       }
       myUpdatedCards && setMyCards(myUpdatedCards);
       opponentUpdatedCards && setOpponentInGameCards(opponentUpdatedCards);
-      setHighlightedCard(card);
+      setHighlightedCard(newActiveCharacter);
       channel
         ?.send({
           type: "broadcast",
           event: "updated_cards_and_dice",
           payload: {
-            highlightedCard: card,
+            highlightedCard: newActiveCharacter,
             myCards: myUpdatedCards,
             myDice: diceAfterCost,
             opponentCards: opponentUpdatedCards,
