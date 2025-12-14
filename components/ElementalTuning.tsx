@@ -2,7 +2,7 @@ import { subtractCost } from "@/app/gameActions";
 import { CardExtended } from "@/app/global";
 import { calculateTotalDice } from "@/app/utils";
 import {
-  errorMessageState,
+  playerErrorMessageState,
   myDiceState,
   myInGameCardsState,
   mySelectedCardsState,
@@ -21,7 +21,7 @@ export default function ElementalTuning({
   const [selectedCards, setSelectedCards] =
     useRecoilState(mySelectedCardsState);
   const [selectedDice, setSelectedDice] = useRecoilState(mySelectedDiceState);
-  const setErrorMessage = useSetRecoilState(errorMessageState);
+  const setErrorMessage = useSetRecoilState(playerErrorMessageState);
   const myActiveCharacter = myCards.find(
     (card) => card.location === "CHARACTER" && card.is_active
   );

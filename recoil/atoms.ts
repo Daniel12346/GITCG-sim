@@ -556,8 +556,8 @@ export const summonsState = selector({
   },
 });
 
-export const errorMessageState = atom<string>({
-  key: "errorMessageState",
+export const playerErrorMessageState = atom<string>({
+  key: "playerErrorMessageState",
   default: "",
 });
 
