@@ -95,7 +95,7 @@ export default function CardAttackInfo({
             ${isCardFrozen && "opacity-50"}}
           }`}
         >
-          <span className="text-lg mb-1 font-semibold  flex items-center justify-center">
+          <span className="text-sm mb-1 font-semibold  flex items-center justify-center">
             {attack?.effectType &&
               attackTypeDisplayText[
                 attack.effectType as
