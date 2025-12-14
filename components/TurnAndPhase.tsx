@@ -22,7 +22,7 @@ import {
   gameWinnerIDState,
   opponentIDState,
   nextRoundFirstPlayerIDState,
-  errorMessageState,
+  playerErrorMessageState,
   gameOverMessageState,
 } from "@/recoil/atoms";
 import { createClient } from "@/utils/supabase/client";
@@ -52,7 +52,7 @@ export default ({}) => {
   const [opponentCards, setOpponentCards] = useRecoilState(
     opponentInGameCardsState
   );
-  const setErrorMessage = useSetRecoilState(errorMessageState);
+  const setErrorMessage = useSetRecoilState(playerErrorMessageState);
   const [myCards, setMyCards] = useRecoilState(myInGameCardsState);
   const [myDice, setMyDice] = useRecoilState(myDiceState);
   const [opponentDice, setOpponentDice] = useRecoilState(opponentDiceState);
