@@ -29,7 +29,7 @@ import { findEffectLogic } from "@/app/cardEffects";
 import { subtractCost, activateEffect } from "@/app/gameActions";
 import { CardExtended } from "@/app/global";
 
-export default function CardAttacks({ playerID }: { playerID: string }) {
+export default function CardAttacks() {
   const myID = useRecoilValue(myIDState);
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
   const [currentPlayerID, setCurrentPlayerID] =
@@ -54,7 +54,6 @@ export default function CardAttacks({ playerID }: { playerID: string }) {
   );
   const currentRound = useRecoilValue(currentRoundState);
 
-  const isMyBoard = playerID === myID;
   const attacks = useRecoilValue(currentActiveCharacterAttacksState);
   const [usedAttack, setUsedAttack] = useRecoilState(usedAttackState);
   const isOpponentReadyForNextPhase = useRecoilValue(
@@ -243,121 +242,116 @@ export default function CardAttacks({ playerID }: { playerID: string }) {
   };
 
   return (
-    <div className="flex justify-between overflow-hidden px-4 items-center absolute h-full bottom-[-4px] w-fit right-2">
-      {isMyBoard && (
-        <>
-          {
-            /* sort so the attack with effect type NORMAL_ATTACK is first, ELEMENTAL_SKILL is second and ELEMENTAL_BURST is last */
-            attacks?.length &&
-              attacks
-                ?.toSorted((a: Effect, b: Effect) => {
-                  const order = [
-                    "NORMAL_ATTACK",
-                    "ELEMENTAL_SKILL",
-                    "ELEMENTAL_BURST",
-                  ];
-                  return (
-                    order.indexOf(a.effectType!) - order.indexOf(b.effectType!)
-                  );
-                })
-                ?.map((attack) => (
-                  <CardAttack
-                    key={attack.id}
-                    playerID={playerID}
-                    attack={attack}
-                    handleMouseEnter={() => {
-                      const res = activateAttackEffect(attack);
-                      console.log(res);
-                      if (!res) return;
-                      const { opponentCharacterChanges } = res;
+    <div className="flex justify-between overflow-hidden px-4 items-center  h-full bottom-[-4px] w-fit right-2">
+      {
+        /* sort so the attack with effect type NORMAL_ATTACK is first, ELEMENTAL_SKILL is second and ELEMENTAL_BURST is last */
+        attacks?.length &&
+          attacks
+            ?.toSorted((a: Effect, b: Effect) => {
+              const order = [
+                "NORMAL_ATTACK",
+                "ELEMENTAL_SKILL",
+                "ELEMENTAL_BURST",
+              ];
+              return (
+                order.indexOf(a.effectType!) - order.indexOf(b.effectType!)
+              );
+            })
+            ?.map((attack) => (
+              <CardAttack
+                key={attack.id}
+                playerID={myID}
+                attack={attack}
+                handleMouseEnter={() => {
+                  const res = activateAttackEffect(attack);
+                  console.log(res);
+                  if (!res) return;
+                  const { opponentCharacterChanges } = res;
 
-                      opponentCharacterChanges &&
-                        setOpponentCharacterChangesAfterAttack(
-                          opponentCharacterChanges
-                        );
-                    }}
-                    handleMouseLeave={() => {
-                      setOpponentCharacterChangesAfterAttack(null);
-                    }}
-                    handleAttack={() => {
-                      const res = activateAttackEffect(attack);
-                      if (res) {
-                        const {
-                          myUpdatedCards,
-                          myUpdatedDice,
-                          opponentUpdatedCards,
-                          opponentUpdatedDice,
-                          errorMessage,
-                          targetCard,
-                        } = res;
-                        if (errorMessage) {
-                          setErrorMessage(errorMessage);
-                          return;
-                        }
-                        if (attack.effect_basic_info_id) {
-                          setUsedAttack({
-                            attackerCardID: attack.card_id ?? null,
+                  opponentCharacterChanges &&
+                    setOpponentCharacterChangesAfterAttack(
+                      opponentCharacterChanges
+                    );
+                }}
+                handleMouseLeave={() => {
+                  setOpponentCharacterChangesAfterAttack(null);
+                }}
+                handleAttack={() => {
+                  const res = activateAttackEffect(attack);
+                  if (res) {
+                    const {
+                      myUpdatedCards,
+                      myUpdatedDice,
+                      opponentUpdatedCards,
+                      opponentUpdatedDice,
+                      errorMessage,
+                      targetCard,
+                    } = res;
+                    if (errorMessage) {
+                      setErrorMessage(errorMessage);
+                      return;
+                    }
+                    if (attack.effect_basic_info_id) {
+                      setUsedAttack({
+                        attackerCardID: attack.card_id ?? null,
+                        targetCardID: targetCard?.id || null,
+                        attackEffectBaseID: attack.effect_basic_info_id,
+                      });
+                      setTimeout(() => {
+                        setUsedAttack(null);
+                      }, 1500);
+                    }
+                    myUpdatedCards && setMyCards(myUpdatedCards);
+                    myUpdatedDice && setMyDice(myUpdatedDice);
+                    opponentUpdatedCards &&
+                      setOpponentInGameCards(opponentUpdatedCards);
+                    opponentUpdatedDice && setOpponentDice(opponentUpdatedDice);
+                    setSelectedTargets([]);
+                    const opponentsActiveCharacterIsDefeated =
+                      opponentUpdatedCards?.find(
+                        (c) =>
+                          c.location === "CHARACTER" &&
+                          c.is_active &&
+                          c.health === 0
+                      );
+                    channel
+                      ?.send({
+                        type: "broadcast",
+                        event: "updated_cards_and_dice",
+                        payload: {
+                          myCards: myUpdatedCards,
+                          myDice: myUpdatedDice,
+                          opponentCards: opponentUpdatedCards,
+                          opponentDice: opponentUpdatedDice,
+                          usedAttack: {
+                            attackerCardID: attack.card_id,
                             targetCardID: targetCard?.id || null,
                             attackEffectBaseID: attack.effect_basic_info_id,
+                          },
+                        },
+                      })
+                      .then(() => {
+                        setMySelectedDice({});
+                        //passing the turn to the opponent
+                        //the attacker continues their turn if the attack was a fast action or if the opponent finished their actions for the phase
+                        if (
+                          !isOpponentReadyForNextPhase ||
+                          //if the opponent's active character was defeated, they switch to another character, even if they have finished their actions in this phase
+                          //TODO: make switching mandatory when the opponent's active character is defeated
+                          opponentsActiveCharacterIsDefeated
+                        ) {
+                          setCurrentPlayerID(opponentID);
+                          broadcastSwitchPlayer({
+                            channel,
+                            playerID: opponentID,
                           });
-                          setTimeout(() => {
-                            setUsedAttack(null);
-                          }, 1500);
                         }
-                        myUpdatedCards && setMyCards(myUpdatedCards);
-                        myUpdatedDice && setMyDice(myUpdatedDice);
-                        opponentUpdatedCards &&
-                          setOpponentInGameCards(opponentUpdatedCards);
-                        opponentUpdatedDice &&
-                          setOpponentDice(opponentUpdatedDice);
-                        setSelectedTargets([]);
-                        const opponentsActiveCharacterIsDefeated =
-                          opponentUpdatedCards?.find(
-                            (c) =>
-                              c.location === "CHARACTER" &&
-                              c.is_active &&
-                              c.health === 0
-                          );
-                        channel
-                          ?.send({
-                            type: "broadcast",
-                            event: "updated_cards_and_dice",
-                            payload: {
-                              myCards: myUpdatedCards,
-                              myDice: myUpdatedDice,
-                              opponentCards: opponentUpdatedCards,
-                              opponentDice: opponentUpdatedDice,
-                              usedAttack: {
-                                attackerCardID: attack.card_id,
-                                targetCardID: targetCard?.id || null,
-                                attackEffectBaseID: attack.effect_basic_info_id,
-                              },
-                            },
-                          })
-                          .then(() => {
-                            setMySelectedDice({});
-                            //passing the turn to the opponent
-                            //the attacker continues their turn if the attack was a fast action or if the opponent finished their actions for the phase
-                            if (
-                              !isOpponentReadyForNextPhase ||
-                              //if the opponent's active character was defeated, they switch to another character, even if they have finished their actions in this phase
-                              //TODO: make switching mandatory when the opponent's active character is defeated
-                              opponentsActiveCharacterIsDefeated
-                            ) {
-                              setCurrentPlayerID(opponentID);
-                              broadcastSwitchPlayer({
-                                channel,
-                                playerID: opponentID,
-                              });
-                            }
-                          });
-                      }
-                    }}
-                  />
-                ))
-          }
-        </>
-      )}
+                      });
+                  }
+                }}
+              />
+            ))
+      }
     </div>
   );
 }
