@@ -1,12 +1,14 @@
 "use client";
 import GameBoard from "@/components/GameBoard";
 import CurrentViewedCardDisplay from "@/components/CurrentViewedCard";
+import CardAttacks from "@/components/CardAttacks";
 
 export default function Game() {
   return (
     <div className="w-full max-h-screen">
-      <div className="grid grid-cols-[5fr_1fr] bg-indigo-950">
+      <div className="grid md:grid-cols-[5fr_1fr] bg-indigo-950">
         <GameBoard />
+        <div className="md:hidden h-28">{<CardAttacks />}</div>
         <CurrentViewedCardDisplay />
       </div>
     </div>
