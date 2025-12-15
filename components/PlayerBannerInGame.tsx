@@ -33,7 +33,7 @@ export default function PlayerBannerInGame({
             ? isMyTurn && isActionPhase && "border-green-400"
             : !isMyTurn && isActionPhase && "border-red-600"
         }
-         flex flex-col  lg:flex-row lg:items-center pl-2 pr-3 gap-6 min-w-fit`}
+        flex flex-col  lg:flex-row lg:items-center pl-2 pr-3 md:gap-6 min-w-fit`}
     >
       {userBanner && (
         <img
@@ -42,10 +42,10 @@ export default function PlayerBannerInGame({
         ></img>
       )}
       <img
-        className="rounded-sm  z-10 w-14 h-14 object-cover object-center"
+        className="rounded-sm  z-10 w-7 h-7 md:w-14 md:h-14 object-cover object-center"
         src={userAvatar || "/card_back_origin.png"}
       />
-      <span className="font-bold z-10 text-xl text-blue-100">
+      <span className="font-bold z-10 md:text-lg text-blue-100">
         {playerProfile?.username ?? "guest"}
       </span>
     </div>

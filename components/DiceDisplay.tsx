@@ -107,7 +107,7 @@ export default function DiceDisplay({
           <ElementalTuning channel={channel || null} />
         )}
       <ul
-        className={`flex gap-2 flex-wrap p-3 h-full
+        className={`flex gap-0.5 md:gap-2 flex-wrap p-1 md:p-3 h-full
         ${isMain && "p-0 overflow-y-scroll"}`}
       >
         {Object.entries(dice)

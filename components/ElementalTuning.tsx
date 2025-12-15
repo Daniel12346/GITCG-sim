@@ -74,7 +74,7 @@ export default function ElementalTuning({
     return {};
   };
   return (
-    <div className="px-3">
+    <div className="md:px-3">
       <button
         className="px-1 bg-blue-800 font-semibold text-md text-blue-100 w-fit"
         onClick={() => {
