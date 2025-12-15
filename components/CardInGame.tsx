@@ -80,7 +80,7 @@ export default function CardInGame({
   return (
     <div
       className={`
-       group  transition-transform bg-blue-200 flex flex-col items-center relative h-24 w-16 border-4
+       group  transition-transform bg-blue-200 flex flex-col items-center relative h-16 w-12 md:h-24 md:w-16 border-[3px] md:border-4
          border-orange-300 
          ${isDefeated && "border-gray-400 scale-100"}
          rounded-md duration-300 ease-in-out
