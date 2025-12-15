@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { playerErrorMessageState } from "@/recoil/atoms";
 import { useRecoilValue } from "recoil";
 
-export default function PlayerError() {
+export default function PlayerErrorDisplay() {
   const playerErrorMessage = useRecoilValue(playerErrorMessageState);
   return (
     <div
