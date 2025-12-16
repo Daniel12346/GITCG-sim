@@ -42,7 +42,6 @@ import {
   findEquippedCards,
 } from "@/app/utils";
 import DiceDisplay from "./DiceDisplay";
-import CardAttack from "./CardAttack";
 import { findEffectLogic } from "@/app/cardEffects";
 import { getCreationDisplayComponentForCard } from "./CreationDisplay";
 import DiceReroll from "./DiceReroll";
@@ -52,6 +51,7 @@ import PlayerBannerInGame from "./PlayerBannerInGame";
 import { createClient } from "@/utils/supabase/client";
 import { cn } from "@/lib/utils";
 import CardAttacks from "./CardAttacks";
+import PlayerErrorDisplay from "./PlayerErrorDisplay";
 
 interface PlayerBoardProps {
   playerID?: string;
@@ -106,9 +106,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
     isOpponentReadyForNextPhaseState
   );
 
-  const setOpponentCharacterChangesAfterAttack = useSetRecoilState(
-    opponentCharacterChangesAfterAttackState
-  );
   const amIReadyForNextPhase = useRecoilValue(amIReadyForNextPhaseState);
   useEffect(() => {
     const supabase = createClient();
@@ -642,18 +639,20 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
 
   return (
     <div
-      className={`bg-fieldSecondary grid grid-cols-[10%_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)_10%] 
-    gap-2 w-100% text-slate-100 p-2 overflow-x-hidden border-x-4  transition-colors duration-300 ${
-      isMyBoard && currentPhase === "ACTION_PHASE" && isMyTurn
-        ? "border-green-500"
-        : "border-red-500"
-    }`}
+      className={cn(
+        "bg-fieldSecondary grid grid-cols-[10%_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)_10%] gap-2 w-100% text-slate-100 p-2 overflow-x-hidden border-x-4  transition-colors duration-300",
+        isMyBoard && currentPhase === "ACTION_PHASE" && isMyTurn
+          ? "border-green-500"
+          : "border-red-500"
+      )}
     >
       <div
-        className={`${isMyBoard && "order-2"} relative
-        bg-fieldHand col-span-full h-32 py-2 grid grid-cols-[4fr_1fr_8fr_5fr] `}
+        className={cn(
+          `relative
+        bg-fieldHand col-span-full h-24 md:h-32 py-2 grid grid-cols-[2fr_10fr_2fr] `,
+          isMyBoard && "order-2"
+        )}
       >
-        {/* <div className="text-red-700">{errorMessage || ""}</div> */}
         <div
           className={`h-full flex ${isMyBoard ? "items-end" : "items-start"}`}
         >
@@ -662,22 +661,14 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
             isMyProfile={isMyBoard}
           />
         </div>
-        {isMyBoard ? (
-          <div
-            className={cn(
-              "flex justify-center  text-red-600 items-center opacity-0",
-              errorMessage && "opacity-100"
-            )}
-          >
-            <span className="bg-red-800 p-1 text-red-100 rounded-sm border-4 border-red-400 border-solid">
-              {errorMessage}
-            </span>
-          </div>
-        ) : (
-          <div></div>
-        )}
+        {/* HAND ZONE */}
+        <div className="flex relative flex-row justify-center items-center gap-0.5 md:gap-1">
+          {isMyBoard && (
+            <div className="absolute w-full top-[-20px] flex justify-center">
+              <PlayerErrorDisplay />
+            </div>
+          )}
 
-        <div className="flex flex-row justify-center items-center gap-2 ">
           {playerCards
             ?.filter((card) => card.location === "HAND")
             .map((card) => (
@@ -688,8 +679,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
               />
             ))}
         </div>
-
-        {playerID && <CardAttacks playerID={playerID} />}
+        <div className="hidden md:block">{isMyBoard && <CardAttacks />}</div>
       </div>
 
       <div
@@ -697,7 +687,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           isMyBoard ? "flex-col" : "flex-col-reverse"
         } justify-center items-center`}
       >
-        {/* <span className="text-slate-200">deck zone</span> */}
+        {/*DECK ZONE*/}
         <div className="relative flex-col items-center">
           {cardsInDeck.length && (
             <CardInGame card={cardsInDeck[0]} overrideIsFaceDown />
@@ -708,7 +698,7 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         </span>
       </div>
       <div className="bg-fieldMain">
-        {/* action zone */}
+        {/* ACTION ZONE */}
         <div className="grid grid-cols-2">
           {playerCards
             ?.filter(
@@ -723,12 +713,12 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         </div>
       </div>
       <div
-        className={`bg-fieldMain h-40 flex items-center justify-center  ${
+        className={`bg-fieldMain h-full flex items-center justify-center  ${
           !isMyBoard && "self-end"
         }`}
       >
-        {/* character zone */}
-        <div className="flex flex-row justify-evenly px-2 w-full max-w-md">
+        {/* CHARACTER ZONE*/}
+        <div className="flex flex-row justify-between md:justify-evenly px-0.5 md:px-2 w-full max-w-md gap-0.5">
           {playerCards
             ?.filter((card) => card.card_type === "CHARACTER")
             .map((card) => {
@@ -761,14 +751,14 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
         </div>
       </div>
       <div className="bg-fieldMain h-full">
-        {/* SUMMONS */}
+        {/* SUMMON ZONE */}
         {playerCards
           ?.filter((card) => card.location === "SUMMON")
           .map((card) => {
             return <CardInGame key={card.id} card={card} />;
           })}
       </div>
-      <div className="h-40">
+      <div className="h-full">
         <DiceDisplay
           channel={channel}
           dice={playerDice}
