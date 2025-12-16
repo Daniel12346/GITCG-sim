@@ -8,7 +8,6 @@ import {
   opponentDiceState,
   mySelectedCardsState,
   myInGameCardsState,
-  currentActiveCharacterAttacksState,
   mySelectedDiceState,
   summonsState,
   currentRoundState,
@@ -21,14 +20,12 @@ import {
   myProfileState,
   isOpponentReadyForNextPhaseState,
   amIReadyForNextPhaseState,
-  opponentCharacterChangesAfterAttackState,
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { useEffect, useState } from "react";
 import CardInGame from "./CardInGame";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import {
-  activateEffect,
   subtractCost,
   switchActiveCharacterCard,
 } from "@/app/gameActions";
@@ -94,7 +91,6 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   const isMyBoard = playerID === myID;
   const playerCards = isMyBoard ? myCards : opponentInGameCards;
   const playerDice = isMyBoard ? myDice : opponentDice;
-  const attacks = useRecoilValue(currentActiveCharacterAttacksState);
   const isMyTurn = useRecoilValue(isMyTurnState);
   const cardsInDeck = playerCards.filter((card) => card.location === "DECK");
   const setHighlightedCard = useSetRecoilState(currentHighlightedCardState);
