@@ -99,7 +99,7 @@ export default function DiceDisplay({
   const currentPhase = useRecoilValue(currentPhaseState);
   const isMyTurn = useRecoilValue(isMyTurnState);
   return (
-    <div className={`${!isMyBoard && "pt-3"} h-full`}>
+    <div className={`${!isMyBoard && "pt-3"} h-44`}>
       {withElementalTuning &&
         isMyBoard &&
         isMyTurn &&

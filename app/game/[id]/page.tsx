@@ -8,7 +8,7 @@ export default function Game() {
     <div className="w-full max-h-screen">
       <div className="grid md:grid-cols-[5fr_1fr] bg-indigo-950">
         <GameBoard />
-        <div className="md:hidden h-28">{<CardAttacks />}</div>
+        <div className="md:hidden h-28 flex justify-center">{<CardAttacks />}</div>
         <CurrentViewedCardDisplay />
       </div>
     </div>

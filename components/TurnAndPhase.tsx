@@ -351,7 +351,7 @@ export default ({}) => {
 
   return (
     <div className="py-1 flex justify-center">
-      <div className="w-4/5 text-blue-100 bg-indigo-900 px-1 py-2 flex gap-4 justify-evenly">
+      <div className="w-full flex items-center md:w-4/5 text-blue-100 bg-indigo-900 px-1 py-2 md:gap-4 justify-evenly">
         <span className="text-lg">Round {currentRound}</span>
         <span>
           {!amIReadyForNextPhase ? (
@@ -392,9 +392,9 @@ export default ({}) => {
             <span>waiting for opponent to complete phase...</span>
           )}
         </span>
-        <div className="flex gap-2">
+        <div className="flex md:gap-2 flex-col md:flex-row">
           <span
-            className={`font-semibold text-lg transition-all
+            className={`font-semibold flex items-center md:text-lg transition-all
             ${phaseChange && "duration-400 text-yellow-400 animate-pulse"}`}
           >
             {currentPhase?.replace("_", " ")}
