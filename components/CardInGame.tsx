@@ -4,17 +4,14 @@ import {
   currentViewedCardState,
   mySelectedCardsState,
   myIDState,
-  isMyTurnState,
-  currentPhaseState,
   currentHighlightedCardState,
   usedAttackState,
-  amIReadyForNextPhaseState,
-  currentActiveCharacterState,
   opponentCharacterChangesAfterAttackState,
 } from "@/recoil/atoms";
 import { ArrowUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import CardInGameOptions from "./CardInGameOptions";
 
 interface Props {
   card: CardExt;
@@ -46,15 +43,11 @@ export default function CardInGame({
   const isFrozen = card.statuses?.find((status) => status.name === "FROZEN");
   const isDefeated = card.location === "CHARACTER" && card.health === 0;
   const isSummon = card.location === "SUMMON";
-  const isMyTurn = useRecoilValue(isMyTurnState);
-  const currentPhase = useRecoilValue(currentPhaseState);
   const usedAttack = useRecoilValue(usedAttackState);
   let wasAttacker = usedAttack?.attackerCardID === card.id;
   let wasAttackTarget = usedAttack?.targetCardID === card.id;
   const previousCard = usePrevious(card);
   const [healthChange, setHealthChange] = useState(0);
-  const amIReadyForNextPhase = useRecoilValue(amIReadyForNextPhaseState);
-  const myActiveCharacter = useRecoilValue(currentActiveCharacterState);
   const isOpponentActiveCharacter = card.is_active && !isMyCard;
 
   const opponentCharacterChangesAfterAttack = useRecoilValue(
@@ -108,68 +101,7 @@ export default function CardInGame({
       <div className="z-10 flex justify-between w-full">
         {creationDisplayElements?.map((element) => element)}
       </div>
-      {/* used for activating cards from hand */}
-      {card.location === "HAND" &&
-        isMyCard &&
-        isMyTurn &&
-        !amIReadyForNextPhase &&
-        //if a player does not control an active character, the only action they can perform is to switch to a new active character
-        myActiveCharacter &&
-        myActiveCharacter.health !== 0 && (
-          <span
-            className="z-30 cursor-pointer hidden group-hover:block absolute top-1 left-1 bg-green-200 text-green-800 p-1"
-            onClick={handleClick}
-          >
-            activate
-          </span>
-        )}
-
-      {/* used for switching active character */}
-      {card.location === "CHARACTER" &&
-        isMyCard &&
-        (!amIReadyForNextPhase ||
-          !myActiveCharacter ||
-          myActiveCharacter.health === 0) &&
-        !card.is_active &&
-        ((currentPhase === "ACTION_PHASE" && isMyTurn) ||
-          (currentPhase === "PREPARATION_PHASE" && !myActiveCharacter)) && (
-          <span
-            className={cn(
-              "z-30 cursor-pointer hidden group-hover:block absolute top-1 right-1 bg-green-200 text-green-800 p-1",
-            )}
-            onClick={handleClick}
-          >
-            switch
-          </span>
-        )}
-      {/* used for selecting cards */}
-      {/* only my cards can be selected outside the action phase*/}
-      {(currentPhase !== "ACTION_PHASE" ? isMyCard : true) && (
-        <span
-          className={cn(
-            "z-30 cursor-pointer hidden group-hover:block absolute top-10 right-1 bg-slate-200 text-blue-800 p-1",
-          )}
-          onClick={() => {
-            setSelectedTargets((prev) => {
-              if (prev.find((target) => target.id === card.id)) {
-                return prev.filter((target) => target.id !== card.id);
-              } else {
-                return [...prev, card];
-              }
-            });
-          }}
-        >
-          {isSelected ? "deselect" : "select"}
-        </span>
-      )}
-      {isSummon && (
-        <div className="z-10 flex justify-between w-full">
-          <span className="bg-blue-600 rounded-sm text-blue-100  -mr-1 ">
-            {card.max_usages! - card.usages!}
-          </span>
-        </div>
-      )}
-
+      <CardInGameOptions card={card} handleClick={handleClick!} />
       {thisCardChangesAfterAttack?.healthChange != undefined && (
         <>
           {isOpponentActiveCharacter && (
@@ -200,6 +132,14 @@ export default function CardInGame({
           {isInDeckDisplay ? card.base_health : card.health}
         </span>
       </div>
+      {/* TODO: check position for summon usages */}
+      {isSummon && (
+        <div className="z-10 flex justify-between w-full ">
+          <span className="bg-blue-600 rounded-sm text-blue-100  -mr-1 ">
+            {card.max_usages! - card.usages!}
+          </span>
+        </div>
+      )}
       {/* energy */}
       <div className="z-10 absolute h-full w-2 top-0 right-0">
         {card.energy !== null && (
