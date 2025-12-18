@@ -8,6 +8,7 @@ import { useRecoilState, useRecoilValue } from "recoil";
 import ElementalTuning from "./ElementalTuning";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import RequiredEnergyDisplay from "./RequiredEnergyDisplay";
+import { cn } from "@/lib/utils";
 
 type DiceDisplayProps = {
   dice: Dice;
@@ -99,7 +100,7 @@ export default function DiceDisplay({
   const currentPhase = useRecoilValue(currentPhaseState);
   const isMyTurn = useRecoilValue(isMyTurnState);
   return (
-    <div className={`${!isMyBoard && "pt-3"} h-44`}>
+    <div className={cn(!isMyBoard && "pt-3", isMain && "h-44")}>
       {withElementalTuning &&
         isMyBoard &&
         isMyTurn &&
@@ -107,8 +108,10 @@ export default function DiceDisplay({
           <ElementalTuning channel={channel || null} />
         )}
       <ul
-        className={`flex gap-0.5 md:gap-2 flex-wrap p-1 md:p-3 h-full
-        ${isMain && "p-0 overflow-y-scroll"}`}
+        className={cn(
+          "flex gap-0.5 md:gap-2 flex-wrap p-1 md:p-3 h-full",
+          isMain && "p-0 overflow-y-scroll"
+        )}
       >
         {Object.entries(dice)
           .toSorted()
