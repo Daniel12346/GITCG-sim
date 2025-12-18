@@ -741,3 +741,8 @@ export const opponentCharacterChangesAfterAttackState = atom<
   key: "opponentCharacterChangesAfterAttackState",
   default: null,
 });
+
+export const isCardViewOpenState = atom<boolean>({
+  key: "isCardViewState",
+  default: false,
+});
