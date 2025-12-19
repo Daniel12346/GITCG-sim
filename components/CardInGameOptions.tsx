@@ -6,8 +6,9 @@ import {
   currentPhaseState,
   amIReadyForNextPhaseState,
   currentActiveCharacterState,
+  isCardViewOpenState,
 } from "@/recoil/atoms";
-import { useRecoilState, useRecoilValue } from "recoil";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 
 export default function CardInGameOptions({
   card,
@@ -25,8 +26,9 @@ export default function CardInGameOptions({
   const currentPhase = useRecoilValue(currentPhaseState);
   const amIReadyForNextPhase = useRecoilValue(amIReadyForNextPhaseState);
   const myActiveCharacter = useRecoilValue(currentActiveCharacterState);
+  const isCardViewOpen = useSetRecoilState(isCardViewOpenState);
   return (
-    <div className="z-20 hidden group-hover:flex absolute  gap-0.5top-0 left-8 w-full h-full  flex-col">
+    <div className="z-20 hidden group-hover:flex absolute  gap-0.5 top-0 left-8 w-fit h-full  flex-col">
       {/* used for activating cards from hand */}
       {card.location === "HAND" &&
         isMyCard &&
@@ -85,9 +87,7 @@ export default function CardInGameOptions({
         className={cn(
           "z-30 cursor-pointer md:hidden -top-1 left-8 bg-slate-200 text-blue-800 px-0.5 md:p-1"
         )}
-        onClick={() => {
-          //TODO: show card details
-        }}
+        onClick={() => isCardViewOpen(true)}
       >
         view
       </span>
