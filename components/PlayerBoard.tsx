@@ -20,15 +20,13 @@ import {
   myProfileState,
   isOpponentReadyForNextPhaseState,
   amIReadyForNextPhaseState,
+  isCardViewOpenState,
 } from "@/recoil/atoms";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { useEffect, useState } from "react";
 import CardInGame from "./CardInGame";
 import { RealtimeChannel } from "@supabase/supabase-js";
-import {
-  subtractCost,
-  switchActiveCharacterCard,
-} from "@/app/gameActions";
+import { subtractCost, switchActiveCharacterCard } from "@/app/gameActions";
 import { CardExtended, CostT } from "@/app/global";
 import {
   broadcastSwitchPlayer,
@@ -49,6 +47,8 @@ import { createClient } from "@/utils/supabase/client";
 import { cn } from "@/lib/utils";
 import CardAttacks from "./CardAttacks";
 import PlayerErrorDisplay from "./PlayerErrorDisplay";
+import CurrentViewedCard from "./CurrentViewedCard";
+import { XIcon } from "lucide-react";
 
 interface PlayerBoardProps {
   playerID?: string;
@@ -101,6 +101,8 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
   const isOpponentReadyForNextPhase = useRecoilValue(
     isOpponentReadyForNextPhaseState
   );
+  const [isCardViewOpen, setIsCardViewOpen] =
+    useRecoilState(isCardViewOpenState);
 
   const amIReadyForNextPhase = useRecoilValue(amIReadyForNextPhaseState);
   useEffect(() => {
@@ -761,11 +763,32 @@ export default function PlayerBoard({ playerID }: PlayerBoardProps) {
           isMyBoard={isMyBoard}
           withElementalTuning
           isMain
-        ></DiceDisplay>
+        />
       </div>
+      {/* DiceReroll, CardRedraw, GameOver and CurrentViewedCard (on small screens)
+      should only be displayed on user's board, not the opponent's */}
       {isMyBoard && <DiceReroll channel={channel} />}
       {isMyBoard && <CardRedraw channel={channel} />}
       {isMyBoard && <GameOver />}
+      {isMyBoard && (
+        <div
+          className={cn(
+            "md:hidden absolute z-30 left-0 top-0 justify-center w-screen",
+            isCardViewOpen ? "flex" : "hidden"
+          )}
+        >
+          <div className="p-2 bg-black/80">
+            <span className="md:hidden top-2 right-2">
+              <XIcon
+                onClick={() => {
+                  setIsCardViewOpen(false);
+                }}
+              />
+            </span>
+            <CurrentViewedCard />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
